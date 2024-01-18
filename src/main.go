@@ -4,7 +4,8 @@ import (
   "github.com/labstack/echo/v4"
   "github.com/labstack/echo/v4/middleware"
   "net/http"
-   _ "github.com/saklani/bungo/docs"
+  "github.com/swaggo/echo-swagger"
+   _ "github.com/saklani/bungo/src/docs"
 )
 
 // @title Swagger Example API
