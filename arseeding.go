@@ -2,6 +2,12 @@ package arseeding
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/everFinance/arseeding/cache"
 	"github.com/everFinance/arseeding/config"
 	"github.com/everFinance/arseeding/rawdb"
@@ -13,10 +19,6 @@ import (
 	"github.com/everFinance/goar/types"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 var log = common.NewLog("arseeding")
@@ -59,6 +61,7 @@ func New(
 	useMongoDb bool, mongodbUri string,
 	port string, customTags []types.Tag, useKafka bool, kafkaUri string,
 ) *Arseeding {
+	fmt.Println(boltDirPath)
 	var err error
 	KVDb := &Store{}
 
