@@ -7,10 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/everFinance/arseeding/rawdb"
 	"github.com/everFinance/arseeding/schema"
 	"github.com/everFinance/go-everpay/account"
 	"github.com/everFinance/go-everpay/config"
@@ -25,11 +30,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
-	"math/big"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -756,65 +756,19 @@ func (s *Arseeding) retryOnChainArTx() {
 func (s *Arseeding) onChainBundleTx(itemIds []string) (arTx types.Transaction, onChainItemIds []string, err error) {
 	onChainItems := make([]types.BundleItem, 0)
 	bundle := &types.Bundle{}
-	verifyBundle := &types.Bundle{}
-	if s.store.KVDb.Type() != rawdb.S3Type {
-		onChainItems, err = s.getOnChainBundle(itemIds)
-		// assemble and send to arweave
-		bundle, err = utils.NewBundle(onChainItems...)
-		if err != nil {
-			log.Error("utils.NewBundle(onChainItems...)", "err", err)
-			return
-		}
 
-		// verify bundle, ensure that the bundle is exactly right before sending
-		if _, err = utils.DecodeBundle(bundle.BundleBinary); err != nil {
-			err = errors.New(fmt.Sprintf("Verify bundle failed; err:%v", err))
-			return
-		}
-	} else { // only s3 support stream
-		defer func() {
-			for _, item := range onChainItems {
-				if item.DataReader != nil {
-					item.DataReader.Close()
-					os.Remove(item.DataReader.Name())
-				}
-			}
-			for _, item := range verifyBundle.Items {
-				if item.DataReader != nil {
-					item.DataReader.Close()
-					os.Remove(item.DataReader.Name())
-				}
-			}
-			if bundle.BundleDataReader != nil {
-				bundle.BundleDataReader.Close()
-				os.Remove(bundle.BundleDataReader.Name())
-			}
-		}()
+	onChainItems, err = s.getOnChainBundle(itemIds)
+	// assemble and send to arweave
+	bundle, err = utils.NewBundle(onChainItems...)
+	if err != nil {
+		log.Error("utils.NewBundle(onChainItems...)", "err", err)
+		return
+	}
 
-		onChainItems, err = s.getOnChainBundleStream(itemIds)
-		if err != nil {
-			log.Error("s.getOnChainBundleStream(itemIds)", "err", err)
-			return
-		}
-		// assemble and send to arweave
-		bundle, err = utils.NewBundleStream(onChainItems...)
-		if err != nil {
-			log.Error("utils.NewBundle(onChainItems...)", "err", err)
-			return
-		}
-
-		// verify bundle, ensure that the bundle is exactly right before sending
-		if verifyBundle, err = utils.DecodeBundleStream(bundle.BundleDataReader); err != nil {
-			err = errors.New(fmt.Sprintf("Verify bundle failed; err:%v", err))
-			return
-		}
-		for _, item := range verifyBundle.Items {
-			if err = utils.VerifyBundleItem(item); err != nil {
-				log.Error("utils.VerifyBundleItem(item)", "err", err, "itemId", item.Id)
-				err = errors.New("utils.VerifyBundleItem(item) failed")
-				return
-			}
-		}
+	// verify bundle, ensure that the bundle is exactly right before sending
+	if _, err = utils.DecodeBundle(bundle.BundleBinary); err != nil {
+		err = errors.New(fmt.Sprintf("Verify bundle failed; err:%v", err))
+		return
 	}
 
 	// get onChainItemIds
@@ -832,10 +786,6 @@ func (s *Arseeding) onChainBundleTx(itemIds []string) (arTx types.Transaction, o
 		{Name: "App-Version", Value: "0.3.0"},
 		{Name: "Input", Value: `{"function":"mint"}`},
 		{Name: "Contract", Value: "KTzTXT_ANmF84fWEKHzWURD1LWd9QaFR9yfYUwH2Lxw"},
-	}
-
-	if len(s.customTags) > 0 {
-		arTxtags = append(s.customTags, arTxtags...)
 	}
 
 	// speed arTx Fee

@@ -1,22 +1,18 @@
 package arseeding
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
 	"github.com/everFinance/arseeding/cache"
 	"github.com/everFinance/arseeding/config"
-	"github.com/everFinance/arseeding/rawdb"
 	"github.com/everFinance/arseeding/schema"
 	"github.com/everFinance/arseeding/sdk"
 	"github.com/everFinance/go-everpay/common"
 	paySdk "github.com/everFinance/go-everpay/sdk"
 	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 )
@@ -48,38 +44,19 @@ type Arseeding struct {
 	bundlePerFeeMap     map[string]schema.Fee // key: tokenSymbol, val: fee per chunk_size(256KB)
 	paymentExpiredRange int64                 // default
 	expectedRange       int64                 // default 50 block
-	customTags          []types.Tag
 	locker              sync.RWMutex
 	localCache          *cache.Cache
 }
 
 func New(
-	boltDirPath, mySqlDsn string, sqliteDir string, useSqlite bool,
+	boltDirPath, sqliteDir string,
 	arWalletKeyPath string, arNode, payUrl string, noFee bool, enableManifest bool,
-	useS3 bool, s3AccKey, s3SecretKey, s3BucketPrefix, s3Region, s3Endpoint string,
-	use4EVER bool, useAliyun bool, aliyunEndpoint, aliyunAccKey, aliyunSecretKey, aliyunPrefix string,
-	useMongoDb bool, mongodbUri string,
-	port string, customTags []types.Tag, useKafka bool, kafkaUri string,
+	port string, useKafka bool, kafkaUri string,
 ) *Arseeding {
 	fmt.Println(boltDirPath)
 	var err error
-	KVDb := &Store{}
 
-	switch {
-	case useS3 && useAliyun:
-		panic("can not use both s3 and aliyun")
-	case useS3:
-		if use4EVER {
-			s3Endpoint = rawdb.ForeverLandEndpoint // inject 4everland endpoint
-		}
-		KVDb, err = NewS3Store(s3AccKey, s3SecretKey, s3Region, s3BucketPrefix, s3Endpoint)
-	case useAliyun:
-		KVDb, err = NewAliyunStore(aliyunEndpoint, aliyunAccKey, aliyunSecretKey, aliyunPrefix)
-	case useMongoDb:
-		KVDb, err = NewMongoDBStore(context.Background(), mongodbUri)
-	default:
-		KVDb, err = NewBoltStore(boltDirPath)
-	}
+	KVDb, err := NewBoltStore(boltDirPath)
 
 	if err != nil {
 		panic(err)
@@ -89,12 +66,9 @@ func New(
 	if err := jobmg.InitTaskMg(KVDb); err != nil {
 		panic(err)
 	}
-	wdb := &Wdb{}
-	if useSqlite {
-		wdb = NewSqliteDb(sqliteDir)
-	} else {
-		wdb = NewMysqlDb(mySqlDsn)
-	}
+
+	wdb := NewSqliteDb(sqliteDir)
+
 	if err = wdb.Migrate(noFee, enableManifest); err != nil {
 		panic(err)
 	}
@@ -114,7 +88,7 @@ func New(
 
 	localArseedUrl := "http://127.0.0.1" + port
 	a := &Arseeding{
-		config:              config.New(mySqlDsn, sqliteDir, useSqlite),
+		config:              config.New(sqliteDir),
 		store:               KVDb,
 		engine:              gin.Default(),
 		submitLocker:        sync.Mutex{},
@@ -132,7 +106,6 @@ func New(
 		bundlePerFeeMap:     make(map[string]schema.Fee),
 		paymentExpiredRange: schema.DefaultPaymentExpiredRange,
 		expectedRange:       schema.DefaultExpectedRange,
-		customTags:          customTags,
 	}
 
 	// init cache

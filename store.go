@@ -1,30 +1,18 @@
 package arseeding
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
+	"os"
 	"github.com/everFinance/arseeding/rawdb"
 	"github.com/everFinance/arseeding/schema"
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
-	"os"
 )
 
 type Store struct {
 	KVDb rawdb.KeyValueDB
-}
-
-func NewS3Store(accKey, secretKey, region, bucketPrefix, endpoint string) (*Store, error) {
-	Db, err := rawdb.NewS3DB(accKey, secretKey, region, bucketPrefix, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	return &Store{
-		KVDb: Db,
-	}, nil
-
 }
 
 func NewBoltStore(boltDirPath string) (*Store, error) {
@@ -33,26 +21,6 @@ func NewBoltStore(boltDirPath string) (*Store, error) {
 		return nil, err
 	}
 	return &Store{KVDb: Db}, nil
-}
-
-func NewAliyunStore(endpoint, accKey, secretKey, bucketPrefix string) (*Store, error) {
-	Db, err := rawdb.NewAliyunDB(endpoint, accKey, secretKey, bucketPrefix)
-	if err != nil {
-		return nil, err
-	}
-	return &Store{
-		KVDb: Db,
-	}, nil
-}
-
-func NewMongoDBStore(ctx context.Context, uri string) (*Store, error) {
-	Db, err := rawdb.NewMongoDB(ctx, uri)
-	if err != nil {
-		return nil, err
-	}
-	return &Store{
-		KVDb: Db,
-	}, nil
 }
 
 func (s *Store) Close() error {
@@ -120,10 +88,7 @@ func (s *Store) LoadTxMeta(arId string) (arTx *types.Transaction, err error) {
 
 func (s *Store) IsExistTxMeta(arId string) bool {
 	_, err := s.LoadTxMeta(arId)
-	if err == schema.ErrNotExist {
-		return false
-	}
-	return true
+	return err != schema.ErrNotExist
 }
 
 func (s *Store) SaveTxDataEndOffSet(dataRoot, dataSize string, txDataEndOffset uint64) (err error) {
@@ -141,10 +106,7 @@ func (s *Store) LoadTxDataEndOffSet(dataRoot, dataSize string) (txDataEndOffset 
 
 func (s *Store) IsExistTxDataEndOffset(dataRoot, dataSize string) bool {
 	_, err := s.LoadTxDataEndOffSet(dataRoot, dataSize)
-	if err == schema.ErrNotExist {
-		return false
-	}
-	return true
+	return err != schema.ErrNotExist
 }
 
 func (s *Store) SaveChunk(chunkStartOffset uint64, chunk types.GetChunk) error {
@@ -169,10 +131,7 @@ func (s *Store) LoadChunk(chunkStartOffset uint64) (chunk *types.GetChunk, err e
 
 func (s *Store) IsExistChunk(chunkStartOffset uint64) bool {
 	_, err := s.LoadChunk(chunkStartOffset)
-	if err == schema.ErrNotExist {
-		return false
-	}
-	return true
+	return err != schema.ErrNotExist
 }
 
 func (s *Store) SavePeers(peers map[string]int64) error {
@@ -197,10 +156,7 @@ func (s *Store) LoadPeers() (peers map[string]int64, err error) {
 
 func (s *Store) IsExistPeers() bool {
 	_, err := s.LoadPeers()
-	if err == schema.ErrNotExist {
-		return false
-	}
-	return true
+	return err != schema.ErrNotExist
 }
 
 // itob returns an 64-byte big endian representation of v.
@@ -230,7 +186,6 @@ func (s *Store) PutTaskPendingPool(taskId string) error {
 }
 
 func (s *Store) LoadAllPendingTaskIds() ([]string, error) {
-	taskIds := make([]string, 0)
 	taskIds, err := s.KVDb.GetAllKey(schema.TaskIdPendingPoolBucket)
 	if err != nil {
 		if err == schema.ErrNotExist {
@@ -295,13 +250,7 @@ func (s *Store) SaveItemBinary(item types.BundleItem) (err error) {
 }
 
 func (s *Store) LoadItemBinary(itemId string) (binaryReader *os.File, itemBinary []byte, err error) {
-	itemBinary = make([]byte, 0)
-	// if store implement with s3, then get binary stream
-	if s.KVDb.Type() == rawdb.S3Type {
-		binaryReader, err = s.KVDb.GetStream(schema.BundleItemBinary, itemId)
-	} else {
-		itemBinary, err = s.KVDb.Get(schema.BundleItemBinary, itemId)
-	}
+	itemBinary, err = s.KVDb.Get(schema.BundleItemBinary, itemId)
 	return
 }
 
@@ -344,7 +293,6 @@ func (s *Store) SaveWaitParseBundleArId(arId string) error {
 }
 
 func (s *Store) LoadWaitParseBundleArIds() (arIds []string, err error) {
-	arIds = make([]string, 0)
 	arIds, err = s.KVDb.GetAllKey(schema.BundleWaitParseArIdBucket)
 	return
 }
@@ -373,10 +321,7 @@ func (s *Store) LoadArIdToItemIds(arId string) (itemIds []string, err error) {
 
 func (s *Store) ExistArIdToItemIds(arId string) bool {
 	_, err := s.LoadArIdToItemIds(arId)
-	if err == schema.ErrNotExist {
-		return false
-	}
-	return true
+	return err != schema.ErrNotExist
 }
 
 func (s *Store) UpdateRealTimeStatistic(data []byte) error {

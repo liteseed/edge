@@ -16,13 +16,8 @@ type Config struct {
 	Param          schema.Param
 }
 
-func New(configDSN, sqliteDir string, useSqlite bool) *Config {
-	wdb := &Wdb{}
-	if useSqlite {
-		wdb = NewSqliteDb(sqliteDir)
-	} else {
-		wdb = NewMysqlDb(configDSN)
-	}
+func New( sqliteDir string) *Config {
+	wdb := NewSqliteDb(sqliteDir)
 	err := wdb.Migrate()
 	if err != nil {
 		panic(err)
