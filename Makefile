@@ -1,6 +1,6 @@
 all:
 	go mod tidy
-	go build -o ./build/arseeding ./cmd
+	go build -o ./dist/arseeding ./cmd
 
 gen-graphql:
 	go get github.com/Khan/genqlient

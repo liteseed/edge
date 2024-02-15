@@ -1,11 +1,11 @@
 package arseeding
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
 	"github.com/everFinance/arseeding/cache"
 	"github.com/everFinance/arseeding/config"
 	"github.com/everFinance/arseeding/schema"
@@ -39,7 +39,6 @@ type Arseeding struct {
 	wdb                 *Wdb
 	bundler             *goar.Wallet
 	bundlerItemSigner   *goar.ItemSigner
-	NoFee               bool // if true, means no bundle fee; default false
 	EnableManifest      bool
 	bundlePerFeeMap     map[string]schema.Fee // key: tokenSymbol, val: fee per chunk_size(256KB)
 	paymentExpiredRange int64                 // default
@@ -50,14 +49,11 @@ type Arseeding struct {
 
 func New(
 	boltDirPath, sqliteDir string,
-	arWalletKeyPath string, arNode, payUrl string, noFee bool, enableManifest bool,
+	arWalletKeyPath string, arNode, payUrl string, enableManifest bool,
 	port string, useKafka bool, kafkaUri string,
 ) *Arseeding {
-	fmt.Println(boltDirPath)
-	var err error
 
 	KVDb, err := NewBoltStore(boltDirPath)
-
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +65,7 @@ func New(
 
 	wdb := NewSqliteDb(sqliteDir)
 
-	if err = wdb.Migrate(noFee, enableManifest); err != nil {
+	if err = wdb.Migrate(false, enableManifest); err != nil {
 		panic(err)
 	}
 	bundler, err := goar.NewWalletFromPath(arWalletKeyPath, arNode)
@@ -101,7 +97,6 @@ func New(
 		wdb:                 wdb,
 		bundler:             bundler,
 		bundlerItemSigner:   itemSigner,
-		NoFee:               noFee,
 		EnableManifest:      enableManifest,
 		bundlePerFeeMap:     make(map[string]schema.Fee),
 		paymentExpiredRange: schema.DefaultPaymentExpiredRange,
@@ -159,8 +154,3 @@ func (s *Arseeding) GetPerFee(tokenSymbol string) *schema.Fee {
 	return &perFee
 }
 
-func (s *Arseeding) SetPerFee(feeMap map[string]schema.Fee) {
-	s.locker.Lock()
-	s.bundlePerFeeMap = feeMap
-	s.locker.Unlock()
-}

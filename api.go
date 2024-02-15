@@ -39,10 +39,6 @@ func (s *Arseeding) runAPI(port string) {
 	if s.EnableManifest {
 		r.Use(ManifestMiddleware(s))
 	}
-
-	if !s.NoFee {
-		r.Use(LimiterMiddleware(300000, "M", s.config.GetIPWhiteList()))
-	}
 	v1 := r.Group("/")
 	{
 		v1.Any("/", s.arseedInfo)
@@ -599,18 +595,11 @@ func (s *Arseeding) submitItem(c *gin.Context) {
 	noFee := false
 	// if has apikey
 	apikey := c.GetHeader("X-API-KEY")
-	hasApikey := false
 	if len(apikey) > 0 {
 		if err := s.processApikeySpendBal(currency, apikey, size); err != nil {
 			errorResponse(c, err.Error())
 			return
 		}
-		// currency has balance
-		hasApikey = true
-	}
-
-	if s.NoFee || hasApikey {
-		noFee = true
 	}
 
 	// process bundleItem
