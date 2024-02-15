@@ -165,8 +165,8 @@ func (s *Bungo) FetchAndStoreTx(arId string) (err error) {
 	if s.EnableManifest && getTagValue(tags, schema.ContentType) == schema.ManifestType {
 		mfUrl := expectedTxSandbox(arId)
 		// insert new record
-		if _, err = s.wdb.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
-			if err = s.wdb.InsertManifest(schema.Manifest{
+		if _, err = s.database.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
+			if err = s.database.InsertManifest(schema.Manifest{
 				ManifestUrl: mfUrl,
 				ManifestId:  arId,
 			}); err != nil {

@@ -63,7 +63,7 @@ func (s *Bungo) ProcessSubmitItem(item types.BundleItem, currency string, isNoFe
 	}
 
 	// insert to mysql
-	if err = s.wdb.InsertOrder(order); err != nil {
+	if err = s.database.InsertOrder(order); err != nil {
 		return schema.Order{}, err
 	}
 	return order, nil
@@ -91,11 +91,11 @@ func (s *Bungo) CalcItemFee(currency string, itemSize int64) (*schema.RespFee, e
 }
 
 func (s *Bungo) GetBundlePerFees() (map[string]schema.Fee, error) {
-	arPrice, err := s.wdb.GetArPrice()
+	arPrice, err := s.database.GetArPrice()
 	if err != nil {
 		return nil, err
 	}
-	tps, err := s.wdb.GetPrices()
+	tps, err := s.database.GetPrices()
 	if err != nil {
 		return nil, err
 	}
@@ -144,9 +144,9 @@ func (s *Bungo) ParseAndSaveBundleItems(arId string, data []byte) error {
 		// process manifest
 		if s.EnableManifest && getTagValue(item.Tags, schema.ContentType) == schema.ManifestType {
 			mfUrl := expectedTxSandbox(item.Id)
-			if _, err = s.wdb.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
+			if _, err = s.database.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
 				// insert new record
-				if err = s.wdb.InsertManifest(schema.Manifest{
+				if err = s.database.InsertManifest(schema.Manifest{
 					ManifestUrl: mfUrl,
 					ManifestId:  item.Id,
 				}); err != nil {

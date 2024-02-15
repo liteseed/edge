@@ -14,7 +14,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.6.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/shopspring/decimal v1.2.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.14.4
 	github.com/ulule/limiter/v3 v3.10.0
 	github.com/urfave/cli/v2 v2.24.4

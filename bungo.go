@@ -13,6 +13,7 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/liteseed/bungo/cache"
 	"github.com/liteseed/bungo/config"
+	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/schema"
 	"github.com/liteseed/bungo/sdk"
 )
@@ -36,7 +37,7 @@ type Bungo struct {
 	// ANS-104 bundle
 	arseedCli           *sdk.ArSeedCli
 	everpaySdk          *paySdk.SDK
-	wdb                 *Wdb
+	database            *database.Query
 	bundler             *goar.Wallet
 	bundlerItemSigner   *goar.ItemSigner
 	EnableManifest      bool
@@ -53,19 +54,19 @@ func New(
 	port string, useKafka bool, kafkaUri string,
 ) *Bungo {
 
-	KVDb, err := NewBoltStore(boltDirectory)
+	store, err := NewBoltStore(boltDirectory)
 	if err != nil {
 		panic(err)
 	}
 
 	jobmg := NewTaskMg()
-	if err := jobmg.InitTaskMg(KVDb); err != nil {
+	if err := jobmg.InitTaskMg(store); err != nil {
 		panic(err)
 	}
 
-	wdb := NewSqliteDb(sqliteDirectory)
+	database := database.NewSqliteDatabase(sqliteDirectory)
 
-	if err = wdb.Migrate(false, enableManifest); err != nil {
+	if err = database.Migrate(); err != nil {
 		panic(err)
 	}
 	bundler, err := goar.NewWalletFromPath(arWalletKeyPath, arNode)
@@ -85,7 +86,7 @@ func New(
 	localArseedUrl := "http://127.0.0.1" + port
 	a := &Bungo{
 		config:              config.New(boltDirectory, sqliteDirectory),
-		store:               KVDb,
+		store:               store,
 		engine:              gin.Default(),
 		submitLocker:        sync.Mutex{},
 		endOffsetLocker:     sync.Mutex{},
@@ -94,7 +95,7 @@ func New(
 		scheduler:           gocron.NewScheduler(time.UTC),
 		arseedCli:           sdk.New(localArseedUrl),
 		everpaySdk:          everpaySdk,
-		wdb:                 wdb,
+		database:            database,
 		bundler:             bundler,
 		bundlerItemSigner:   itemSigner,
 		EnableManifest:      enableManifest,
@@ -104,7 +105,7 @@ func New(
 	}
 
 	// init cache
-	peerMap, err := KVDb.LoadPeers()
+	peerMap, err := store.LoadPeers()
 	if err != nil {
 		peerMap = make(map[string]int64)
 	}

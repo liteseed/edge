@@ -491,7 +491,7 @@ func (s *Bungo) getBundler(c *gin.Context) {
 }
 
 func (s *Bungo) processApikeySpendBal(currency, apikey string, dataSize int64) error {
-	apikeyDetail, err := s.wdb.GetApiKeyDetail(apikey)
+	apikeyDetail, err := s.database.GetApiKeyDetail(apikey)
 	if err != nil {
 		return err
 	}
@@ -522,7 +522,7 @@ func (s *Bungo) processApikeySpendBal(currency, apikey string, dataSize int64) e
 
 	// update db tokenBalance
 	apikeyDetail.TokenBalance[strings.ToUpper(currency)] = endBalDe.String()
-	if err = s.wdb.UpdateApikeyTokenBal(apikeyDetail.Address, apikeyDetail.TokenBalance); err != nil {
+	if err = s.database.UpdateApikeyTokenBal(apikeyDetail.Address, apikeyDetail.TokenBalance); err != nil {
 		log.Error("UpdateApikeyTokenBal", "err", err)
 		return err
 	}
@@ -618,7 +618,7 @@ func (s *Bungo) submitNativeData(c *gin.Context) {
 		errorResponse(c, "Wrong X-API-KEY")
 		return
 	}
-	_, err := s.wdb.GetApiKeyDetail(apiKey)
+	_, err := s.database.GetApiKeyDetail(apiKey)
 	if err != nil {
 		errorResponse(c, fmt.Sprintf("Wrong X-API-KEY: %s", err.Error()))
 		return
@@ -701,7 +701,7 @@ func (s *Bungo) submitNativeData(c *gin.Context) {
 
 func (s *Bungo) getOrdersByApiKey(c *gin.Context) {
 	apiKey := c.GetHeader("X-API-KEY")
-	_, err := s.wdb.GetApiKeyDetail(apiKey)
+	_, err := s.database.GetApiKeyDetail(apiKey)
 	if err != nil {
 		errorResponse(c, "Wrong X-API-KEY")
 		return
@@ -724,7 +724,7 @@ func (s *Bungo) getOrdersByApiKey(c *gin.Context) {
 	}
 
 	sort := c.DefaultQuery("sort", "DESC")
-	orders, err := s.wdb.GetOrdersByApiKey(apiKey, cursorId, pageSize, sort)
+	orders, err := s.database.GetOrdersByApiKey(apiKey, cursorId, pageSize, sort)
 	if err != nil {
 		internalErrorResponse(c, err.Error())
 		return
@@ -844,7 +844,7 @@ func (s *Bungo) getOrders(c *gin.Context) {
 		return
 	}
 
-	orders, err := s.wdb.GetOrdersBySigner(signerAddr, cursorId, int(num))
+	orders, err := s.database.GetOrdersBySigner(signerAddr, cursorId, int(num))
 	if err != nil {
 		internalErrorResponse(c, err.Error())
 		return
@@ -899,9 +899,9 @@ func (s *Bungo) dataRoute(c *gin.Context) {
 		// process manifest
 		if s.EnableManifest && getTagValue(tags, schema.ContentType) == schema.ManifestType {
 			mfUrl := expectedTxSandbox(txId)
-			if _, err = s.wdb.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
+			if _, err = s.database.GetManifestId(mfUrl); err == gorm.ErrRecordNotFound {
 				// insert new record
-				if err = s.wdb.InsertManifest(schema.Manifest{
+				if err = s.database.InsertManifest(schema.Manifest{
 					ManifestUrl: mfUrl,
 					ManifestId:  txId,
 				}); err != nil {
@@ -931,7 +931,7 @@ func (s *Bungo) dataRoute(c *gin.Context) {
 func (s *Bungo) setManifestUrl(c *gin.Context) {
 	txId := c.Param("id")
 	mfUrl := expectedTxSandbox(txId)
-	if mfId, err := s.wdb.GetManifestId(mfUrl); err == nil {
+	if mfId, err := s.database.GetManifestId(mfUrl); err == nil {
 		c.JSON(http.StatusOK, schema.Manifest{
 			ManifestUrl: mfUrl,
 			ManifestId:  mfId,
@@ -946,7 +946,7 @@ func (s *Bungo) setManifestUrl(c *gin.Context) {
 	}
 	if s.EnableManifest && getTagValue(tags, schema.ContentType) == schema.ManifestType {
 		// insert new record
-		if err = s.wdb.InsertManifest(schema.Manifest{
+		if err = s.database.InsertManifest(schema.Manifest{
 			ManifestUrl: mfUrl,
 			ManifestId:  txId,
 		}); err != nil {
@@ -1173,7 +1173,7 @@ func (s *Bungo) getApiKeyInfo(c *gin.Context) {
 		return
 	}
 
-	detail, err := s.wdb.GetApiKeyDetailByAddress(addr)
+	detail, err := s.database.GetApiKeyDetailByAddress(addr)
 	if err != nil {
 		internalErrorResponse(c, err.Error())
 		return
@@ -1236,7 +1236,7 @@ func (s *Bungo) getApiKey(c *gin.Context) {
 		return
 	}
 
-	detail, err := s.wdb.GetApiKeyDetailByAddress(addr.String())
+	detail, err := s.database.GetApiKeyDetailByAddress(addr.String())
 	if err != nil {
 		internalErrorResponse(c, err.Error())
 		return
@@ -1263,7 +1263,7 @@ func (s *Bungo) getApikeyDepositRecords(c *gin.Context) {
 		return
 	}
 
-	receiptTxs, err := s.wdb.GetApiKeyDepositRecords(addr, rawId, int(num))
+	receiptTxs, err := s.database.GetApiKeyDepositRecords(addr, rawId, int(num))
 	if err != nil {
 		internalErrorResponse(c, err.Error())
 		return
@@ -1311,7 +1311,7 @@ func (s *Bungo) getOrderStatisticByDate(c *gin.Context) {
 		errorResponse(c, "Wrong time format, what is correct is yyyyMMdd")
 		return
 	}
-	results, err := s.wdb.GetOrderStatisticByDate(schema.Range{Start: start, End: end})
+	results, err := s.database.GetOrderStatisticByDate(schema.Range{Start: start, End: end})
 	if err != nil {
 		errorResponse(c, err.Error())
 		return

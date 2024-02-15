@@ -25,6 +25,7 @@ import (
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
 	"github.com/google/uuid"
+	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/schema"
 	"github.com/panjf2000/ants/v2"
 	"github.com/shopspring/decimal"
@@ -130,15 +131,15 @@ func (s *Bungo) updateTokenPrice() {
 			UpdatedAt: time.Time{},
 		})
 	}
-	if err := s.wdb.InsertPrices(tps); err != nil {
-		log.Error("s.wdb.InsertPrices(tps)", "err", err)
+	if err := s.database.InsertPrices(tps); err != nil {
+		log.Error("s.query.InsertPrices(tps)", "err", err)
 		return
 	}
 
 	// update fee
-	tps, err := s.wdb.GetPrices()
+	tps, err := s.database.GetPrices()
 	if err != nil {
-		log.Error("s.wdb.GetPrices()", "err", err)
+		log.Error("s.query.GetPrices()", "err", err)
 		return
 	}
 	for _, tp := range tps {
@@ -155,8 +156,8 @@ func (s *Bungo) updateTokenPrice() {
 			continue
 		}
 		// update tokenPrice
-		if err := s.wdb.UpdatePrice(tp.Symbol, price); err != nil {
-			log.Error("s.wdb.UpdateFee(tp.Symbol,fee)", "err", err, "symbol", tp.Symbol, "fee", price)
+		if err := s.database.UpdatePrice(tp.Symbol, price); err != nil {
+			log.Error("s.query.UpdateFee(tp.Symbol,fee)", "err", err, "symbol", tp.Symbol, "fee", price)
 		}
 	}
 }
@@ -188,7 +189,7 @@ func (s *Bungo) watcherAndCloseTasks() {
 }
 
 func (s *Bungo) watchEverReceiptTxs() {
-	startCursor, err := s.wdb.GetLastEverRawId()
+	startCursor, err := s.database.GetLastEverRawId()
 	if err != nil {
 		panic(err)
 	}
@@ -224,23 +225,23 @@ func (s *Bungo) watchEverReceiptTxs() {
 				Status:   schema.UnSpent,
 			}
 
-			if err = s.wdb.InsertReceiptTx(res); err != nil {
-				log.Error("s.wdb.InsertReceiptTx(res)", "err", err)
+			if err = s.database.InsertReceiptTx(res); err != nil {
+				log.Error("s.query.InsertReceiptTx(res)", "err", err)
 			}
 		}
 	}
 }
 
-func processPayItems(wdb *Wdb, itemIds []string, urtx schema.ReceiptEverTx) error {
+func processPayItems(query *database.Query, itemIds []string, urtx schema.ReceiptEverTx) error {
 	// get orders by itemIds
-	ordArr, err := getUnPaidOrdersByItemIds(wdb, itemIds)
+	ordArr, err := getUnPaidOrdersByItemIds(query, itemIds)
 	if err != nil {
-		log.Error("s.wdb.GetUnPaidOrder", "err", err, "id", urtx.RawId)
+		log.Error("s.query.GetUnPaidOrder", "err", err, "id", urtx.RawId)
 		if err == gorm.ErrRecordNotFound {
 			log.Warn("need refund about not find order", "id", urtx.RawId)
 			// update receipt status is unrefund and waiting refund
-			if err = wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-				log.Error("s.wdb.UpdateReceiptStatus2", "err", err, "id", urtx.RawId)
+			if err = query.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+				log.Error("s.query.UpdateReceiptStatus2", "err", err, "id", urtx.RawId)
 			}
 		}
 		return err
@@ -248,8 +249,8 @@ func processPayItems(wdb *Wdb, itemIds []string, urtx schema.ReceiptEverTx) erro
 	// check currency, orders currency must == paymentTxSymbol
 	if err = checkOrdersCurrency(ordArr, urtx.Symbol); err != nil {
 		log.Error("checkOrdersCurrency(ordArr, urtx.Symbol)", "err", err, "urtx", urtx.EverHash)
-		if err = wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-			log.Error("s.wdb.UpdateReceiptStatus3", "err", err, "id", urtx.RawId)
+		if err = query.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+			log.Error("s.query.UpdateReceiptStatus3", "err", err, "id", urtx.RawId)
 		}
 		return err
 	}
@@ -257,23 +258,23 @@ func processPayItems(wdb *Wdb, itemIds []string, urtx schema.ReceiptEverTx) erro
 	// check amount
 	if err = checkOrdersAmount(ordArr, urtx.Amount); err != nil {
 		log.Error("checkOrdersAmount(ordArr, urtx.Amount)", "err", err, "urtx", urtx.EverHash)
-		if err = wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-			log.Error("s.wdb.UpdateReceiptStatus4", "err", err, "id", urtx.RawId)
+		if err = query.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+			log.Error("s.query.UpdateReceiptStatus4", "err", err, "id", urtx.RawId)
 		}
 		return err
 	}
 	// update order payment status
-	dbTx := wdb.Db.Begin()
+	dbTx := query.Db.Begin()
 	for _, ord := range ordArr {
-		if err = wdb.UpdateOrderPay(ord.ID, urtx.EverHash, schema.SuccPayment, dbTx); err != nil {
-			log.Error("s.wdb.UpdateOrderPay(ord.ID,schema.SuccPayment,dbTx)", "err", err)
+		if err = query.UpdateOrderPay(ord.ID, urtx.EverHash, schema.SuccPayment, dbTx); err != nil {
+			log.Error("s.query.UpdateOrderPay(ord.ID,schema.SuccPayment,dbTx)", "err", err)
 			dbTx.Rollback()
 			break
 		}
 	}
 
-	if err = wdb.UpdateReceiptStatus(urtx.RawId, schema.Spent, dbTx); err != nil {
-		log.Error("s.wdb.UpdateReceiptStatus(urtx.ID,schema.Spent,dbTx)", "err", err)
+	if err = query.UpdateReceiptStatus(urtx.RawId, schema.Spent, dbTx); err != nil {
+		log.Error("s.query.UpdateReceiptStatus(urtx.ID,schema.Spent,dbTx)", "err", err)
 		dbTx.Rollback()
 		return err
 	}
@@ -282,16 +283,16 @@ func processPayItems(wdb *Wdb, itemIds []string, urtx schema.ReceiptEverTx) erro
 	return nil
 }
 
-func processPayApikey(wdb *Wdb, urtx schema.ReceiptEverTx) error {
+func processPayApikey(query *database.Query, urtx schema.ReceiptEverTx) error {
 	if urtx.Amount == "0" {
-		if err := wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-			log.Error("s.wdb.UpdateReceiptStatus5", "err", err, "id", urtx.RawId)
+		if err := query.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+			log.Error("s.query.UpdateReceiptStatus5", "err", err, "id", urtx.RawId)
 		}
 		return errors.New("amount can not be 0")
 	}
 
 	from := common.HexToAddress(urtx.From).String()
-	exist, apikey := wdb.ExistApikey(from)
+	exist, apikey := query.ExistApikey(from)
 	if !exist {
 		// create new record
 		newKey, err := uuid.NewUUID()
@@ -318,7 +319,7 @@ func processPayApikey(wdb *Wdb, urtx schema.ReceiptEverTx) error {
 			return err
 		}
 
-		err = wdb.InsertApiKey(schema.AutoApiKey{
+		err = query.InsertApiKey(schema.AutoApiKey{
 			ApiKey:       newKeyStr,
 			PubKey:       public,
 			Address:      from,
@@ -328,7 +329,7 @@ func processPayApikey(wdb *Wdb, urtx schema.ReceiptEverTx) error {
 			},
 		})
 		if err != nil {
-			log.Error("s.wdb.InsertApiKey", "err", err)
+			log.Error("s.query.InsertApiKey", "err", err)
 			return err
 		}
 	} else {
@@ -347,38 +348,38 @@ func processPayApikey(wdb *Wdb, urtx schema.ReceiptEverTx) error {
 		}
 
 		// update db
-		if err := wdb.UpdateApikeyTokenBal(from, tokBalMap); err != nil {
-			log.Error("s.wdb.UpdateApikeyTokenBal(from,tokBalMap)", "err", err)
+		if err := query.UpdateApikeyTokenBal(from, tokBalMap); err != nil {
+			log.Error("s.query.UpdateApikeyTokenBal(from,tokBalMap)", "err", err)
 			return err
 		}
 	}
 	//  更新 spent 状态
-	if err := wdb.UpdateReceiptStatus(urtx.RawId, schema.Spent, nil); err != nil {
-		log.Error("s.wdb.UpdateReceiptStatus8(urtx.ID,schema.Spent,nil)", "err", err, "id", urtx.RawId)
+	if err := query.UpdateReceiptStatus(urtx.RawId, schema.Spent, nil); err != nil {
+		log.Error("s.query.UpdateReceiptStatus8(urtx.ID,schema.Spent,nil)", "err", err, "id", urtx.RawId)
 		return err
 	}
 	return nil
 }
 
 func (s *Bungo) mergeReceiptEverTxs() {
-	unspentRpts, err := s.wdb.GetReceiptsByStatus(schema.UnSpent)
+	unspentRpts, err := s.database.GetReceiptsByStatus(schema.UnSpent)
 	if err != nil {
-		log.Error("s.wdb.GetUnSpentReceipts()", "err", err)
+		log.Error("s.query.GetUnSpentReceipts()", "err", err)
 		return
 	}
 	for _, urtx := range unspentRpts {
 		action, itemIds, err := parseTxData(urtx.Data)
 		if err != nil {
 			log.Error("parseItemIds(urtx.Data)", "err", err, "urtx", urtx.EverHash)
-			if err = s.wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-				log.Error("s.wdb.UpdateReceiptStatus1", "err", err, "id", urtx.RawId)
+			if err = s.database.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+				log.Error("s.query.UpdateReceiptStatus1", "err", err, "id", urtx.RawId)
 			}
 			continue
 		}
 
 		switch action {
 		case ItemPaymentAction:
-			if err := processPayItems(s.wdb, itemIds, urtx); err != nil {
+			if err := processPayItems(s.database, itemIds, urtx); err != nil {
 				log.Error("processPayItemOrder", "err", err)
 				continue
 			}
@@ -386,19 +387,19 @@ func (s *Bungo) mergeReceiptEverTxs() {
 		case ApikeyPaymentAction:
 			if s.GetPerFee(urtx.Symbol) == nil {
 				log.Error("s.bundlePerFeeMap[strings.ToUpper(urtx.Symbol)]", "symbol", urtx.Symbol)
-				if err = s.wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-					log.Error("s.wdb.UpdateReceiptStatus6", "err", err, "id", urtx.RawId)
+				if err = s.database.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+					log.Error("s.query.UpdateReceiptStatus6", "err", err, "id", urtx.RawId)
 				}
 				continue
 			}
-			if err := processPayApikey(s.wdb, urtx); err != nil {
+			if err := processPayApikey(s.database, urtx); err != nil {
 				log.Error("processPayApikey", "err", err)
 				continue
 			}
 		default:
 			log.Error(fmt.Sprintf("not support the action: %s", action))
-			if err = s.wdb.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-				log.Error("s.wdb.UpdateReceiptStatus7", "err", err, "id", urtx.RawId)
+			if err = s.database.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
+				log.Error("s.query.UpdateReceiptStatus7", "err", err, "id", urtx.RawId)
 			}
 			continue
 		}
@@ -486,12 +487,12 @@ func parseTxData(txData string) (action string, itemIds []string, err error) {
 	}
 }
 
-func getUnPaidOrdersByItemIds(wdb *Wdb, itemIds []string) ([]schema.Order, error) {
+func getUnPaidOrdersByItemIds(query *database.Query, itemIds []string) ([]schema.Order, error) {
 	ordArr := make([]schema.Order, 0, len(itemIds))
 	for _, itemId := range itemIds {
-		ord, err := wdb.GetUnPaidOrder(itemId)
+		ord, err := query.GetUnPaidOrder(itemId)
 		if err != nil {
-			log.Error("s.wdb.GetUnPaidOrder(itemId)", "err", err, "itemId", itemId)
+			log.Error("s.query.GetUnPaidOrder(itemId)", "err", err, "itemId", itemId)
 			return nil, err
 		}
 		ordArr = append(ordArr, ord)
@@ -536,16 +537,16 @@ func (s *Bungo) collectFee() {
 }
 
 func (s *Bungo) refundReceipt() {
-	recpts, err := s.wdb.GetReceiptsByStatus(schema.UnRefund)
+	recpts, err := s.database.GetReceiptsByStatus(schema.UnRefund)
 	if err != nil {
-		log.Error("s.wdb.GetReceiptsByStatus(schema.UnRefund)", "err", err)
+		log.Error("s.query.GetReceiptsByStatus(schema.UnRefund)", "err", err)
 		return
 	}
 
 	for _, rpt := range recpts {
 		// update rpt status is refund
-		if err := s.wdb.UpdateReceiptStatus(rpt.RawId, schema.Refund, nil); err != nil {
-			log.Error("s.wdb.UpdateReceiptStatus(rpt.ID,schema.Refund,nil)", "err", err, "id", rpt.RawId)
+		if err := s.database.UpdateReceiptStatus(rpt.RawId, schema.Refund, nil); err != nil {
+			log.Error("s.query.UpdateReceiptStatus(rpt.ID,schema.Refund,nil)", "err", err, "id", rpt.RawId)
 			continue
 		}
 		// send everTx transfer for refund
@@ -565,8 +566,8 @@ func (s *Bungo) refundReceipt() {
 		if err != nil { // notice: if refund failed, then need manual check and refund
 			log.Error("s.everpaySdk.Transfer", "err", err)
 			// update receipt status is unrefund
-			if err := s.wdb.UpdateRefundErr(rpt.RawId, err.Error()); err != nil {
-				log.Error("s.wdb.UpdateRefundErr(rpt.RawId, err.Error())", "err", err, "id", rpt.RawId)
+			if err := s.database.UpdateRefundErr(rpt.RawId, err.Error()); err != nil {
+				log.Error("s.query.UpdateRefundErr(rpt.RawId, err.Error())", "err", err, "id", rpt.RawId)
 			}
 			continue
 		}
@@ -575,9 +576,9 @@ func (s *Bungo) refundReceipt() {
 }
 
 func (s *Bungo) onChainBundleItems() {
-	ords, err := s.wdb.GetNeedOnChainOrders()
+	ords, err := s.database.GetNeedOnChainOrders()
 	if err != nil {
-		log.Error("s.wdb.GetNeedOnChainOrders()", "err", err)
+		log.Error("s.query.GetNeedOnChainOrders()", "err", err)
 		return
 	}
 	if len(ords) == 0 {
@@ -595,9 +596,9 @@ func (s *Bungo) onChainBundleItems() {
 }
 
 func (s *Bungo) onChainItemsBySeq() {
-	ords, err := s.wdb.GetNeedOnChainOrdersSorted()
+	ords, err := s.database.GetNeedOnChainOrdersSorted()
 	if err != nil {
-		log.Error("s.wdb.GetNeedOnChainOrders()", "err", err)
+		log.Error("s.query.GetNeedOnChainOrders()", "err", err)
 		return
 	}
 
@@ -627,10 +628,10 @@ func (s *Bungo) onChainOrds(ords []schema.Order) (arTx types.Transaction, onChai
 		if totalSize+ord.Size > schema.MaxPerOnChainSize {
 			continue
 		}
-		od, exist := s.wdb.ExistProcessedOrderItem(ord.ItemId)
+		od, exist := s.database.ExistProcessedOrderItem(ord.ItemId)
 		if exist {
-			if err = s.wdb.UpdateOrdOnChainStatus(od.ItemId, od.OnChainStatus, nil); err != nil {
-				log.Error("s.wdb.UpdateOrdOnChainStatus(od.ItemId,od.OnChainStatus)", "err", err, "itemId", od.ItemId)
+			if err = s.database.UpdateOrdOnChainStatus(od.ItemId, od.OnChainStatus, nil); err != nil {
+				log.Error("s.query.UpdateOrdOnChainStatus(od.ItemId,od.OnChainStatus)", "err", err, "itemId", od.ItemId)
 			}
 			continue
 		}
@@ -649,7 +650,7 @@ func (s *Bungo) updateOnChainInfo(onChainItemIds []string, arTx types.Transactio
 		log.Error("json.Marshal(itemIds)", "err", err, "onChainItemIds", onChainItemIds)
 		return
 	}
-	if err = s.wdb.InsertArTx(schema.OnChainTx{
+	if err = s.database.InsertArTx(schema.OnChainTx{
 		ArId:      arTx.ID,
 		CurHeight: s.cache.GetInfo().Height,
 		DataSize:  arTx.DataSize,
@@ -658,22 +659,22 @@ func (s *Bungo) updateOnChainInfo(onChainItemIds []string, arTx types.Transactio
 		ItemIds:   onChainItemIdsJs,
 		ItemNum:   len(onChainItemIds),
 	}); err != nil {
-		log.Error("s.wdb.InsertArTx", "err", err)
+		log.Error("s.query.InsertArTx", "err", err)
 		return
 	}
 
 	// update order onChainStatus to pending
 	for _, itemId := range onChainItemIds {
-		if err = s.wdb.UpdateOrdOnChainStatus(itemId, onChainStatus, nil); err != nil {
-			log.Error("s.wdb.UpdateOrdOnChainStatus(item.Id,schema.PendingOnChain)", "err", err, "itemId", itemId)
+		if err = s.database.UpdateOrdOnChainStatus(itemId, onChainStatus, nil); err != nil {
+			log.Error("s.query.UpdateOrdOnChainStatus(item.Id,schema.PendingOnChain)", "err", err, "itemId", itemId)
 		}
 	}
 }
 
 func (s *Bungo) watchArTx() {
-	txs, err := s.wdb.GetArTxByStatus(schema.PendingOnChain)
+	txs, err := s.database.GetArTxByStatus(schema.PendingOnChain)
 	if err != nil {
-		log.Error("s.wdb.GetArTxByStatus(schema.PendingOnChain)", "err", err)
+		log.Error("s.query.GetArTxByStatus(schema.PendingOnChain)", "err", err)
 		return
 	}
 
@@ -683,7 +684,7 @@ func (s *Bungo) watchArTx() {
 		if err != nil {
 			if err != goar.ErrPendingTx && s.cache.GetInfo().Height-tx.CurHeight > 50 {
 				// arTx has expired
-				if err = s.wdb.UpdateArTxStatus(tx.ArId, schema.FailedOnChain, nil, nil); err != nil {
+				if err = s.database.UpdateArTxStatus(tx.ArId, schema.FailedOnChain, nil, nil); err != nil {
 					log.Error("UpdateArTxStatus(tx.ArId,schema.FailedOnChain)", "err", err)
 				}
 			}
@@ -692,8 +693,8 @@ func (s *Bungo) watchArTx() {
 
 		// update status success
 		if arTxStatus.NumberOfConfirmations > 3 {
-			dbTx := s.wdb.Db.Begin()
-			if err = s.wdb.UpdateArTxStatus(tx.ArId, schema.SuccOnChain, arTxStatus, dbTx); err != nil {
+			dbTx := s.database.Db.Begin()
+			if err = s.database.UpdateArTxStatus(tx.ArId, schema.SuccOnChain, arTxStatus, dbTx); err != nil {
 				log.Error("UpdateArTxStatus(tx.ArId,schema.SuccOnChain)", "err", err)
 				dbTx.Rollback()
 				continue
@@ -708,8 +709,8 @@ func (s *Bungo) watchArTx() {
 			}
 
 			for _, itemId := range bundleItemIds {
-				if err = s.wdb.UpdateOrdOnChainStatus(itemId, schema.SuccOnChain, dbTx); err != nil {
-					log.Error("s.wdb.UpdateOrdOnChainStatus(itemId,schema.SuccOnChain,dbTx)", "err", err, "item", itemId)
+				if err = s.database.UpdateOrdOnChainStatus(itemId, schema.SuccOnChain, dbTx); err != nil {
+					log.Error("s.query.UpdateOrdOnChainStatus(itemId,schema.SuccOnChain,dbTx)", "err", err, "item", itemId)
 					dbTx.Rollback()
 					continue
 				}
@@ -720,9 +721,9 @@ func (s *Bungo) watchArTx() {
 }
 
 func (s *Bungo) retryOnChainArTx() {
-	txs, err := s.wdb.GetArTxByStatus(schema.FailedOnChain)
+	txs, err := s.database.GetArTxByStatus(schema.FailedOnChain)
 	if err != nil {
-		log.Error("s.wdb.GetArTxByStatus(schema.PendingOnChain)", "err", err)
+		log.Error("s.query.GetArTxByStatus(schema.PendingOnChain)", "err", err)
 		return
 	}
 	if len(txs) == 0 {
@@ -738,8 +739,8 @@ func (s *Bungo) retryOnChainArTx() {
 			return
 		}
 		// update onChain
-		if err = s.wdb.UpdateArTx(tx.ID, arTx.ID, s.cache.GetInfo().Height, arTx.DataSize, arTx.Reward, schema.PendingOnChain); err != nil {
-			log.Error("s.wdb.UpdateArTx", "err", err, "id", tx.ID, "arId", arTx.ID)
+		if err = s.database.UpdateArTx(tx.ID, arTx.ID, s.cache.GetInfo().Height, arTx.DataSize, arTx.Reward, schema.PendingOnChain); err != nil {
+			log.Error("s.query.UpdateArTx", "err", err, "id", tx.ID, "arId", arTx.ID)
 		}
 	}
 }
@@ -884,23 +885,23 @@ func (s *Bungo) getOnChainBundleStream(itemIds []string) (onChainItems []types.B
 }
 
 func (s *Bungo) processExpiredOrd() {
-	ords, err := s.wdb.GetExpiredOrders()
+	ords, err := s.database.GetExpiredOrders()
 	if err != nil {
 		log.Error("GetExpiredOrders()", "err", err)
 		return
 	}
 	for _, ord := range ords {
-		if err = s.wdb.UpdateOrdToExpiredStatus(ord.ID); err != nil {
+		if err = s.database.UpdateOrdToExpiredStatus(ord.ID); err != nil {
 			log.Error("UpdateOrdToExpiredStatus", "err", err, "id", ord.ID)
 			continue
 		}
 		// can not delete
 		// 1. exist paid order
-		if s.wdb.ExistPaidOrd(ord.ItemId) {
+		if s.database.ExistPaidOrd(ord.ItemId) {
 			continue
 		}
 		// 2. this order not the latest unpaid order
-		if !s.wdb.IsLatestUnpaidOrd(ord.ItemId, ord.PaymentExpiredTime) {
+		if !s.database.IsLatestUnpaidOrd(ord.ItemId, ord.PaymentExpiredTime) {
 			continue
 		}
 		// delete bundle item from store
@@ -909,8 +910,8 @@ func (s *Bungo) processExpiredOrd() {
 			continue
 		}
 		// delete manifest table
-		if err = s.wdb.DelManifest(ord.ItemId); err != nil {
-			log.Error("s.wdb.DelManifest", "err", err, "itemId", ord.ItemId)
+		if err = s.database.DelManifest(ord.ItemId); err != nil {
+			log.Error("s.query.DelManifest", "err", err, "itemId", ord.ItemId)
 			continue
 		}
 	}
@@ -1069,9 +1070,9 @@ func arTxWatcher(arCli *goar.Client, arTxHash string) bool {
 }
 
 func (s *Bungo) UpdateRealTime() {
-	data, err := s.wdb.GetOrderRealTimeStatistic()
+	data, err := s.database.GetOrderRealTimeStatistic()
 	if err != nil {
-		log.Error("s.wdb.GetOrderRealTimeStatistic()", "err", err)
+		log.Error("s.query.GetOrderRealTimeStatistic()", "err", err)
 		return
 	}
 	if err := s.store.UpdateRealTimeStatistic(data); err != nil {
@@ -1084,12 +1085,12 @@ func (s *Bungo) ProduceDailyStatistic() {
 	var start time.Time
 	var firstOrder schema.Order
 	var osc schema.OrderStatistic
-	err := s.wdb.Db.Model(&schema.Order{}).First(&firstOrder).Error
+	err := s.database.Db.Model(&schema.Order{}).First(&firstOrder).Error
 	//Not found
 	if err != nil {
 		return
 	}
-	err = s.wdb.Db.Model(&schema.OrderStatistic{}).Last(&osc).Error
+	err = s.database.Db.Model(&schema.OrderStatistic{}).Last(&osc).Error
 	if err == nil {
 		start = osc.Date.Add(24 * time.Hour)
 	} else {
@@ -1098,31 +1099,31 @@ func (s *Bungo) ProduceDailyStatistic() {
 	end := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	//If yesterday's record already exists, return
-	if !s.wdb.WhetherExec(schema.TimeRange{Start: end.Add(-24 * time.Hour), End: end}) {
+	if !s.database.WhetherExec(schema.TimeRange{Start: end.Add(-24 * time.Hour), End: end}) {
 		return
 	}
 	for start.Before(end) {
-		results, err := s.wdb.GetDailyStatisticByDate(schema.TimeRange{Start: start, End: start.Add(24 * time.Hour)})
+		results, err := s.database.GetDailyStatisticByDate(schema.TimeRange{Start: start, End: start.Add(24 * time.Hour)})
 		if err != nil {
 			log.Error("s.ProduceDailyStatistic()", "err", err)
 			start = start.Add(24 * time.Hour)
 			continue
 		}
 		if len(results) == 0 {
-			s.wdb.Db.Model(&schema.OrderStatistic{}).Create(&schema.OrderStatistic{
+			s.database.Db.Model(&schema.OrderStatistic{}).Create(&schema.OrderStatistic{
 				Date: start,
 			})
 		} else {
-			s.wdb.Db.Model(&schema.OrderStatistic{}).Create(&schema.OrderStatistic{Date: start, Totals: results[0].Totals, TotalDataSize: results[0].TotalDataSize})
+			s.database.Db.Model(&schema.OrderStatistic{}).Create(&schema.OrderStatistic{Date: start, Totals: results[0].Totals, TotalDataSize: results[0].TotalDataSize})
 		}
 		start = start.Add(24 * time.Hour)
 	}
 }
 
 func (s *Bungo) broadcastItemToKafka() {
-	kafkaOrdInfos, err := s.wdb.GetKafkaOrderInfos()
+	kafkaOrdInfos, err := s.database.GetKafkaOrderInfos()
 	if err != nil {
-		log.Error("s.wdb.GetKafkaOrderInfos()", "err", err)
+		log.Error("s.query.GetKafkaOrderInfos()", "err", err)
 		return
 	}
 	if len(kafkaOrdInfos) == 0 {
@@ -1176,17 +1177,17 @@ func (s *Bungo) broadcastItemToKafka() {
 			continue
 		}
 
-		if err = s.wdb.KafkaDone(ord.ID); err != nil {
-			log.Error("s.wdb.KafkaDone(ord.ID)", "err", err, "id", ord.ID)
+		if err = s.database.KafkaDone(ord.ID); err != nil {
+			log.Error("s.query.KafkaDone(ord.ID)", "err", err, "id", ord.ID)
 			continue
 		}
 	}
 }
 
 func (s *Bungo) broadcastBlockToKafka() {
-	kafkaOnchains, err := s.wdb.GetKafkaOnChains()
+	kafkaOnchains, err := s.database.GetKafkaOnChains()
 	if err != nil {
-		log.Error("s.wdb.GetKafkaOnChains()", "err", err)
+		log.Error("s.query.GetKafkaOnChains()", "err", err)
 		return
 	}
 
@@ -1227,8 +1228,8 @@ func (s *Bungo) broadcastBlockToKafka() {
 			continue
 		}
 
-		if err = s.wdb.KafkaOnChainDone(onchain.ID); err != nil {
-			log.Error("s.wdb.KafkaOnChainDone(onchain.ID)", "err", err, "id", onchain.ID)
+		if err = s.database.KafkaOnChainDone(onchain.ID); err != nil {
+			log.Error("s.query.KafkaOnChainDone(onchain.ID)", "err", err, "id", onchain.ID)
 			continue
 		}
 	}

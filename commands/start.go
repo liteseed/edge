@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/liteseed/bungo/server"
+	"github.com/liteseed/bungo"
 	"github.com/urfave/cli/v2"
 )
 
@@ -23,16 +23,17 @@ var Start = &cli.Command{
 
 func start(context *cli.Context) error {
 
-	// b := bungo.New(
-	// 	context.String("bolt"),
-	// 	context.String("sqlite"),
-	// 	context.String("key_path"),
-	// 	context.String("node"),
-	// 	context.String("payment_url"),
-	// 	context.Bool("manifest"),
-	// 	context.String("port"),
-	// 	context.Bool("use_kafka"), context.String("kafka_uri"))
+	b := bungo.New(
+		context.String("bolt"),
+		context.String("sqlite"),
+		context.String("key_path"),
+		context.String("node"),
+		context.String("payment_url"),
+		context.Bool("manifest"),
+		context.String("port"),
+		context.Bool("use_kafka"), context.String("kafka_uri"))
 
-	server.Run(context.String("port"))
+	b.Run(context.String("port"), context.Int("interval"))
+	// server.Run(context.String("port"))
 	return nil
 }

@@ -1,10 +1,8 @@
-package memory
+package store
 
-import (
-	"os"
-)
+import "os"
 
-type Memory interface {
+type Store interface {
 	Put(bucket, key string, value interface{}) (err error)
 
 	Get(bucket, key string) (data []byte, err error)

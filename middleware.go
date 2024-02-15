@@ -76,7 +76,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func ManifestMiddleware(s *Bungo) gin.HandlerFunc {
 
-	wdb := s.wdb
+	wdb := s.database
 	store := s.store
 	localCache := s.localCache
 

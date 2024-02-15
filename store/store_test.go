@@ -1,11 +1,11 @@
-package memory
+package store
 
 import (
 	"fmt"
 	"sort"
 	"testing"
 
-	"github.com/liteseed/bungo/memory/bolt"
+	"github.com/liteseed/bungo/store/bolt"
 	"github.com/liteseed/bungo/schema"
 	"github.com/stretchr/testify/assert"
 )
