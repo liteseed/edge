@@ -1,4 +1,4 @@
-package arseeding
+package bungo
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/everFinance/arseeding/schema"
 	"github.com/everFinance/go-everpay/account"
 	"github.com/everFinance/go-everpay/config"
 	sdkSchema "github.com/everFinance/go-everpay/sdk/schema"
@@ -26,6 +25,7 @@ import (
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
 	"github.com/google/uuid"
+	"github.com/liteseed/bungo/schema"
 	"github.com/panjf2000/ants/v2"
 	"github.com/shopspring/decimal"
 	"github.com/tidwall/gjson"
@@ -37,7 +37,7 @@ const (
 	ApikeyPaymentAction = "apikeyPayment"
 )
 
-func (s *Arseeding) runJobs(bundleInterval int) {
+func (s *Bungo) runJobs(bundleInterval int) {
 	// update cache
 	s.scheduler.Every(2).Minute().SingletonMode().Do(s.updateAnchor)
 	s.scheduler.Every(2).Minute().SingletonMode().Do(s.updateArFee)
@@ -45,15 +45,6 @@ func (s *Arseeding) runJobs(bundleInterval int) {
 	s.scheduler.Every(5).Minute().SingletonMode().Do(s.updatePeerMap)
 	s.scheduler.Every(5).Minute().SingletonMode().Do(s.updateTokenPrice)
 	s.scheduler.Every(1).Minute().SingletonMode().Do(s.updateBundlePerFee)
-	// about bundle
-	if !s.NoFee {
-		go s.watchEverReceiptTxs()
-		s.scheduler.Every(5).Seconds().SingletonMode().Do(s.mergeReceiptEverTxs)
-		s.scheduler.Every(2).Minute().SingletonMode().Do(s.refundReceipt)
-		s.scheduler.Every(1).Minute().SingletonMode().Do(s.processExpiredOrd)
-		// collection fee
-		s.scheduler.Every(1).Day().At("00:00").SingletonMode().Do(s.collectFee)
-	}
 
 	s.scheduler.Every(bundleInterval).Seconds().SingletonMode().Do(s.onChainBundleItems) // can set a longer time, if the items are less. such as 2m
 	// onChainBundleItems by upload order
@@ -85,21 +76,21 @@ func (s *Arseeding) runJobs(bundleInterval int) {
 	s.scheduler.StartAsync()
 }
 
-func (s *Arseeding) updateAnchor() {
+func (s *Bungo) updateAnchor() {
 	anchor, err := fetchAnchor(s.arCli, s.cache.GetPeers())
 	if err == nil {
 		s.cache.UpdateAnchor(anchor)
 	}
 }
 
-func (s *Arseeding) updateInfo() {
+func (s *Bungo) updateInfo() {
 	info, err := fetchArInfo(s.arCli, s.cache.GetPeers())
 	if err == nil && info != nil {
 		s.cache.UpdateInfo(*info)
 	}
 }
 
-func (s *Arseeding) updateArFee() {
+func (s *Bungo) updateArFee() {
 	txPrice, err := fetchArFee(s.arCli, s.cache.GetPeers())
 	if err == nil {
 		s.cache.UpdateFee(txPrice)
@@ -107,7 +98,7 @@ func (s *Arseeding) updateArFee() {
 }
 
 // update peer list concurrency, check peer available, save in db
-func (s *Arseeding) updatePeerMap() {
+func (s *Bungo) updatePeerMap() {
 	peers, err := s.arCli.GetPeers()
 	if err != nil {
 		return
@@ -128,7 +119,7 @@ func (s *Arseeding) updatePeerMap() {
 
 // bundle
 
-func (s *Arseeding) updateTokenPrice() {
+func (s *Bungo) updateTokenPrice() {
 	// update symbol
 	tps := make([]schema.TokenPrice, 0)
 	for _, tok := range s.everpaySdk.GetTokens() {
@@ -170,16 +161,16 @@ func (s *Arseeding) updateTokenPrice() {
 	}
 }
 
-func (s *Arseeding) updateBundlePerFee() {
+func (s *Bungo) updateBundlePerFee() {
 	feeMap, err := s.GetBundlePerFees()
 	if err != nil {
 		log.Error("s.GetBundlePerFees()", "err", err)
 		return
 	}
-	s.SetPerFee(feeMap)
+	print(feeMap)
 }
 
-func (s *Arseeding) watcherAndCloseTasks() {
+func (s *Bungo) watcherAndCloseTasks() {
 	tasks := s.taskMg.GetTasks()
 	now := time.Now().Unix()
 	for _, tk := range tasks {
@@ -196,7 +187,7 @@ func (s *Arseeding) watcherAndCloseTasks() {
 	}
 }
 
-func (s *Arseeding) watchEverReceiptTxs() {
+func (s *Bungo) watchEverReceiptTxs() {
 	startCursor, err := s.wdb.GetLastEverRawId()
 	if err != nil {
 		panic(err)
@@ -369,7 +360,7 @@ func processPayApikey(wdb *Wdb, urtx schema.ReceiptEverTx) error {
 	return nil
 }
 
-func (s *Arseeding) mergeReceiptEverTxs() {
+func (s *Bungo) mergeReceiptEverTxs() {
 	unspentRpts, err := s.wdb.GetReceiptsByStatus(schema.UnSpent)
 	if err != nil {
 		log.Error("s.wdb.GetUnSpentReceipts()", "err", err)
@@ -471,9 +462,9 @@ func checkOrdersCurrency(ordArr []schema.Order, txSymbol string) error {
 
 func parseTxData(txData string) (action string, itemIds []string, err error) {
 	res := gjson.Parse(txData)
-	// appName must be arseeding
-	if res.Get("appName").String() != "arseeding" {
-		return "", nil, errors.New("txData.appName not be arseeding")
+	// appName must be bungo
+	if res.Get("appName").String() != "bungo" {
+		return "", nil, errors.New("txData.appName not be bungo")
 	}
 
 	// action
@@ -508,7 +499,7 @@ func getUnPaidOrdersByItemIds(wdb *Wdb, itemIds []string) ([]schema.Order, error
 	return ordArr, nil
 }
 
-func (s *Arseeding) collectFee() {
+func (s *Bungo) collectFee() {
 	collectAddr := s.config.FeeCollectAddress()
 	if collectAddr == "" {
 		log.Warn("s.config.FeeCollectAddress()", "collectAddr", "null")
@@ -531,7 +522,7 @@ func (s *Arseeding) collectFee() {
 			continue
 		}
 		mmap := map[string]string{
-			"appName": "arseeding",
+			"appName": "bungo",
 			"action":  "feeCollection",
 			"bundler": s.bundler.Signer.Address,
 		}
@@ -544,7 +535,7 @@ func (s *Arseeding) collectFee() {
 	}
 }
 
-func (s *Arseeding) refundReceipt() {
+func (s *Bungo) refundReceipt() {
 	recpts, err := s.wdb.GetReceiptsByStatus(schema.UnRefund)
 	if err != nil {
 		log.Error("s.wdb.GetReceiptsByStatus(schema.UnRefund)", "err", err)
@@ -565,7 +556,7 @@ func (s *Arseeding) refundReceipt() {
 		}
 		// everTx data
 		mmap := map[string]string{
-			"appName":        "arseeding",
+			"appName":        "bungo",
 			"action":         "refund",
 			"refundEverHash": rpt.EverHash,
 		}
@@ -583,7 +574,7 @@ func (s *Arseeding) refundReceipt() {
 	}
 }
 
-func (s *Arseeding) onChainBundleItems() {
+func (s *Bungo) onChainBundleItems() {
 	ords, err := s.wdb.GetNeedOnChainOrders()
 	if err != nil {
 		log.Error("s.wdb.GetNeedOnChainOrders()", "err", err)
@@ -603,7 +594,7 @@ func (s *Arseeding) onChainBundleItems() {
 
 }
 
-func (s *Arseeding) onChainItemsBySeq() {
+func (s *Bungo) onChainItemsBySeq() {
 	ords, err := s.wdb.GetNeedOnChainOrdersSorted()
 	if err != nil {
 		log.Error("s.wdb.GetNeedOnChainOrders()", "err", err)
@@ -628,7 +619,7 @@ func (s *Arseeding) onChainItemsBySeq() {
 	s.updateOnChainInfo(onChainItemIds, arTx, schema.SuccOnChain)
 }
 
-func (s *Arseeding) onChainOrds(ords []schema.Order) (arTx types.Transaction, onChainItemIds []string, err error) {
+func (s *Bungo) onChainOrds(ords []schema.Order) (arTx types.Transaction, onChainItemIds []string, err error) {
 	// once total size limit 2 GB
 	itemIds := make([]string, 0, len(ords))
 	totalSize := int64(0)
@@ -651,7 +642,7 @@ func (s *Arseeding) onChainOrds(ords []schema.Order) (arTx types.Transaction, on
 	return s.onChainBundleTx(itemIds)
 }
 
-func (s *Arseeding) updateOnChainInfo(onChainItemIds []string, arTx types.Transaction, onChainStatus string) {
+func (s *Bungo) updateOnChainInfo(onChainItemIds []string, arTx types.Transaction, onChainStatus string) {
 	// insert arTx record
 	onChainItemIdsJs, err := json.Marshal(onChainItemIds)
 	if err != nil {
@@ -679,7 +670,7 @@ func (s *Arseeding) updateOnChainInfo(onChainItemIds []string, arTx types.Transa
 	}
 }
 
-func (s *Arseeding) watchArTx() {
+func (s *Bungo) watchArTx() {
 	txs, err := s.wdb.GetArTxByStatus(schema.PendingOnChain)
 	if err != nil {
 		log.Error("s.wdb.GetArTxByStatus(schema.PendingOnChain)", "err", err)
@@ -728,7 +719,7 @@ func (s *Arseeding) watchArTx() {
 	}
 }
 
-func (s *Arseeding) retryOnChainArTx() {
+func (s *Bungo) retryOnChainArTx() {
 	txs, err := s.wdb.GetArTxByStatus(schema.FailedOnChain)
 	if err != nil {
 		log.Error("s.wdb.GetArTxByStatus(schema.PendingOnChain)", "err", err)
@@ -753,7 +744,7 @@ func (s *Arseeding) retryOnChainArTx() {
 	}
 }
 
-func (s *Arseeding) onChainBundleTx(itemIds []string) (arTx types.Transaction, onChainItemIds []string, err error) {
+func (s *Bungo) onChainBundleTx(itemIds []string) (arTx types.Transaction, onChainItemIds []string, err error) {
 	onChainItems := make([]types.BundleItem, 0)
 	bundle := &types.Bundle{}
 
@@ -777,7 +768,7 @@ func (s *Arseeding) onChainBundleTx(itemIds []string) (arTx types.Transaction, o
 	}
 
 	arTxtags := []types.Tag{
-		{Name: "App-Name", Value: "arseeding"},
+		{Name: "App-Name", Value: "bungo"},
 		{Name: "App-Version", Value: "1.0.0"},
 		{Name: "Action", Value: "Bundle"},
 		{Name: "Protocol-Name", Value: "U"},
@@ -816,14 +807,14 @@ func (s *Arseeding) onChainBundleTx(itemIds []string) (arTx types.Transaction, o
 	}
 	log.Info("Send bundle arTx", "arTx", arTx.ID)
 
-	// arseeding broadcast tx data
+	// bungo broadcast tx data
 	if err := s.arseedCli.SubmitTxConcurrent(context.TODO(), concurrentNum, arTx); err != nil {
 		log.Error("s.arseedCli.SubmitTxConcurrent(arTx)", "err", err, "arId", arTx.ID)
 	}
 	return
 }
 
-func (s *Arseeding) getOnChainBundle(itemIds []string) (onChainItems []types.BundleItem, err error) {
+func (s *Bungo) getOnChainBundle(itemIds []string) (onChainItems []types.BundleItem, err error) {
 	onChainItems = make([]types.BundleItem, 0, len(itemIds))
 	for _, itemId := range itemIds {
 		_, itemBinary, err := s.store.LoadItemBinary(itemId)
@@ -865,7 +856,7 @@ func (s *Arseeding) getOnChainBundle(itemIds []string) (onChainItems []types.Bun
 	return
 }
 
-func (s *Arseeding) getOnChainBundleStream(itemIds []string) (onChainItems []types.BundleItem, err error) {
+func (s *Bungo) getOnChainBundleStream(itemIds []string) (onChainItems []types.BundleItem, err error) {
 	onChainItems = make([]types.BundleItem, 0, len(itemIds))
 	for _, itemId := range itemIds {
 		binaryReader, _, err := s.store.LoadItemBinary(itemId)
@@ -892,7 +883,7 @@ func (s *Arseeding) getOnChainBundleStream(itemIds []string) (onChainItems []typ
 	// todo
 }
 
-func (s *Arseeding) processExpiredOrd() {
+func (s *Bungo) processExpiredOrd() {
 	ords, err := s.wdb.GetExpiredOrders()
 	if err != nil {
 		log.Error("GetExpiredOrders()", "err", err)
@@ -925,7 +916,7 @@ func (s *Arseeding) processExpiredOrd() {
 	}
 }
 
-func (s *Arseeding) parseAndSaveBundleTx() {
+func (s *Bungo) parseAndSaveBundleTx() {
 	arIds, err := s.store.LoadWaitParseBundleArIds()
 	if err != nil {
 		if err != schema.ErrNotExist {
@@ -956,7 +947,7 @@ func (s *Arseeding) parseAndSaveBundleTx() {
 	}
 }
 
-func (s *Arseeding) updateBundler() {
+func (s *Bungo) updateBundler() {
 	// update bundler balance
 	addr := s.bundler.Signer.Address
 	bal, err := s.arCli.GetWalletBalance(addr)
@@ -966,7 +957,7 @@ func (s *Arseeding) updateBundler() {
 	metricBundlerBalance(bal, addr)
 }
 
-func (s *Arseeding) deleteTmpFile() {
+func (s *Bungo) deleteTmpFile() {
 	tmpFileMapLock.Lock()
 	defer tmpFileMapLock.Unlock()
 	for tmpFileName, cnt := range tmpFileMap {
@@ -1068,7 +1059,7 @@ func arTxWatcher(arCli *goar.Client, arTxHash string) bool {
 		// when err is nil
 		// confirms block height must >= 3
 		if status.NumberOfConfirmations < 3 {
-			log.Debug("arseeding send sequence tx must more than 2 block confirms", "txHash", arTxHash, "currentConfirms", status.NumberOfConfirmations)
+			log.Debug("bungo send sequence tx must more than 2 block confirms", "txHash", arTxHash, "currentConfirms", status.NumberOfConfirmations)
 			continue
 		} else {
 			return true
@@ -1077,7 +1068,7 @@ func arTxWatcher(arCli *goar.Client, arTxHash string) bool {
 	return false
 }
 
-func (s *Arseeding) UpdateRealTime() {
+func (s *Bungo) UpdateRealTime() {
 	data, err := s.wdb.GetOrderRealTimeStatistic()
 	if err != nil {
 		log.Error("s.wdb.GetOrderRealTimeStatistic()", "err", err)
@@ -1088,7 +1079,7 @@ func (s *Arseeding) UpdateRealTime() {
 	}
 }
 
-func (s *Arseeding) ProduceDailyStatistic() {
+func (s *Bungo) ProduceDailyStatistic() {
 	now := time.Now()
 	var start time.Time
 	var firstOrder schema.Order
@@ -1128,7 +1119,7 @@ func (s *Arseeding) ProduceDailyStatistic() {
 	}
 }
 
-func (s *Arseeding) broadcastItemToKafka() {
+func (s *Bungo) broadcastItemToKafka() {
 	kafkaOrdInfos, err := s.wdb.GetKafkaOrderInfos()
 	if err != nil {
 		log.Error("s.wdb.GetKafkaOrderInfos()", "err", err)
@@ -1192,7 +1183,7 @@ func (s *Arseeding) broadcastItemToKafka() {
 	}
 }
 
-func (s *Arseeding) broadcastBlockToKafka() {
+func (s *Bungo) broadcastBlockToKafka() {
 	kafkaOnchains, err := s.wdb.GetKafkaOnChains()
 	if err != nil {
 		log.Error("s.wdb.GetKafkaOnChains()", "err", err)

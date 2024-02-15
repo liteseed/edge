@@ -11,9 +11,7 @@ type BigCache struct {
 }
 
 func NewBigCache(allKeysExpTime time.Duration) (*BigCache, error) {
-
 	cache, err := bigcache.New(context.Background(), bigcache.DefaultConfig(allKeysExpTime))
-
 	if err != nil {
 		return nil, err
 	}

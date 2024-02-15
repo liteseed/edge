@@ -2,12 +2,13 @@ package argraphql
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/Khan/genqlient/graphql"
 	"github.com/everFinance/go-everpay/common"
-	"net/http"
 )
 
-var logger = common.NewLog("arseeding")
+var logger = common.NewLog("bungo")
 
 type ARGraphQL struct {
 	Client graphql.Client

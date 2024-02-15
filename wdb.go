@@ -1,20 +1,21 @@
-package arseeding
+package bungo
 
 import (
 	"encoding/json"
-	"github.com/everFinance/arseeding/schema"
+	"math"
+	"os"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/everFinance/goar/types"
+	"github.com/liteseed/bungo/schema"
 	"gorm.io/datatypes"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
-	"math"
-	"os"
-	"path"
-	"strings"
-	"time"
 )
 
 const (

@@ -1,12 +1,12 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/arseeding/schema"
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/utils"
+	"github.com/liteseed/bungo/schema"
 )
 
-func (s *Arseeding) runTask() {
+func (s *Bungo) runTask() {
 	for {
 		select {
 		case taskId := <-s.taskMg.PopTkChan():
@@ -15,7 +15,7 @@ func (s *Arseeding) runTask() {
 	}
 }
 
-func (s *Arseeding) processTask(taskId string) {
+func (s *Bungo) processTask(taskId string) {
 	arId, taskType, err := splitTaskId(taskId)
 	if err != nil {
 		log.Error("splitTaskId", "err", err, "taskId", taskId)
@@ -40,7 +40,7 @@ func (s *Arseeding) processTask(taskId string) {
 	}
 }
 
-func (s *Arseeding) syncTask(arId string) (err error) {
+func (s *Bungo) syncTask(arId string) (err error) {
 	// 0. job manager set
 	if s.taskMg.IsClosed(arId, schema.TaskTypeSync) {
 		return
@@ -58,7 +58,7 @@ func (s *Arseeding) syncTask(arId string) (err error) {
 	return err
 }
 
-func (s *Arseeding) broadcastTxTask(arId string) (err error) {
+func (s *Bungo) broadcastTxTask(arId string) (err error) {
 	// job manager set
 	if s.taskMg.IsClosed(arId, schema.TaskTypeBroadcast) {
 		log.Warn("broadcast task was closed", "arId", arId)
@@ -114,7 +114,7 @@ func (s *Arseeding) broadcastTxTask(arId string) (err error) {
 	return
 }
 
-func (s *Arseeding) broadcastTxMetaTask(arId string) (err error) {
+func (s *Bungo) broadcastTxMetaTask(arId string) (err error) {
 	if !s.store.IsExistTxMeta(arId) {
 		return schema.ErrNotExist
 	}
@@ -135,7 +135,7 @@ func (s *Arseeding) broadcastTxMetaTask(arId string) (err error) {
 	return
 }
 
-func (s *Arseeding) setProcessedTask(arId string, tktype string) error {
+func (s *Bungo) setProcessedTask(arId string, tktype string) error {
 	taskId := assembleTaskId(arId, tktype)
 
 	tk := s.taskMg.GetTask(arId, tktype)
@@ -151,7 +151,7 @@ func (s *Arseeding) setProcessedTask(arId string, tktype string) error {
 	return s.store.DelPendingPoolTaskId(taskId)
 }
 
-func (s *Arseeding) syncManifestTask(arId string) (err error) {
+func (s *Bungo) syncManifestTask(arId string) (err error) {
 
 	if s.taskMg.IsClosed(arId, schema.TaskTypeSyncManifest) {
 		return

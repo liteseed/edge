@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"net/http"
@@ -8,9 +8,12 @@ import (
 
 // GetStatus reports if the server is operational.
 //
-// GET /api/v1/status
+// GET /status
 func GetStatus(router *gin.RouterGroup) {
 	router.GET("/status", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "operational"})
+		c.JSON(http.StatusOK, gin.H{
+			"Name":    "Bungo",
+			"Version": "v0.0.1",
+		})
 	})
 }

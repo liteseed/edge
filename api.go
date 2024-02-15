@@ -1,21 +1,10 @@
-package arseeding
+package bungo
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/go-everpay/account"
-	"github.com/everFinance/goar/types"
-	"github.com/everFinance/goar/utils"
-	"github.com/everFinance/goether"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/handlers"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 	"io"
 	"io/ioutil"
 	gLog "log"
@@ -26,6 +15,19 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/everFinance/go-everpay/account"
+	"github.com/everFinance/goar/types"
+	"github.com/everFinance/goar/utils"
+	"github.com/everFinance/goether"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/handlers"
+	"github.com/liteseed/bungo/api"
+	"github.com/liteseed/bungo/schema"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 var (
@@ -33,15 +35,14 @@ var (
 	tmpFileMapLock sync.Mutex
 )
 
-func (s *Arseeding) runAPI(port string) {
+var APIv1 *gin.RouterGroup
+
+func (s *Bungo) runAPI(port string) {
 	r := s.engine
-	r.Use(CORSMiddleware())
-	if s.EnableManifest {
-		r.Use(ManifestMiddleware(s))
-	}
+
+	api.GetStatus(&r.RouterGroup)
 	v1 := r.Group("/")
 	{
-		v1.Any("/", s.arseedInfo)
 		// Compatible arweave http api
 		v1.POST("tx", s.submitTx)
 		v1.POST("chunk", s.submitChunk)
@@ -118,16 +119,7 @@ func (s *Arseeding) runAPI(port string) {
 	}
 }
 
-func (s *Arseeding) arseedInfo(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"Name":          "Arseeding",
-		"Version":       "v1.2.0",
-		"Documentation": "https://web3infra.dev",
-		"ConcurrentNum": s.config.Param.ChunkConcurrentNum,
-	})
-}
-
-func (s *Arseeding) submitTx(c *gin.Context) {
+func (s *Bungo) submitTx(c *gin.Context) {
 	arTx := types.Transaction{}
 	if c.Request.Body == nil {
 		errorResponse(c, "chunk data can not be null")
@@ -157,7 +149,7 @@ func (s *Arseeding) submitTx(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) submitChunk(c *gin.Context) {
+func (s *Bungo) submitChunk(c *gin.Context) {
 	chunk := types.GetChunk{}
 	if c.Request.Body == nil {
 		errorResponse(c, "chunk data can not be null")
@@ -182,7 +174,7 @@ func (s *Arseeding) submitChunk(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) getTxOffset(c *gin.Context) {
+func (s *Bungo) getTxOffset(c *gin.Context) {
 	arId := c.Param("arid")
 	if len(arId) == 0 {
 		errorResponse(c, "invalid_address")
@@ -206,7 +198,7 @@ func (s *Arseeding) getTxOffset(c *gin.Context) {
 	c.JSON(http.StatusOK, txOffset)
 }
 
-func (s *Arseeding) getChunk(c *gin.Context) {
+func (s *Bungo) getChunk(c *gin.Context) {
 	offset := c.Param("offset")
 	chunkOffset, err := strconv.ParseUint(offset, 10, 64)
 	if err != nil {
@@ -226,7 +218,7 @@ func (s *Arseeding) getChunk(c *gin.Context) {
 	c.JSON(http.StatusOK, chunk)
 }
 
-func (s *Arseeding) getTx(c *gin.Context) {
+func (s *Bungo) getTx(c *gin.Context) {
 	id := c.Param("arid")
 	arTx, err := s.store.LoadTxMeta(id)
 	if err == nil {
@@ -239,7 +231,7 @@ func (s *Arseeding) getTx(c *gin.Context) {
 	proxyArweaveGateway(c)
 }
 
-func (s *Arseeding) getTxField(c *gin.Context) {
+func (s *Bungo) getTxField(c *gin.Context) {
 	arid := c.Param("arid")
 	field := c.Param("field")
 	txMeta, err := s.store.LoadTxMeta(arid)
@@ -307,17 +299,17 @@ func (s *Arseeding) getTxField(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) getInfo(c *gin.Context) {
+func (s *Bungo) getInfo(c *gin.Context) {
 	info := s.cache.GetInfo()
 	c.JSON(http.StatusOK, info)
 }
 
-func (s *Arseeding) getAnchor(c *gin.Context) {
+func (s *Bungo) getAnchor(c *gin.Context) {
 	anchor := s.cache.GetAnchor()
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(anchor))
 }
 
-func (s *Arseeding) getTxPrice(c *gin.Context) {
+func (s *Bungo) getTxPrice(c *gin.Context) {
 	dataSize, err := strconv.ParseInt(c.Param("size"), 10, 64)
 	if err != nil {
 		errorResponse(c, err.Error())
@@ -328,7 +320,7 @@ func (s *Arseeding) getTxPrice(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(fmt.Sprintf("%d", totPrice)))
 }
 
-func (s *Arseeding) getPeers(c *gin.Context) {
+func (s *Bungo) getPeers(c *gin.Context) {
 	log.Debug("peers len", "len", len(s.cache.GetPeers()))
 	c.JSON(http.StatusOK, s.cache.GetPeers())
 }
@@ -407,7 +399,7 @@ func calculatePrice(fee schema.ArFee, dataSize int64) int64 {
 
 // about task-manager
 
-func (s *Arseeding) postTask(c *gin.Context) {
+func (s *Bungo) postTask(c *gin.Context) {
 	arid := c.Param("arid")
 	txHash, err := utils.Base64Decode(arid)
 	if err != nil || len(txHash) != 32 {
@@ -427,7 +419,7 @@ func (s *Arseeding) postTask(c *gin.Context) {
 	c.JSON(http.StatusOK, "ok")
 }
 
-func (s *Arseeding) killTask(c *gin.Context) {
+func (s *Bungo) killTask(c *gin.Context) {
 	arid := c.Param("arid")
 	tktype := c.Param("taskType")
 	if !strings.Contains(schema.TaskTypeSync+schema.TaskTypeBroadcast+schema.TaskTypeBroadcastMeta, tktype) {
@@ -447,7 +439,7 @@ func (s *Arseeding) killTask(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) getTask(c *gin.Context) {
+func (s *Bungo) getTask(c *gin.Context) {
 	arid := c.Param("arid")
 	tktype := c.Param("taskType")
 	if !strings.Contains(schema.TaskTypeSync+schema.TaskTypeBroadcast+schema.TaskTypeBroadcastMeta, tktype) {
@@ -475,7 +467,7 @@ func (s *Arseeding) getTask(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) getCacheTasks(c *gin.Context) {
+func (s *Bungo) getCacheTasks(c *gin.Context) {
 	tks := s.taskMg.GetTasks()
 	total := len(tks)
 	c.JSON(http.StatusOK, gin.H{
@@ -484,7 +476,7 @@ func (s *Arseeding) getCacheTasks(c *gin.Context) {
 	})
 }
 
-func (s *Arseeding) registerTask(arId, tktype string) error {
+func (s *Bungo) registerTask(arId, tktype string) error {
 	s.taskMg.AddTask(arId, tktype)
 	if err := s.store.PutTaskPendingPool(assembleTaskId(arId, tktype)); err != nil {
 		s.taskMg.DelTask(arId, tktype)
@@ -496,11 +488,11 @@ func (s *Arseeding) registerTask(arId, tktype string) error {
 	return nil
 }
 
-func (s *Arseeding) getBundler(c *gin.Context) {
+func (s *Bungo) getBundler(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.ResBundler{Bundler: s.bundler.Signer.Address})
 }
 
-func (s *Arseeding) processApikeySpendBal(currency, apikey string, dataSize int64) error {
+func (s *Bungo) processApikeySpendBal(currency, apikey string, dataSize int64) error {
 	apikeyDetail, err := s.wdb.GetApiKeyDetail(apikey)
 	if err != nil {
 		return err
@@ -539,7 +531,7 @@ func (s *Arseeding) processApikeySpendBal(currency, apikey string, dataSize int6
 	return nil
 }
 
-func (s *Arseeding) submitItem(c *gin.Context) {
+func (s *Bungo) submitItem(c *gin.Context) {
 	if c.GetHeader("Content-Type") != "application/octet-stream" {
 		errorResponse(c, "Wrong body type")
 		return
@@ -622,7 +614,7 @@ func (s *Arseeding) submitItem(c *gin.Context) {
 	})
 }
 
-func (s *Arseeding) submitNativeData(c *gin.Context) {
+func (s *Bungo) submitNativeData(c *gin.Context) {
 	apiKey := c.GetHeader("X-API-KEY")
 	if len(apiKey) == 0 {
 		errorResponse(c, "Wrong X-API-KEY")
@@ -709,7 +701,7 @@ func (s *Arseeding) submitNativeData(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.RespItemId{ItemId: order.ItemId, Size: order.Size})
 }
 
-func (s *Arseeding) getOrdersByApiKey(c *gin.Context) {
+func (s *Bungo) getOrdersByApiKey(c *gin.Context) {
 	apiKey := c.GetHeader("X-API-KEY")
 	_, err := s.wdb.GetApiKeyDetail(apiKey)
 	if err != nil {
@@ -762,7 +754,7 @@ func (s *Arseeding) getOrdersByApiKey(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-func (s *Arseeding) getItemMeta(c *gin.Context) {
+func (s *Bungo) getItemMeta(c *gin.Context) {
 	id := c.Param("itemId")
 	// could be bundle item id
 	meta, err := s.store.LoadItemMeta(id)
@@ -773,7 +765,7 @@ func (s *Arseeding) getItemMeta(c *gin.Context) {
 	c.JSON(http.StatusOK, meta)
 }
 
-func (s *Arseeding) getItemField(c *gin.Context) {
+func (s *Bungo) getItemField(c *gin.Context) {
 	id := c.Param("itemId")
 	field := c.Param("field")
 	txMeta, err := s.store.LoadItemMeta(id)
@@ -809,7 +801,7 @@ func (s *Arseeding) getItemField(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) getItemIdsByArId(c *gin.Context) {
+func (s *Bungo) getItemIdsByArId(c *gin.Context) {
 	arId := c.Param("arId")
 	itemIds, err := s.store.LoadArIdToItemIds(arId)
 	if err != nil {
@@ -819,7 +811,7 @@ func (s *Arseeding) getItemIdsByArId(c *gin.Context) {
 	c.JSON(http.StatusOK, itemIds)
 }
 
-func (s *Arseeding) bundleFee(c *gin.Context) {
+func (s *Bungo) bundleFee(c *gin.Context) {
 	size := c.Param("size")
 	symbol := c.Param("currency")
 	numSize, err := strconv.Atoi(size)
@@ -835,7 +827,7 @@ func (s *Arseeding) bundleFee(c *gin.Context) {
 	c.JSON(http.StatusOK, respFee)
 }
 
-func (s *Arseeding) getOrders(c *gin.Context) {
+func (s *Bungo) getOrders(c *gin.Context) {
 	signer := c.Param("signer")
 	_, signerAddr, err := account.IDCheck(signer)
 	if err != nil {
@@ -882,11 +874,11 @@ func (s *Arseeding) getOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-func (s *Arseeding) bundleFees(c *gin.Context) {
+func (s *Bungo) bundleFees(c *gin.Context) {
 	c.JSON(http.StatusOK, s.bundlePerFeeMap)
 }
 
-func (s *Arseeding) dataRoute(c *gin.Context) {
+func (s *Bungo) dataRoute(c *gin.Context) {
 	txId := c.Param("id")
 	tmpFileName := genTmpFileName(c.ClientIP(), txId)
 	if existTmpFile(tmpFileName) {
@@ -938,7 +930,7 @@ func (s *Arseeding) dataRoute(c *gin.Context) {
 	}
 }
 
-func (s *Arseeding) setManifestUrl(c *gin.Context) {
+func (s *Bungo) setManifestUrl(c *gin.Context) {
 	txId := c.Param("id")
 	mfUrl := expectedTxSandbox(txId)
 	if mfId, err := s.wdb.GetManifestId(mfUrl); err == nil {
@@ -1175,7 +1167,7 @@ func decFileCnt(tmpFileName string) {
 	tmpFileMap[tmpFileName] -= 1
 }
 
-func (s *Arseeding) getApiKeyInfo(c *gin.Context) {
+func (s *Bungo) getApiKeyInfo(c *gin.Context) {
 	address := c.Param("address")
 	_, addr, err := account.IDCheck(address)
 	if err != nil {
@@ -1226,7 +1218,7 @@ func (s *Arseeding) getApiKeyInfo(c *gin.Context) {
 	})
 }
 
-func (s *Arseeding) getApiKey(c *gin.Context) {
+func (s *Bungo) getApiKey(c *gin.Context) {
 	timestamp := c.Param("timestamp")
 	signature := c.Param("signature")
 	timestampNum, err := strconv.ParseInt(timestamp, 10, 64)
@@ -1254,7 +1246,7 @@ func (s *Arseeding) getApiKey(c *gin.Context) {
 	c.JSON(http.StatusOK, detail.ApiKey)
 }
 
-func (s *Arseeding) getApikeyDepositRecords(c *gin.Context) {
+func (s *Bungo) getApikeyDepositRecords(c *gin.Context) {
 	address := c.Param("address")
 	_, addr, err := account.IDCheck(address)
 	if err != nil {
@@ -1297,7 +1289,7 @@ func (s *Arseeding) getApikeyDepositRecords(c *gin.Context) {
 	c.JSON(http.StatusOK, respRecords)
 }
 
-func (s *Arseeding) getRealTimeOrderStatistic(c *gin.Context) {
+func (s *Bungo) getRealTimeOrderStatistic(c *gin.Context) {
 	result := make([]schema.Result, 0)
 	data, err := s.store.GetRealTimeStatistic()
 	if err != nil {
@@ -1308,7 +1300,7 @@ func (s *Arseeding) getRealTimeOrderStatistic(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func (s *Arseeding) getOrderStatisticByDate(c *gin.Context) {
+func (s *Bungo) getOrderStatisticByDate(c *gin.Context) {
 	start := c.Query("start")
 	end := c.Query("end")
 	_, err := time.Parse("20060102", start)

@@ -1,11 +1,12 @@
-package rawdb
+package database
 
 import (
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/liteseed/bungo/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBoltDB(t *testing.T) {

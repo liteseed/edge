@@ -2,11 +2,6 @@ package sdk
 
 import (
 	"encoding/json"
-	seedSchema "github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/arseeding/sdk/schema"
-	paySchema "github.com/everFinance/go-everpay/pay/schema"
-	"github.com/everFinance/goar/types"
-	"github.com/panjf2000/ants/v2"
 	"io/ioutil"
 	"mime"
 	"os"
@@ -14,6 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	paySchema "github.com/everFinance/go-everpay/pay/schema"
+	"github.com/everFinance/goar/types"
+	seedSchema "github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/sdk/schema"
+	"github.com/panjf2000/ants/v2"
 )
 
 func (s *SDK) UploadFolder(rootPath string, batchSize int, indexFile string, currency string) (orders []*seedSchema.RespOrder, manifestId string, err error) {
@@ -82,7 +83,7 @@ func (s *SDK) uploadFolder(rootPath string, batchSize int, indexFile string, cur
 		tags := []types.Tag{
 			{"Content-Type", mime.TypeByExtension(filepath.Ext(filePath))},
 		}
-		// bundle item and send to arseeding
+		// bundle item and send to bungo
 		order, err := s.SendData(data, currency, noFeeApikey, &schema.OptionItem{Tags: tags}, needSequence)
 		if err != nil {
 			panic(err)

@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	arseedSchema "github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/arseeding/sdk/schema"
+	"math/big"
+	"os"
+
 	paySchema "github.com/everFinance/go-everpay/pay/schema"
 	paySdk "github.com/everFinance/go-everpay/sdk"
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
-	"math/big"
-	"os"
+	arseedSchema "github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/sdk/schema"
 )
 
 type SDK struct {
@@ -126,7 +127,7 @@ func (s *SDK) PayOrders(orders []*arseedSchema.RespOrder) (everTx *paySchema.Tra
 	if len(orders) == 0 {
 		return nil, errors.New("order is null")
 	}
-	if orders[0].Fee == "" { // arseeding NO_FEE module
+	if orders[0].Fee == "" { // bungo NO_FEE module
 		return
 	}
 
@@ -161,7 +162,7 @@ func (s *SDK) PayOrders(orders []*arseedSchema.RespOrder) (everTx *paySchema.Tra
 		Action  string   `json:"action"`
 		ItemIds []string `json:"itemIds"`
 	}{
-		AppName: "arseeding",
+		AppName: "bungo",
 		Action:  "payment",
 		ItemIds: itemIds,
 	}
@@ -212,7 +213,7 @@ func (s *SDK) PayApikey(tokenTag string, amount *big.Int) (everHash string, err 
 		Action  string `json:"action"`
 		Bundler string `json:"bundler"` // option
 	}{
-		AppName: "arseeding",
+		AppName: "bungo",
 		Action:  "apikeyPayment",
 		Bundler: bundler,
 	}

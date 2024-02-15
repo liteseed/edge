@@ -1,21 +1,22 @@
-package arseeding
+package bungo
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/argraphql"
-	"github.com/everFinance/goar"
-	"gopkg.in/h2non/gentleman.v2"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/everFinance/arseeding/schema"
+	"github.com/everFinance/goar"
+	"github.com/liteseed/bungo/graphql"
+	"gopkg.in/h2non/gentleman.v2"
+
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
+	"github.com/liteseed/bungo/schema"
 )
 
 func handleManifest(maniData []byte, path string, db *Store) ([]types.Tag, []byte, error) {
@@ -72,7 +73,7 @@ func getArTxOrItemData(id string, db *Store) (decodeTags []types.Tag, binaryRead
 	return nil, nil, nil, schema.ErrLocalNotExist
 }
 
-func getArTxOrItemDataForManifest(id string, db *Store, s *Arseeding) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
+func getArTxOrItemDataForManifest(id string, db *Store, s *Bungo) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
 
 	//  find bundle item form local
 	decodeTags, binaryReader, data, err = getArTxOrItemData(id, db)
@@ -136,7 +137,7 @@ func parseBundleItem(binaryReader *os.File, itemBinary []byte) (item *types.Bund
 	return
 }
 
-func syncManifestData(id string, s *Arseeding) (err error) {
+func syncManifestData(id string, s *Bungo) (err error) {
 
 	//  get manifest  data
 	data, contentType, err := getRawById(id)

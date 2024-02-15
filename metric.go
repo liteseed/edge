@@ -1,4 +1,4 @@
-package arseeding
+package bungo
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	MetricNameSpace = "arseeding"
+	MetricNameSpace = "bungo"
 )
 
 var (

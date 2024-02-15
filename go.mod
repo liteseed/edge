@@ -1,10 +1,10 @@
-module github.com/everFinance/arseeding
+module github.com/liteseed/bungo
 
 go 1.17
 
 require (
 	github.com/ethereum/go-ethereum v1.10.20
-	github.com/everFinance/goar v1.5.7
+	github.com/everFinance/goar v1.5.8
 	github.com/everFinance/goether v1.1.9
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-co-op/gocron v1.11.0
@@ -29,7 +29,7 @@ require (
 require (
 	github.com/Khan/genqlient v0.6.0
 	github.com/allegro/bigcache/v3 v3.1.0
-	github.com/everFinance/go-everpay v0.1.1
+	github.com/everFinance/go-everpay v0.2.0
 	github.com/everFinance/goarns v0.0.3
 	github.com/segmentio/kafka-go v0.4.40
 )
@@ -43,6 +43,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/everFinance/arseeding v1.0.3 // indirect
 	github.com/everFinance/ethrpc v1.0.4 // indirect
 	github.com/everFinance/gojwk v1.0.0 // indirect
 	github.com/everFinance/ttcrsa v1.1.3 // indirect
@@ -55,7 +56,6 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hamba/avro v1.5.6 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect

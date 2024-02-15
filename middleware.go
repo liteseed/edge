@@ -1,22 +1,23 @@
-package arseeding
+package bungo
 
 import (
 	"encoding/base32"
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar/utils"
-	"github.com/everFinance/goarns"
-	"github.com/gin-gonic/gin"
-	"github.com/ulule/limiter/v3"
-	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
-	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/everFinance/goar/utils"
+	"github.com/everFinance/goarns"
+	"github.com/gin-gonic/gin"
+	"github.com/liteseed/bungo/schema"
+	"github.com/ulule/limiter/v3"
+	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
 var (
@@ -73,7 +74,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-func ManifestMiddleware(s *Arseeding) gin.HandlerFunc {
+func ManifestMiddleware(s *Bungo) gin.HandlerFunc {
 
 	wdb := s.wdb
 	store := s.store

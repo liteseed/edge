@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/everFinance/arseeding/config/schema"
+	"time"
+
 	"github.com/everFinance/go-everpay/account"
 	"github.com/go-co-op/gocron"
-	"time"
+	"github.com/liteseed/bungo/config/schema"
 )
 
 type Config struct {
@@ -16,7 +17,7 @@ type Config struct {
 	Param          schema.Param
 }
 
-func New( sqliteDir string) *Config {
+func New(sqliteDir string) *Config {
 	wdb := NewSqliteDb(sqliteDir)
 	err := wdb.Migrate()
 	if err != nil {

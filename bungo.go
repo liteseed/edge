@@ -1,4 +1,4 @@
-package arseeding
+package bungo
 
 import (
 	"os"
@@ -6,20 +6,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/everFinance/arseeding/cache"
-	"github.com/everFinance/arseeding/config"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/arseeding/sdk"
 	"github.com/everFinance/go-everpay/common"
 	paySdk "github.com/everFinance/go-everpay/sdk"
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
+	"github.com/liteseed/bungo/cache"
+	"github.com/liteseed/bungo/config"
+	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/sdk"
 )
 
-var log = common.NewLog("arseeding")
+var log = common.NewLog("bungo")
 
-type Arseeding struct {
+type Bungo struct {
 	store           *Store
 	engine          *gin.Engine
 	submitLocker    sync.Mutex
@@ -48,12 +48,12 @@ type Arseeding struct {
 }
 
 func New(
-	boltDirPath, sqliteDir string,
+	boltDirectory, sqliteDirectory string,
 	arWalletKeyPath string, arNode, payUrl string, enableManifest bool,
 	port string, useKafka bool, kafkaUri string,
-) *Arseeding {
+) *Bungo {
 
-	KVDb, err := NewBoltStore(boltDirPath)
+	KVDb, err := NewBoltStore(boltDirectory)
 	if err != nil {
 		panic(err)
 	}
@@ -63,7 +63,7 @@ func New(
 		panic(err)
 	}
 
-	wdb := NewSqliteDb(sqliteDir)
+	wdb := NewSqliteDb(sqliteDirectory)
 
 	if err = wdb.Migrate(false, enableManifest); err != nil {
 		panic(err)
@@ -83,8 +83,8 @@ func New(
 	}
 
 	localArseedUrl := "http://127.0.0.1" + port
-	a := &Arseeding{
-		config:              config.New(sqliteDir),
+	a := &Bungo{
+		config:              config.New(sqliteDirectory),
 		store:               KVDb,
 		engine:              gin.Default(),
 		submitLocker:        sync.Mutex{},
@@ -130,21 +130,21 @@ func New(
 	return a
 }
 
-func (s *Arseeding) Run(port string, bundleInterval int) {
+func (s *Bungo) Run(port string, interval int) {
 	s.config.Run()
 	go s.runAPI(port)
-	go s.runJobs(bundleInterval)
+	go s.runJobs(interval)
 	go s.runTask()
 }
 
-func (s *Arseeding) Close() {
+func (s *Bungo) Close() {
 	s.store.Close()
 	for _, k := range s.KWriters {
 		k.Close()
 	}
 }
 
-func (s *Arseeding) GetPerFee(tokenSymbol string) *schema.Fee {
+func (s *Bungo) GetPerFee(tokenSymbol string) *schema.Fee {
 	s.locker.RLock()
 	defer s.locker.RUnlock()
 	perFee, ok := s.bundlePerFeeMap[strings.ToUpper(tokenSymbol)]
@@ -153,4 +153,3 @@ func (s *Arseeding) GetPerFee(tokenSymbol string) *schema.Fee {
 	}
 	return &perFee
 }
-

@@ -1,17 +1,18 @@
-package arseeding
+package bungo
 
 import (
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar/types"
-	"github.com/everFinance/goar/utils"
-	"gorm.io/gorm"
 	"math/big"
 	"strconv"
+
+	"github.com/everFinance/goar/types"
+	"github.com/everFinance/goar/utils"
+	"github.com/liteseed/bungo/schema"
+	"gorm.io/gorm"
 )
 
-func (s *Arseeding) SaveSubmitChunk(chunk types.GetChunk) error {
+func (s *Bungo) SaveSubmitChunk(chunk types.GetChunk) error {
 	// 1. verify chunk
 	err, ok := verifyChunk(chunk)
 	if err != nil || !ok {
@@ -40,7 +41,7 @@ func (s *Arseeding) SaveSubmitChunk(chunk types.GetChunk) error {
 	return nil
 }
 
-func (s *Arseeding) SaveSubmitTx(arTx types.Transaction) error {
+func (s *Bungo) SaveSubmitTx(arTx types.Transaction) error {
 	// 1. verify ar tx
 	if err := utils.VerifyTransaction(arTx); err != nil {
 		log.Error("utils.VerifyTransaction(arTx)", "err", err, "arTx", arTx.ID)
@@ -90,7 +91,7 @@ func (s *Arseeding) SaveSubmitTx(arTx types.Transaction) error {
 	return nil
 }
 
-func (s *Arseeding) FetchAndStoreTx(arId string) (err error) {
+func (s *Bungo) FetchAndStoreTx(arId string) (err error) {
 	// 1. sync arTxMeta
 	arTxMeta := &types.Transaction{}
 	arTxMeta, err = s.store.LoadTxMeta(arId)
@@ -182,7 +183,7 @@ func (s *Arseeding) FetchAndStoreTx(arId string) (err error) {
 	return nil
 }
 
-func (s *Arseeding) syncAddTxDataEndOffset(dataRoot, dataSize string) error {
+func (s *Bungo) syncAddTxDataEndOffset(dataRoot, dataSize string) error {
 	s.endOffsetLocker.Lock()
 	defer s.endOffsetLocker.Unlock()
 

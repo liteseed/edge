@@ -1,13 +1,14 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
+	"github.com/liteseed/bungo/schema"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBundleCalcItemFee(t *testing.T) {
@@ -23,7 +24,7 @@ func TestBundleCalcItemFee(t *testing.T) {
 			PerChunk: decimal.New(1, 0),
 		},
 	}
-	aa := &Arseeding{
+	aa := &Bungo{
 		bundlePerFeeMap: perFeeMap,
 	}
 	res, err := aa.CalcItemFee("AR", size0)
@@ -53,7 +54,7 @@ func TestSaveDelItem(t *testing.T) {
 	assert.NoError(t, err)
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
-	aa := &Arseeding{
+	aa := &Bungo{
 		store: s,
 	}
 	err = aa.saveItem(item)
@@ -74,7 +75,7 @@ func TestParseAndSaveBundleItems(t *testing.T) {
 	assert.NoError(t, err)
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
-	aa := &Arseeding{
+	aa := &Bungo{
 		store: s,
 	}
 	err = aa.ParseAndSaveBundleItems(arId, data)

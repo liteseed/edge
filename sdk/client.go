@@ -5,12 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
-	"gopkg.in/h2non/gentleman.v2"
 	"io"
 	"strconv"
+
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
+	"github.com/liteseed/bungo/schema"
+	"gopkg.in/h2non/gentleman.v2"
 )
 
 type ArSeedCli struct {

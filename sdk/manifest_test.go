@@ -1,9 +1,10 @@
 package sdk
 
 import (
+	"testing"
+
 	"github.com/everFinance/goether"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestSDK_UploadFolderAndPay(t *testing.T) {

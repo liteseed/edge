@@ -1,11 +1,12 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/everFinance/goar"
+	"github.com/liteseed/bungo/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTasks(t *testing.T) {
@@ -21,7 +22,7 @@ func TestTasks(t *testing.T) {
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	cli := goar.NewClient("https://arweave.net")
-	aa := &Arseeding{
+	aa := &Bungo{
 		store:  s,
 		taskMg: tkm,
 		arCli:  cli,

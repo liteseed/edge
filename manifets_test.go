@@ -1,4 +1,4 @@
-package arseeding
+package bungo
 
 import "testing"
 

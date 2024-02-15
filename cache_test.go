@@ -1,9 +1,10 @@
-package arseeding
+package bungo
 
 import (
+	"testing"
+
 	"github.com/everFinance/goar"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCache_GetPeers(t *testing.T) {

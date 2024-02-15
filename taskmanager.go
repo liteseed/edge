@@ -1,14 +1,15 @@
-package arseeding
+package bungo
 
 import (
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
+	"github.com/liteseed/bungo/schema"
 )
 
 type TaskManager struct {

@@ -1,4 +1,4 @@
-# Arseeding
+# bungo
 
 Implementation of a Bundler in Go
 

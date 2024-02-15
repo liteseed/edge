@@ -1,13 +1,14 @@
-package arseeding
+package bungo
 
 import (
 	"encoding/json"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/goar/types"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"sort"
 	"testing"
+
+	"github.com/everFinance/goar/types"
+	"github.com/liteseed/bungo/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAllDataEndOffset(t *testing.T) {

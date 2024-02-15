@@ -1,4 +1,4 @@
-package arseeding
+package bungo
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	ItemTopic  = "arseeding_transaction"
-	BlockTopic = "arseeding_block"
+	ItemTopic  = "bungo_transaction"
+	BlockTopic = "bungo_block"
 )
 
 type KWriter struct {

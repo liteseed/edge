@@ -1,14 +1,15 @@
 package config
 
 import (
-	"github.com/everFinance/arseeding/config/schema"
+	"os"
+	"path"
+
 	"github.com/everFinance/go-everpay/common"
+	"github.com/liteseed/bungo/config/schema"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"os"
-	"path"
 )
 
 const (

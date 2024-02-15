@@ -3,11 +3,11 @@ FROM alpine:latest
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH /go
 
-WORKDIR /arseeding
+WORKDIR /bungo
 
-VOLUME ["/arseeding/data"]
+VOLUME ["/bungo/data"]
 
-COPY cmd/arseeding /arseeding/arseeding
+COPY cmd/bungo /bungo/bungo
 EXPOSE 8080
 
-ENTRYPOINT [ "/arseeding/arseeding" ]
+ENTRYPOINT [ "/bungo/bungo" ]

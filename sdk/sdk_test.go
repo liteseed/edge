@@ -2,17 +2,18 @@ package sdk
 
 import (
 	"encoding/hex"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/everFinance/arseeding/sdk/schema"
-	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
-	"github.com/everFinance/goether"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
+	"github.com/everFinance/goether"
+	"github.com/liteseed/bungo/sdk/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewSDK(t *testing.T) {
@@ -83,7 +84,7 @@ func TestArSeedCli_SubmitNativeData(t *testing.T) {
 	cli := New("https://seed-dev.everpay.io")
 	currency := "DODO"
 	res, err := cli.SubmitNativeData(apiKey, currency, data, "image/jpeg", map[string]string{
-		"key1": "arseeding test",
+		"key1": "bungo test",
 		"key2": "sandy test bundle native data",
 	})
 	assert.NoError(t, err)
@@ -132,7 +133,7 @@ func TestArSeedCli_SubmitNativeDataStream(t *testing.T) {
 	cli := New("http://127.0.0.1:8080")
 
 	res, err := cli.SubmitNativeDataStream(apiKey, "usdc", data, "image/jpeg", map[string]string{
-		"key1": "arseeding test",
+		"key1": "bungo test",
 		"key2": "sandy test bundle native data",
 	})
 	assert.NoError(t, err)

@@ -1,10 +1,11 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/goar"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/everFinance/goar"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFetchAndStoreTx(t *testing.T) {
@@ -14,7 +15,7 @@ func TestFetchAndStoreTx(t *testing.T) {
 	cli := goar.NewClient(arNode)
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
-	aa := &Arseeding{store: s, arCli: cli}
+	aa := &Bungo{store: s, arCli: cli}
 	err = aa.FetchAndStoreTx(arId)
 	assert.NoError(t, err)
 	err = os.RemoveAll(dbPath)
@@ -28,7 +29,7 @@ func TestSaveSubmitTx(t *testing.T) {
 	cli := goar.NewClient(arNode)
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
-	aa := &Arseeding{store: s, arCli: cli}
+	aa := &Bungo{store: s, arCli: cli}
 	tx, err := cli.GetTransactionByID(arId)
 	assert.NoError(t, err)
 	err = aa.SaveSubmitTx(*tx)
@@ -44,7 +45,7 @@ func TestSyncAddTxDataEndOffset(t *testing.T) {
 	cli := goar.NewClient(arNode)
 	s, err := NewBoltStore(dbPath)
 	assert.NoError(t, err)
-	aa := &Arseeding{store: s, arCli: cli}
+	aa := &Bungo{store: s, arCli: cli}
 	tx, err := cli.GetTransactionByID(arId)
 	assert.NoError(t, err)
 	err = aa.syncAddTxDataEndOffset(tx.DataRoot, tx.DataSize)

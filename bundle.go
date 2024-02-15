@@ -1,19 +1,20 @@
-package arseeding
+package bungo
 
 import (
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	"github.com/everFinance/go-everpay/account"
-	"github.com/everFinance/goar/types"
-	"github.com/everFinance/goar/utils"
-	"github.com/shopspring/decimal"
-	"gorm.io/gorm"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/everFinance/go-everpay/account"
+	"github.com/everFinance/goar/types"
+	"github.com/everFinance/goar/utils"
+	"github.com/liteseed/bungo/schema"
+	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
-func (s *Arseeding) ProcessSubmitItem(item types.BundleItem, currency string, isNoFeeMode bool, apiKey string, isSort bool, size int64) (schema.Order, error) {
+func (s *Bungo) ProcessSubmitItem(item types.BundleItem, currency string, isNoFeeMode bool, apiKey string, isSort bool, size int64) (schema.Order, error) {
 	if err := utils.VerifyBundleItem(item); err != nil {
 		return schema.Order{}, err
 	}
@@ -68,7 +69,7 @@ func (s *Arseeding) ProcessSubmitItem(item types.BundleItem, currency string, is
 	return order, nil
 }
 
-func (s *Arseeding) CalcItemFee(currency string, itemSize int64) (*schema.RespFee, error) {
+func (s *Bungo) CalcItemFee(currency string, itemSize int64) (*schema.RespFee, error) {
 	perFee := s.GetPerFee(currency)
 	if perFee == nil {
 		return nil, fmt.Errorf("not support currency: %s", currency)
@@ -89,7 +90,7 @@ func (s *Arseeding) CalcItemFee(currency string, itemSize int64) (*schema.RespFe
 	}, nil
 }
 
-func (s *Arseeding) GetBundlePerFees() (map[string]schema.Fee, error) {
+func (s *Bungo) GetBundlePerFees() (map[string]schema.Fee, error) {
 	arPrice, err := s.wdb.GetArPrice()
 	if err != nil {
 		return nil, err
@@ -99,8 +100,8 @@ func (s *Arseeding) GetBundlePerFees() (map[string]schema.Fee, error) {
 		return nil, err
 	}
 	arFee := s.cache.GetFee()
-	arFee.Base = arFee.Base + s.config.GetServeFee()         // add base arseeding service fee
-	arFee.PerChunk = arFee.PerChunk + s.config.GetServeFee() // add base arseeding service fee
+	arFee.Base = arFee.Base + s.config.GetServeFee()         // add base bungo service fee
+	arFee.PerChunk = arFee.PerChunk + s.config.GetServeFee() // add base bungo service fee
 	res := make(map[string]schema.Fee)
 	for _, tp := range tps {
 		if tp.Price <= 0.0 {
@@ -124,7 +125,7 @@ func (s *Arseeding) GetBundlePerFees() (map[string]schema.Fee, error) {
 	return res, nil
 }
 
-func (s *Arseeding) ParseAndSaveBundleItems(arId string, data []byte) error {
+func (s *Bungo) ParseAndSaveBundleItems(arId string, data []byte) error {
 	if s.store.ExistArIdToItemIds(arId) {
 		return nil
 	}
@@ -161,14 +162,14 @@ func (s *Arseeding) ParseAndSaveBundleItems(arId string, data []byte) error {
 	return s.store.SaveArIdToItemIds(arId, itemIds)
 }
 
-func (s *Arseeding) saveItem(item types.BundleItem) error {
+func (s *Bungo) saveItem(item types.BundleItem) error {
 	if s.store.IsExistItemBinary(item.Id) {
 		return nil
 	}
 	return s.store.AtomicSaveItem(item)
 }
 
-func (s *Arseeding) DelItem(itemId string) error {
+func (s *Bungo) DelItem(itemId string) error {
 	if !s.store.IsExistItemBinary(itemId) {
 		return nil
 	}

@@ -1,11 +1,12 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/goar/utils"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/everFinance/goar/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTempFile(t *testing.T) {

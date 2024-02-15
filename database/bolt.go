@@ -1,14 +1,15 @@
-package rawdb
+package database
 
 import (
 	"errors"
 	"fmt"
-	"github.com/everFinance/arseeding/schema"
-	bolt "go.etcd.io/bbolt"
 	"os"
 	"path"
 	"reflect"
 	"time"
+
+	"github.com/liteseed/bungo/schema"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (

@@ -1,9 +1,10 @@
-package arseeding
+package bungo
 
 import (
-	"github.com/everFinance/arseeding/schema"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/liteseed/bungo/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewWdb(t *testing.T) {

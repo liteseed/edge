@@ -1,22 +1,23 @@
-package arseeding
+package bungo
 
 import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"os"
-	"github.com/everFinance/arseeding/rawdb"
-	"github.com/everFinance/arseeding/schema"
+
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
+	"github.com/liteseed/bungo/database"
+	"github.com/liteseed/bungo/schema"
 )
 
 type Store struct {
-	KVDb rawdb.KeyValueDB
+	KVDb database.KeyValueDB
 }
 
 func NewBoltStore(boltDirPath string) (*Store, error) {
-	Db, err := rawdb.NewBoltDB(boltDirPath)
+	Db, err := database.NewBoltDB(boltDirPath)
 	if err != nil {
 		return nil, err
 	}
