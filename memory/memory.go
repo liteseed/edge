@@ -1,14 +1,10 @@
-package database
+package memory
 
 import (
 	"os"
-
-	"github.com/everFinance/go-everpay/common"
 )
 
-var log = common.NewLog("bungo")
-
-type KeyValueDB interface {
+type Memory interface {
 	Put(bucket, key string, value interface{}) (err error)
 
 	Get(bucket, key string) (data []byte, err error)

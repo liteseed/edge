@@ -24,7 +24,6 @@ import (
 	"github.com/everFinance/goether"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/handlers"
-	"github.com/liteseed/bungo/api"
 	"github.com/liteseed/bungo/schema"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -40,7 +39,6 @@ var APIv1 *gin.RouterGroup
 func (s *Bungo) runAPI(port string) {
 	r := s.engine
 
-	api.GetStatus(&r.RouterGroup)
 	v1 := r.Group("/")
 	{
 		// Compatible arweave http api

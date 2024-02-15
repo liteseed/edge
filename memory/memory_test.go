@@ -1,10 +1,11 @@
-package database
+package memory
 
 import (
 	"fmt"
 	"sort"
 	"testing"
 
+	"github.com/liteseed/bungo/memory/bolt"
 	"github.com/liteseed/bungo/schema"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +25,7 @@ func TestBoltDB(t *testing.T) {
 	}
 	assert.Equal(t, keyNum, len(keys))
 	// create a bolt db
-	boltDb, err := NewBoltDB(dataPath)
+	boltDb, err := bolt.NewBoltDB(dataPath)
 	assert.NoError(t, err)
 
 	// test Put & Get

@@ -6,5 +6,5 @@ import (
 
 var Bungo = []*cli.Command{
 	Benchmark,
-	Deploy,
+	Start,
 }

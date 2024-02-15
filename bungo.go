@@ -48,7 +48,7 @@ type Bungo struct {
 }
 
 func New(
-	boltDirectory, sqliteDirectory string,
+	boltDirectory string, sqliteDirectory string,
 	arWalletKeyPath string, arNode, payUrl string, enableManifest bool,
 	port string, useKafka bool, kafkaUri string,
 ) *Bungo {
@@ -84,7 +84,7 @@ func New(
 
 	localArseedUrl := "http://127.0.0.1" + port
 	a := &Bungo{
-		config:              config.New(sqliteDirectory),
+		config:              config.New(boltDirectory, sqliteDirectory),
 		store:               KVDb,
 		engine:              gin.Default(),
 		submitLocker:        sync.Mutex{},

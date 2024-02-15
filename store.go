@@ -8,16 +8,16 @@ import (
 
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
-	"github.com/liteseed/bungo/database"
+	"github.com/liteseed/bungo/memory"
 	"github.com/liteseed/bungo/schema"
 )
 
 type Store struct {
-	KVDb database.KeyValueDB
+	KVDb memory.Memory
 }
 
 func NewBoltStore(boltDirPath string) (*Store, error) {
-	Db, err := database.NewBoltDB(boltDirPath)
+	Db, err := memory.NewBoltDB(boltDirPath)
 	if err != nil {
 		return nil, err
 	}

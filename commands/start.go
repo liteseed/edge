@@ -1,17 +1,13 @@
 package commands
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
-
-	"github.com/liteseed/bungo"
+	"github.com/liteseed/bungo/server"
 	"github.com/urfave/cli/v2"
 )
 
-var Deploy = &cli.Command{
-	Name:  "deploy",
-	Usage: "Deploy the bundler on this system",
+var Start = &cli.Command{
+	Name:  "start",
+	Usage: "Start the bundler on this system",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "bolt", Value: "./data/bolt", Usage: "bolt db dir path", EnvVars: []string{"BOLT"}},
 		&cli.StringFlag{Name: "sqlite", Value: "./data/sqlite", Usage: "sqlite db dir path", EnvVars: []string{"SQLITE"}},
@@ -22,27 +18,21 @@ var Deploy = &cli.Command{
 		&cli.IntFlag{Name: "bundle_interval", Value: 120, Usage: "bundle tx on chain time interval(seconds)", EnvVars: []string{"BUNDLE_INTERVAL"}},
 		&cli.StringFlag{Name: "port", Value: ":8080", EnvVars: []string{"PORT"}},
 	},
-	Action: deploy,
+	Action: start,
 }
 
-func deploy(context *cli.Context) error {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+func start(context *cli.Context) error {
 
-	server := bungo.New(
-		context.String("bolt"),
-		context.String("sqlite"),
-		context.String("key_path"),
-		context.String("node"),
-		context.String("payment_url"),
-		context.Bool("manifest"),
-		context.String("port"),
-		context.Bool("use_kafka"), context.String("kafka_uri"))
+	// b := bungo.New(
+	// 	context.String("bolt"),
+	// 	context.String("sqlite"),
+	// 	context.String("key_path"),
+	// 	context.String("node"),
+	// 	context.String("payment_url"),
+	// 	context.Bool("manifest"),
+	// 	context.String("port"),
+	// 	context.Bool("use_kafka"), context.String("kafka_uri"))
 
-	server.Run(context.String("port"), context.Int("bundle_interval"))
-
-	<-signals
-
-	server.Close()
+	server.Run(context.String("port"))
 	return nil
 }

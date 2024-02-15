@@ -6,9 +6,11 @@ import (
 	"github.com/everFinance/go-everpay/account"
 	"github.com/go-co-op/gocron"
 	"github.com/liteseed/bungo/config/schema"
+	"github.com/liteseed/bungo/memory"
 )
 
 type Config struct {
+	memory         memory.Memory
 	wdb            *Wdb
 	speedTxFee     int64
 	bundleServeFee int64
@@ -17,9 +19,13 @@ type Config struct {
 	Param          schema.Param
 }
 
-func New(sqliteDir string) *Config {
+func New(boltDirectory string, sqliteDir string) *Config {
+	memory, err := memory.NewBoltDB(boltDirectory)
+	if err != nil {
+		panic(err)
+	}
 	wdb := NewSqliteDb(sqliteDir)
-	err := wdb.Migrate()
+	err = wdb.Migrate()
 	if err != nil {
 		panic(err)
 	}
@@ -32,6 +38,7 @@ func New(sqliteDir string) *Config {
 		panic(err)
 	}
 	return &Config{
+		memory:         memory,
 		wdb:            wdb,
 		speedTxFee:     fee.SpeedTxFee,
 		bundleServeFee: fee.BundleServeFee,

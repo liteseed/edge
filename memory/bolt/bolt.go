@@ -1,4 +1,4 @@
-package database
+package bolt
 
 import (
 	"errors"
@@ -89,6 +89,7 @@ func (s *BoltDB) Get(bucket, key string) (data []byte, err error) {
 }
 
 func (s *BoltDB) GetStream(bucket, key string) (data *os.File, err error) {
+
 	return nil, schema.ErrNotImplement
 }
 
