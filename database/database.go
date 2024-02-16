@@ -25,7 +25,7 @@ func (db *Database) InsertOrder(order schema.Order) error {
 	return db.Db.Create(&order).Error
 }
 
-func (w *Database) GetUnPaidOrder(itemId string) (schema.Order, error) {
+func (w *Database) GetOpenOrders(itemId string) (schema.Order, error) {
 	res := schema.Order{}
 	err := w.Db.Model(&schema.Order{}).Where("item_id = ? and payment_status = ?", itemId, schema.UnPayment).Last(&res).Error
 	return res, err
@@ -114,8 +114,8 @@ func (w *Database) GetOrdersByApiKey(apiKey string, cursorId int64, pageSize int
 	return records, err
 }
 
-func (w *Database) ExistProcessedOrderItem(itemId string) (res schema.Order, exist bool) {
-	err := w.Db.Model(&schema.Order{}).Where("item_id = ? and (on_chain_status = ? or on_chain_status = ?)", itemId, schema.PendingOnChain, schema.SuccOnChain).First(&res).Error
+func (db *Database) ExistProcessedOrderItem(itemId string) (res schema.Order, exist bool) {
+	err := db.Db.Model(&schema.Order{}).Where("item_id = ? and (on_chain_status = ? or on_chain_status = ?)", itemId, schema.PendingOnChain, schema.SuccOnChain).First(&res).Error
 	if err == nil {
 		exist = true
 	}

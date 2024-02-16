@@ -2,20 +2,27 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/server/api"
+	"github.com/liteseed/bungo/cache"
+	"github.com/liteseed/bungo/database"
+	"github.com/liteseed/bungo/store"
 )
 
-var APIv1 *gin.RouterGroup
-
-func Register(router *gin.Engine) {
-	api.GetStatus(&router.RouterGroup)
-	api.GetTransactionPrice(&router.RouterGroup)
+type Server struct {
+	engine *gin.Engine
+	cache  *cache.Cache
+	db     *database.Database
+	store  *store.Store
 }
 
-func Run(port string) {
-	router := gin.Default()
+func New(c *cache.Cache, db *database.Database, s *store.Store) *Server {
+	r := gin.Default()
+	return &Server{engine: r, cache: c, db: db, store: s}
+}
 
-	Register(router)
+func (s *Server) Run(port string) {
+	s.registerRoutes()
+	s.engine.Run(port)
+}
 
-	router.Run(port)
+func (s *Server) registerRoutes() {
 }

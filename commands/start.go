@@ -1,7 +1,13 @@
 package commands
 
 import (
-	"github.com/liteseed/bungo"
+	"log"
+	"time"
+
+	"github.com/liteseed/bungo/cache"
+	"github.com/liteseed/bungo/database"
+	"github.com/liteseed/bungo/server"
+	"github.com/liteseed/bungo/store"
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,18 +28,24 @@ var Start = &cli.Command{
 }
 
 func start(context *cli.Context) error {
+	bolt := context.String("bolt")
+	sqlite := context.String("sqlite")
 
-	b := bungo.New(
-		context.String("bolt"),
-		context.String("sqlite"),
-		context.String("key_path"),
-		context.String("node"),
-		context.String("payment_url"),
-		context.Bool("manifest"),
-		context.String("port"),
-		context.Bool("use_kafka"), context.String("kafka_uri"))
+	cache, err := cache.NewBigCache(60 * time.Minute)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	b.Run(context.String("port"), context.Int("interval"))
-	// server.Run(context.String("port"))
+	db := database.NewSqliteDatabase(sqlite)
+	if err = db.Migrate(); err != nil {
+		log.Fatal(err)
+	}
+	store, err := store.NewBoltStore(bolt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s := server.New(cache, db, store)
+	s.Run(":8080")
 	return nil
 }

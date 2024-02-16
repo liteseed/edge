@@ -1,4 +1,4 @@
-package api
+package bungo
 
 import (
 	"net/http"

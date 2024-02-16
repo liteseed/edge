@@ -38,12 +38,36 @@ func (s *Store) AtomicSync(oldOffset, newOffset uint64, root, size string) error
 		log.Fatal("s.store.SaveAllDataEndOffset(newEndOffset)", "err", err)
 		return err
 	}
-	
+
 	if err := s.SaveTransactionOffSet(root, size, newOffset); err != nil {
 		_ = s.RollbackAllDataEndOffset(oldOffset)
 		return err
 	}
 	return nil
+}
+
+func (s *Store) AtomicDeleteItem(id string) (err error) {
+	if !s.IsExistItemBinary(id) {
+		return nil
+	}
+	err = s.DelItemMetadata(id)
+	if err != nil {
+		return
+	}
+	return s.DelItemBinary(id)
+}
+
+func (s *Store) AtomicSaveItem(item types.BundleItem) (err error) {
+	if s.IsExistItemBinary(item.Id) {
+		return nil
+	}
+	if err = s.SaveItemBinary(item); err != nil {
+		return
+	}
+	if err = s.SaveItemMeta(item); err != nil {
+		_ = s.DelItemBinary(item.Id)
+	}
+	return
 }
 
 func (s *Store) Close() error {
@@ -207,25 +231,6 @@ func (s *Store) LoadTask(taskId string) (tk *schema.Task, err error) {
 	return
 }
 
-// about bundle
-func (s *Store) AtomicSaveItem(item types.BundleItem) (err error) {
-	if err = s.SaveItemBinary(item); err != nil {
-		return
-	}
-	if err = s.SaveItemMeta(item); err != nil {
-		_ = s.DelItemBinary(item.Id)
-	}
-	return
-}
-
-func (s *Store) AtomicDelItem(itemId string) (err error) {
-	err = s.DelItemMeta(itemId)
-	if err != nil {
-		return
-	}
-	return s.DelItemBinary(itemId)
-}
-
 func (s *Store) SaveItemBinary(item types.BundleItem) (err error) {
 	if item.DataReader != nil {
 		binaryReader, err := utils.GenerateItemBinaryStream(&item)
@@ -271,7 +276,7 @@ func (s *Store) LoadItemMeta(itemId string) (meta types.BundleItem, err error) {
 	return
 }
 
-func (s *Store) DelItemMeta(itemId string) (err error) {
+func (s *Store) DelItemMetadata(itemId string) (err error) {
 	return s.KVDb.Delete(schema.BundleItemMeta, itemId)
 }
 

@@ -25,7 +25,7 @@ func NewSqliteDatabase(directory string) *Database {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("connect sqlite db success")
+	log.Println("sqlite connected - directory: " + directory)
 	return &Database{Db: db}
 
 }
