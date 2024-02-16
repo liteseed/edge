@@ -10,7 +10,6 @@ import (
 
 	"github.com/everFinance/goar/types"
 	"github.com/liteseed/bungo/schema"
-	"gorm.io/datatypes"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -57,7 +56,7 @@ func NewSqliteDb(dbDir string) *Wdb {
 // when use sqlite,same index name in different table will lead to migrate failed,
 
 func (w *Wdb) Migrate(noFee, enableManifest bool) error {
-	err := w.Db.AutoMigrate(&schema.Order{}, &schema.OnChainTx{}, &schema.AutoApiKey{}, &schema.OrderStatistic{})
+	err := w.Db.AutoMigrate(&schema.Order{}, &schema.OnChainTx{}, &schema.OrderStatistic{})
 	if err != nil {
 		return err
 	}
@@ -92,19 +91,13 @@ func (w *Wdb) GetExpiredOrders() ([]schema.Order, error) {
 func (w *Wdb) ExistPaidOrd(itemId string) bool {
 	ord := &schema.Order{}
 	err := w.Db.Model(&schema.Order{}).Where("item_id = ? and payment_status = ?", itemId, schema.SuccPayment).First(ord).Error
-	if err == gorm.ErrRecordNotFound {
-		return false
-	}
-	return true
+	return err == gorm.ErrRecordNotFound
 }
 
 func (w *Wdb) IsLatestUnpaidOrd(itemId string, CurExpiredTime int64) bool {
 	ord := &schema.Order{}
 	err := w.Db.Model(&schema.Order{}).Where("item_id = ? and payment_status = ? and payment_expired_time > ?", itemId, schema.UnPayment, CurExpiredTime).First(ord).Error
-	if err == gorm.ErrRecordNotFound {
-		return true
-	}
-	return false
+	return err == gorm.ErrRecordNotFound
 }
 
 func (w *Wdb) UpdateOrdToExpiredStatus(id uint) error {
@@ -290,39 +283,6 @@ func (w *Wdb) GetManifestId(mfUrl string) (string, error) {
 
 func (w *Wdb) DelManifest(id string) error {
 	return w.Db.Where("manifest_id = ?", id).Delete(&schema.Manifest{}).Error
-}
-
-func (w *Wdb) InsertApiKey(ak schema.AutoApiKey) error {
-	return w.Db.Create(&ak).Error
-}
-
-func (w *Wdb) GetApiKeyDetail(key string) (schema.AutoApiKey, error) {
-	res := schema.AutoApiKey{}
-	err := w.Db.Model(&schema.AutoApiKey{}).Where("api_key = ?", key).First(&res).Error
-	return res, err
-}
-
-func (w *Wdb) GetApiKeyDetailByAddress(addr string) (res schema.AutoApiKey, err error) {
-	err = w.Db.Model(&schema.AutoApiKey{}).Where("address = ?", addr).First(&res).Error
-	return
-}
-
-func (w *Wdb) ExistApikey(addr string) (bool, schema.AutoApiKey) {
-	apikey, err := w.GetApiKeyDetailByAddress(addr)
-	return err == nil, apikey
-}
-
-func (w *Wdb) UpdateApikeyTokenBal(addr string, newTokBal datatypes.JSONMap) error {
-	return w.Db.Model(&schema.AutoApiKey{}).Where("address = ?", addr).Update("token_balance", newTokBal).Error
-}
-
-func (w *Wdb) GetApiKeyDepositRecords(addr string, cursorId int64, num int) ([]schema.ReceiptEverTx, error) {
-	if cursorId <= 0 {
-		cursorId = math.MaxInt64
-	}
-	records := make([]schema.ReceiptEverTx, 0, num)
-	err := w.Db.Model(&schema.ReceiptEverTx{}).Where("raw_id < ? and `from` = ? and JSON_VALID(`data`) = 1 and JSON_CONTAINS(`data`, JSON_OBJECT('action', 'apikeyPayment')) = 1", cursorId, addr).Order("raw_id DESC").Limit(num).Find(&records).Error
-	return records, err
 }
 
 func (w *Wdb) GetOrderRealTimeStatistic() ([]byte, error) {

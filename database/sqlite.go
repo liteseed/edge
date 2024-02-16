@@ -14,7 +14,7 @@ const (
 	sqliteName = "bungo.sqlite"
 )
 
-func NewSqliteDatabase(directory string) *Query {
+func NewSqliteDatabase(directory string) *Database {
 	if err := os.MkdirAll(directory, os.ModePerm); err != nil {
 		panic(err)
 	}
@@ -26,6 +26,6 @@ func NewSqliteDatabase(directory string) *Query {
 		panic(err)
 	}
 	log.Println("connect sqlite db success")
-	return &Query{Db: db}
+	return &Database{Db: db}
 
 }

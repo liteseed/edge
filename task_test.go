@@ -6,6 +6,7 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +20,7 @@ func TestTasks(t *testing.T) {
 		schema.TaskTypeBroadcastMeta + "-" + arId: tk,
 	}
 	dbPath := "./data/tmp.db"
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	cli := goar.NewClient("https://arweave.net")
 	aa := &Bungo{

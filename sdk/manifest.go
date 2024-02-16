@@ -17,12 +17,12 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
-func (s *SDK) UploadFolder(rootPath string, batchSize int, indexFile string, currency string) (orders []*seedSchema.RespOrder, manifestId string, err error) {
+func (s *SDK) UploadFolder(rootPath string, batchSize int, indexFile string, currency string) (orders []*seedSchema.ResponseOrder, manifestId string, err error) {
 	orders, manifestId, err = s.uploadFolder(rootPath, batchSize, indexFile, currency, "", false)
 	return
 }
 
-func (s *SDK) UploadFolderAndPay(rootPath string, batchSize int, indexFile string, currency string) (orders []*seedSchema.RespOrder, manifestId string, everTxs []*paySchema.Transaction, err error) {
+func (s *SDK) UploadFolderAndPay(rootPath string, batchSize int, indexFile string, currency string) (orders []*seedSchema.ResponseOrder, manifestId string, everTxs []*paySchema.Transaction, err error) {
 	orders, manifestId, err = s.uploadFolder(rootPath, batchSize, indexFile, currency, "", false)
 	if err != nil {
 		return
@@ -31,17 +31,17 @@ func (s *SDK) UploadFolderAndPay(rootPath string, batchSize int, indexFile strin
 	return
 }
 
-func (s *SDK) UploadFolderWithNoFee(rootPath string, batchSize int, indexFile string, noFeeApikey string) (orders []*seedSchema.RespOrder, manifestId string, err error) {
+func (s *SDK) UploadFolderWithNoFee(rootPath string, batchSize int, indexFile string, noFeeApikey string) (orders []*seedSchema.ResponseOrder, manifestId string, err error) {
 	orders, manifestId, err = s.uploadFolder(rootPath, batchSize, indexFile, "", noFeeApikey, false)
 	return
 }
 
-func (s *SDK) UploadFolderWithSequence(rootPath string, batchSize int, indexFile string, noFeeApikey string) (orders []*seedSchema.RespOrder, manifestId string, err error) {
+func (s *SDK) UploadFolderWithSequence(rootPath string, batchSize int, indexFile string, noFeeApikey string) (orders []*seedSchema.ResponseOrder, manifestId string, err error) {
 	orders, manifestId, err = s.uploadFolder(rootPath, batchSize, indexFile, "", noFeeApikey, true)
 	return
 }
 
-func (s *SDK) uploadFolder(rootPath string, batchSize int, indexFile string, currency string, noFeeApikey string, needSequence bool) ([]*seedSchema.RespOrder, string, error) {
+func (s *SDK) uploadFolder(rootPath string, batchSize int, indexFile string, currency string, noFeeApikey string, needSequence bool) ([]*seedSchema.ResponseOrder, string, error) {
 	if indexFile == "" {
 		indexFile = "index.html"
 	}
@@ -61,7 +61,7 @@ func (s *SDK) uploadFolder(rootPath string, batchSize int, indexFile string, cur
 		return nil, "", err
 	}
 
-	orders := make([]*seedSchema.RespOrder, 0, len(pathFiles))
+	orders := make([]*seedSchema.ResponseOrder, 0, len(pathFiles))
 
 	var (
 		lock sync.Mutex

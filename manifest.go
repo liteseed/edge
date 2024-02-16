@@ -11,7 +11,8 @@ import (
 	"strings"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/bungo/graphql"
+	argraphql "github.com/liteseed/bungo/graphql"
+	"github.com/liteseed/bungo/store"
 	"gopkg.in/h2non/gentleman.v2"
 
 	"github.com/everFinance/goar/types"
@@ -19,7 +20,7 @@ import (
 	"github.com/liteseed/bungo/schema"
 )
 
-func handleManifest(maniData []byte, path string, db *Store) ([]types.Tag, []byte, error) {
+func handleManifest(maniData []byte, path string, db *store.Store) ([]types.Tag, []byte, error) {
 	mani := schema.ManifestData{}
 	if err := json.Unmarshal(maniData, &mani); err != nil {
 		return nil, nil, err
@@ -51,7 +52,7 @@ func handleManifest(maniData []byte, path string, db *Store) ([]types.Tag, []byt
 	return tags, data, err
 }
 
-func getArTxOrItemData(id string, db *Store) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
+func getArTxOrItemData(id string, db *store.Store) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
 	// find bundle item
 	_, err = db.LoadItemMeta(id)
 	if err == nil {
@@ -60,7 +61,7 @@ func getArTxOrItemData(id string, db *Store) (decodeTags []types.Tag, binaryRead
 
 	// not bundle item
 	// find arId
-	txMeta, err := db.LoadTxMeta(id)
+	txMeta, err := db.LoadTransactionMetadata(id)
 	if err == nil { // arTx id
 		data, err = txDataByMeta(txMeta, db)
 		if err != nil {
@@ -73,7 +74,7 @@ func getArTxOrItemData(id string, db *Store) (decodeTags []types.Tag, binaryRead
 	return nil, nil, nil, schema.ErrLocalNotExist
 }
 
-func getArTxOrItemDataForManifest(id string, db *Store, s *Bungo) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
+func getArTxOrItemDataForManifest(id string, db *store.Store, s *Bungo) (decodeTags []types.Tag, binaryReader *os.File, data []byte, err error) {
 
 	//  find bundle item form local
 	decodeTags, binaryReader, data, err = getArTxOrItemData(id, db)
@@ -91,7 +92,7 @@ func getArTxOrItemDataForManifest(id string, db *Store, s *Bungo) (decodeTags []
 	return decodeTags, binaryReader, data, err
 }
 
-func getArTxOrItemTags(id string, db *Store) (decodeTags []types.Tag, err error) {
+func getArTxOrItemTags(id string, db *store.Store) (decodeTags []types.Tag, err error) {
 	itemMeta, err := db.LoadItemMeta(id)
 	if err == nil {
 		decodeTags = itemMeta.Tags
@@ -99,7 +100,7 @@ func getArTxOrItemTags(id string, db *Store) (decodeTags []types.Tag, err error)
 	}
 	// not bundle item
 	// find arId
-	txMeta, err := db.LoadTxMeta(id)
+	txMeta, err := db.LoadTransactionMetadata(id)
 	if err == nil { // arTx id
 		decodeTags, err = utils.TagsDecode(txMeta.Tags)
 		return
@@ -107,7 +108,7 @@ func getArTxOrItemTags(id string, db *Store) (decodeTags []types.Tag, err error)
 	return nil, schema.ErrLocalNotExist
 }
 
-func getBundleItemData(id string, db *Store) (decodeTags []types.Tag, dataReader *os.File, data []byte, err error) {
+func getBundleItemData(id string, db *store.Store) (decodeTags []types.Tag, dataReader *os.File, data []byte, err error) {
 	binaryReader, itemBinary, err := db.LoadItemBinary(id)
 	item := &types.BundleItem{}
 	if err == nil {

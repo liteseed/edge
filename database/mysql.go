@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewMysqlDatabase(DSN string) *Query {
+func NewMysqlDatabase(DSN string) *Database {
 	db, err := gorm.Open(mysql.Open(DSN), &gorm.Config{
 		Logger:          logger.Default.LogMode(logger.Silent),
 		CreateBatchSize: 200,
@@ -17,5 +17,5 @@ func NewMysqlDatabase(DSN string) *Query {
 		panic(err)
 	}
 	log.Println("connect mysql db success")
-	return &Query{Db: db}
+	return &Database{Db: db}
 }

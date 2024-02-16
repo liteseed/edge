@@ -2,23 +2,23 @@ package schema
 
 var (
 	// bucket
-	ChunkBucket           = "chunk-bucket"              // key: chunkStartOffset, val: chunk
-	TxDataEndOffSetBucket = "tx-data-end-offset-bucket" // key: dataRoot+dataSize; val: txDataEndOffSet
-	TxMetaBucket          = "tx-meta-bucket"            // key: txId, val: arTx; not include data
-	ConstantsBucket       = "constants-bucket"
+	Chunks              = "chunks"               // key: chunkStartOffset, val: chunks
+	TransactionOffset   = "transaction_offset"   // key: dataRoot+dataSize; val: transactionOffset
+	TransactionMetadata = "transaction_metadata" // key: id (Transaction ID), val: arTx; not include data
+	Constants           = "constants"
 
 	// tasks
-	TaskIdPendingPoolBucket = "task-pending-pool-bucket" // key: taskId(taskType+"-"+arId), val: "0x01"
-	TaskBucket              = "task-bucket"              // key: taskId(taskType+"-"+arId), val: task
+	PendingTasks = "pending_tasks" // key: taskId(taskType+"_"+arId), val: "0x01"
+	Tasks        = "tasks"         // key: taskId(taskType+"_"+arId), val: task
 
 	// bundle bucketName
-	BundleItemBinary = "bundle-item-binary"
-	BundleItemMeta   = "bundle-item-meta"
+	BundleItemBinary = "bundle_item_binary"
+	BundleItemMeta   = "bundle_item_metadata"
 
 	// parse arTx data to bundle items
-	BundleWaitParseArIdBucket = "bundle-wait-parse-arId-bucket" // key: arId, val: "0x01"
-	BundleArIdToItemIdsBucket = "bundle-arId-to-itemIds-bucket" // key: arId, val: json.marshal(itemIds)
+	BundleWaitParseArIdBucket = "bundle_wait_parse_arId_bucket" // key: arId, val: "0x01"
+	BundleArIdToItemIdsBucket = "bundle_arId_to_itemIds_bucket" // key: arId, val: json.marshal(itemIds)
 
 	//statistic
-	StatisticBucket = "order-statistic-bucket"
+	OrderStatistics = "order_statistics"
 )

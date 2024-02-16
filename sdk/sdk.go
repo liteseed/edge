@@ -45,7 +45,7 @@ func (s *SDK) SendDataAndPay(data []byte, currency string, option *schema.Option
 		return
 	}
 	itemId = order.ItemId
-	everTx, err = s.PayOrders([]*arseedSchema.RespOrder{order})
+	everTx, err = s.PayOrders([]*arseedSchema.ResponseOrder{order})
 	return
 }
 
@@ -55,11 +55,11 @@ func (s *SDK) SendDataStreamAndPay(data *os.File, currency string, option *schem
 		return
 	}
 	itemId = order.ItemId
-	everTx, err = s.PayOrders([]*arseedSchema.RespOrder{order})
+	everTx, err = s.PayOrders([]*arseedSchema.ResponseOrder{order})
 	return
 }
 
-func (s *SDK) SendData(data []byte, currency string, apikey string, option *schema.OptionItem, needSequence bool) (order *arseedSchema.RespOrder, err error) {
+func (s *SDK) SendData(data []byte, currency string, apikey string, option *schema.OptionItem, needSequence bool) (order *arseedSchema.ResponseOrder, err error) {
 	bundleItem := types.BundleItem{}
 	if option != nil {
 		bundleItem, err = s.ItemSigner.CreateAndSignItem(data, option.Target, option.Anchor, option.Tags)
@@ -73,7 +73,7 @@ func (s *SDK) SendData(data []byte, currency string, apikey string, option *sche
 	return
 }
 
-func (s *SDK) SendDataStream(data *os.File, currency string, apikey string, option *schema.OptionItem, needSequence bool) (order *arseedSchema.RespOrder, err error) {
+func (s *SDK) SendDataStream(data *os.File, currency string, apikey string, option *schema.OptionItem, needSequence bool) (order *arseedSchema.ResponseOrder, err error) {
 	bundleItem := types.BundleItem{}
 	if option != nil {
 		bundleItem, err = s.ItemSigner.CreateAndSignItemStream(data, option.Target, option.Anchor, option.Tags)
@@ -91,7 +91,7 @@ func (s *SDK) SendDataStream(data *os.File, currency string, apikey string, opti
 	return
 }
 
-func (s *SDK) BatchPayOrders(orders []*arseedSchema.RespOrder) (everTxs []*paySchema.Transaction, err error) {
+func (s *SDK) BatchPayOrders(orders []*arseedSchema.ResponseOrder) (everTxs []*paySchema.Transaction, err error) {
 	if len(orders) <= 500 {
 		everTx, err := s.PayOrders(orders)
 		if err != nil {
@@ -123,7 +123,7 @@ func (s *SDK) BatchPayOrders(orders []*arseedSchema.RespOrder) (everTxs []*paySc
 	return
 }
 
-func (s *SDK) PayOrders(orders []*arseedSchema.RespOrder) (everTx *paySchema.Transaction, err error) {
+func (s *SDK) PayOrders(orders []*arseedSchema.ResponseOrder) (everTx *paySchema.Transaction, err error) {
 	if len(orders) == 0 {
 		return nil, errors.New("order is null")
 	}

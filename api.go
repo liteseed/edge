@@ -3,7 +3,6 @@ package bungo
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,16 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/everFinance/go-everpay/account"
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
-	"github.com/everFinance/goether"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/handlers"
 	"github.com/liteseed/bungo/schema"
-	"github.com/shopspring/decimal"
+	"github.com/liteseed/bungo/store"
 	"gorm.io/gorm"
 )
 
@@ -92,15 +88,6 @@ func (s *Bungo) runAPI(port string) {
 		if s.EnableManifest {
 			v1.POST("/manifest_url/:id", s.setManifestUrl)
 		}
-
-		// submit native data with X-API-KEY
-		v1.POST("/bundle/data/:currency", s.submitNativeData)
-		v1.GET("/bundle/orders", s.getOrdersByApiKey) // http header need X-API-KEY
-
-		// apikey
-		v1.GET("/apikey_info/:address", s.getApiKeyInfo)
-		v1.GET("/apikey/:timestamp/:signature", s.getApiKey)
-		v1.GET("/apikey_records/deposit/:address", s.getApikeyDepositRecords)
 
 		// statistic
 		v1.GET("/statistic/realtime", s.getRealTimeOrderStatistic)
@@ -178,7 +165,7 @@ func (s *Bungo) getTxOffset(c *gin.Context) {
 		errorResponse(c, "invalid_address")
 		return
 	}
-	txMeta, err := s.store.LoadTxMeta(arId)
+	txMeta, err := s.store.LoadTransactionMetadata(arId)
 	if err != nil {
 		c.Data(404, "text/html; charset=utf-8", []byte("Not Found"))
 		return
@@ -218,7 +205,7 @@ func (s *Bungo) getChunk(c *gin.Context) {
 
 func (s *Bungo) getTx(c *gin.Context) {
 	id := c.Param("arid")
-	arTx, err := s.store.LoadTxMeta(id)
+	arTx, err := s.store.LoadTransactionMetadata(id)
 	if err == nil {
 		c.JSON(http.StatusOK, arTx)
 		return
@@ -232,7 +219,7 @@ func (s *Bungo) getTx(c *gin.Context) {
 func (s *Bungo) getTxField(c *gin.Context) {
 	arid := c.Param("arid")
 	field := c.Param("field")
-	txMeta, err := s.store.LoadTxMeta(arid)
+	txMeta, err := s.store.LoadTransactionMetadata(arid)
 	if err != nil {
 		log.Debug("get from local failed, proxy to arweave gateway", "err", err, "arId", arid, "field", field)
 		proxyArweaveGateway(c)
@@ -323,7 +310,7 @@ func (s *Bungo) getPeers(c *gin.Context) {
 	c.JSON(http.StatusOK, s.cache.GetPeers())
 }
 
-func txDataByMeta(txMeta *types.Transaction, db *Store) ([]byte, error) {
+func txDataByMeta(txMeta *types.Transaction, db *store.Store) ([]byte, error) {
 	size, err := strconv.ParseUint(txMeta.DataSize, 10, 64)
 	if err != nil {
 		return nil, err
@@ -341,7 +328,7 @@ func txDataByMeta(txMeta *types.Transaction, db *Store) ([]byte, error) {
 }
 
 // todo need stream
-func getArTxData(dataRoot, dataSize string, db *Store) ([]byte, error) {
+func getArTxData(dataRoot, dataSize string, db *store.Store) ([]byte, error) {
 	size, err := strconv.ParseUint(dataSize, 10, 64)
 	if err != nil {
 		return nil, err
@@ -490,45 +477,6 @@ func (s *Bungo) getBundler(c *gin.Context) {
 	c.JSON(http.StatusOK, schema.ResBundler{Bundler: s.bundler.Signer.Address})
 }
 
-func (s *Bungo) processApikeySpendBal(currency, apikey string, dataSize int64) error {
-	apikeyDetail, err := s.database.GetApiKeyDetail(apikey)
-	if err != nil {
-		return err
-	}
-
-	// exist currency balance
-	curBal, ok := apikeyDetail.TokenBalance[strings.ToUpper(currency)]
-	if !ok {
-		return errors.New("apiKey not the currency balance")
-	}
-	curBalDe, err := decimal.NewFromString(curBal.(string))
-	if err != nil {
-		return err
-	}
-	// calc fee
-	fee, err := s.CalcItemFee(currency, dataSize)
-	if err != nil {
-		return err
-	}
-	feeDe, err := decimal.NewFromString(fee.FinalFee)
-	if err != nil {
-		return err
-	}
-	endBalDe := curBalDe.Sub(feeDe)
-	if endBalDe.LessThan(decimal.NewFromInt(0)) {
-		// balance is insufficient
-		return errors.New("balance is insufficient")
-	}
-
-	// update db tokenBalance
-	apikeyDetail.TokenBalance[strings.ToUpper(currency)] = endBalDe.String()
-	if err = s.database.UpdateApikeyTokenBal(apikeyDetail.Address, apikeyDetail.TokenBalance); err != nil {
-		log.Error("UpdateApikeyTokenBal", "err", err)
-		return err
-	}
-	return nil
-}
-
 func (s *Bungo) submitItem(c *gin.Context) {
 	if c.GetHeader("Content-Type") != "application/octet-stream" {
 		errorResponse(c, "Wrong body type")
@@ -584,13 +532,7 @@ func (s *Bungo) submitItem(c *gin.Context) {
 	// check whether noFee mode
 	noFee := false
 	// if has apikey
-	apikey := c.GetHeader("X-API-KEY")
-	if len(apikey) > 0 {
-		if err := s.processApikeySpendBal(currency, apikey, size); err != nil {
-			errorResponse(c, err.Error())
-			return
-		}
-	}
+	apikey := ""
 
 	// process bundleItem
 	needSort := isSortItems(c)
@@ -600,7 +542,7 @@ func (s *Bungo) submitItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, schema.RespOrder{
+	c.JSON(http.StatusOK, schema.ResponseOrder{
 		ItemId:             ord.ItemId,
 		Size:               ord.Size,
 		Bundler:            s.bundler.Signer.Address,
@@ -610,146 +552,6 @@ func (s *Bungo) submitItem(c *gin.Context) {
 		PaymentExpiredTime: ord.PaymentExpiredTime,
 		ExpectedBlock:      ord.ExpectedBlock,
 	})
-}
-
-func (s *Bungo) submitNativeData(c *gin.Context) {
-	apiKey := c.GetHeader("X-API-KEY")
-	if len(apiKey) == 0 {
-		errorResponse(c, "Wrong X-API-KEY")
-		return
-	}
-	_, err := s.database.GetApiKeyDetail(apiKey)
-	if err != nil {
-		errorResponse(c, fmt.Sprintf("Wrong X-API-KEY: %s", err.Error()))
-		return
-	}
-
-	// get all query and assemble tags
-	queryMap := c.Request.URL.Query()
-	// query key must include "Content-Type"
-	if _, ok := queryMap["Content-Type"]; !ok {
-		errorResponse(c, "Query params must include Content-Type")
-		return
-	}
-	needSort := isSortItems(c)
-	tags := make([]types.Tag, 0, len(queryMap))
-	for k, values := range queryMap {
-		for _, val := range values {
-			tags = append(tags, types.Tag{
-				Name:  k,
-				Value: val,
-			})
-		}
-	}
-
-	if c.Request.Body == nil {
-		errorResponse(c, "can not submit null native data")
-		return
-	}
-
-	dataFile, err := os.CreateTemp(schema.TmpFileDir, "arseed-")
-	if err != nil {
-		c.Request.Body.Close()
-		errorResponse(c, err.Error())
-		return
-	}
-	defer func() {
-		c.Request.Body.Close()
-		dataFile.Close()
-		os.Remove(dataFile.Name())
-	}()
-	var dataBuf bytes.Buffer
-	var item types.BundleItem
-	// write up to schema.AllowMaxNativeDataSize to memory
-	size, err := setItemData(c, dataFile, &dataBuf)
-	if err != nil && err != io.EOF {
-		errorResponse(c, err.Error())
-		return
-	}
-	if size > schema.SubmitMaxSize {
-		errorResponse(c, schema.ErrDataTooBig.Error())
-		return
-	}
-
-	if size > schema.AllowStreamMinItemSize { // the body size > schema.AllowStreamMinItemSize, need write to tmp file
-		item, err = s.bundlerItemSigner.CreateAndSignItemStream(dataFile, "", "", tags)
-	} else {
-		item, err = s.bundlerItemSigner.CreateAndSignItem(dataBuf.Bytes(), "", "", tags)
-	}
-
-	if err != nil {
-		errorResponse(c, "assemble bundle item failed")
-		log.Error("s.bundlerItemSigner.CreateAndSignItem", "err", err)
-		return
-	}
-	currency := c.Param("currency")
-	// cal apikey balance
-	if err := s.processApikeySpendBal(currency, apiKey, size); err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-
-	// process submit item
-	order, err := s.ProcessSubmitItem(item, currency, true, apiKey, needSort, size)
-	if err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, schema.RespItemId{ItemId: order.ItemId, Size: order.Size})
-}
-
-func (s *Bungo) getOrdersByApiKey(c *gin.Context) {
-	apiKey := c.GetHeader("X-API-KEY")
-	_, err := s.database.GetApiKeyDetail(apiKey)
-	if err != nil {
-		errorResponse(c, "Wrong X-API-KEY")
-		return
-	}
-
-	cursorId, err := strconv.ParseInt(c.DefaultQuery("cursorId", "0"), 10, 64)
-	if err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-
-	pageSize, err := strconv.Atoi(c.DefaultQuery("size", "0"))
-	if err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-	MaxSize := 1000
-	if pageSize <= 0 || pageSize > MaxSize {
-		pageSize = MaxSize
-	}
-
-	sort := c.DefaultQuery("sort", "DESC")
-	orders, err := s.database.GetOrdersByApiKey(apiKey, cursorId, pageSize, sort)
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-	results := make([]schema.RespGetOrder, 0, len(orders))
-	for _, od := range orders {
-		results = append(results, schema.RespGetOrder{
-			ID: od.ID,
-			RespOrder: schema.RespOrder{
-				ItemId:             od.ItemId,
-				Size:               od.Size,
-				Bundler:            s.bundler.Signer.Address,
-				Currency:           od.Currency,
-				Decimals:           od.Decimals,
-				Fee:                od.Fee,
-				PaymentExpiredTime: od.PaymentExpiredTime,
-				ExpectedBlock:      od.ExpectedBlock,
-			},
-			PaymentStatus: od.PaymentStatus,
-			PaymentId:     od.PaymentId,
-			OnChainStatus: od.OnChainStatus,
-			Sort:          od.Sort,
-		})
-	}
-	c.JSON(http.StatusOK, results)
 }
 
 func (s *Bungo) getItemMeta(c *gin.Context) {
@@ -849,11 +651,11 @@ func (s *Bungo) getOrders(c *gin.Context) {
 		internalErrorResponse(c, err.Error())
 		return
 	}
-	results := make([]schema.RespGetOrder, 0, len(orders))
+	results := make([]schema.ResponseGetOrder, 0, len(orders))
 	for _, od := range orders {
-		results = append(results, schema.RespGetOrder{
+		results = append(results, schema.ResponseGetOrder{
 			ID: od.ID,
-			RespOrder: schema.RespOrder{
+			ResponseOrder: schema.ResponseOrder{
 				ItemId:             od.ItemId,
 				Size:               od.Size,
 				Bundler:            s.bundler.Signer.Address,
@@ -865,8 +667,7 @@ func (s *Bungo) getOrders(c *gin.Context) {
 			},
 			PaymentStatus: od.PaymentStatus,
 			PaymentId:     od.PaymentId,
-			OnChainStatus: od.OnChainStatus,
-			Sort:          od.Sort,
+			OnChainStatus: od.Status,
 		})
 	}
 	c.JSON(http.StatusOK, results)
@@ -999,20 +800,20 @@ func isSortItems(c *gin.Context) bool {
 
 func errorResponse(c *gin.Context, err string) {
 	// client error
-	c.JSON(http.StatusBadRequest, schema.RespErr{
+	c.JSON(http.StatusBadRequest, schema.ErrorResponse{
 		Err: err,
 	})
 }
 
 func notFoundResponse(c *gin.Context, err string) {
-	c.JSON(http.StatusNotFound, schema.RespErr{
+	c.JSON(http.StatusNotFound, schema.ErrorResponse{
 		Err: err,
 	})
 }
 
 func internalErrorResponse(c *gin.Context, err string) {
 	// internal error
-	c.JSON(http.StatusInternalServerError, schema.RespErr{
+	c.JSON(http.StatusInternalServerError, schema.ErrorResponse{
 		Err: err,
 	})
 }
@@ -1163,128 +964,6 @@ func decFileCnt(tmpFileName string) {
 	tmpFileMapLock.Lock()
 	defer tmpFileMapLock.Unlock()
 	tmpFileMap[tmpFileName] -= 1
-}
-
-func (s *Bungo) getApiKeyInfo(c *gin.Context) {
-	address := c.Param("address")
-	_, addr, err := account.IDCheck(address)
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-
-	detail, err := s.database.GetApiKeyDetailByAddress(addr)
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-	estimateCapDe := decimal.NewFromInt(0)
-	for symbol, bal := range detail.TokenBalance {
-		balDe, err := decimal.NewFromString(bal.(string))
-		if err != nil {
-			log.Error("decimal.NewFromString(balStr)", "err", err, "bal", bal)
-			continue
-		}
-		perFee := s.GetPerFee(symbol)
-		if perFee == nil {
-			continue
-		}
-		tokCap := decimal.NewFromInt(types.MAX_CHUNK_SIZE).Mul(balDe).DivRound(perFee.Base.Add(perFee.PerChunk), 0)
-		estimateCapDe = estimateCapDe.Add(tokCap)
-	}
-	if estimateCapDe.LessThan(decimal.NewFromInt(types.MAX_CHUNK_SIZE)) {
-		estimateCapDe = decimal.NewFromInt(0)
-	}
-
-	tokens := make(map[string]schema.TokBal)
-	for symbol, bal := range detail.TokenBalance {
-		perFee := s.GetPerFee(symbol)
-		if perFee == nil {
-			log.Error("s.GetPerFee(symbol) not found", "symbol", symbol)
-			continue
-		}
-		tokenTags := s.everpaySdk.SymbolToTagArr(symbol)
-		if len(tokenTags) == 0 {
-			continue
-		}
-		tokens[tokenTags[0]] = schema.TokBal{Symbol: symbol, Decimals: perFee.Decimals, Balance: bal.(string)}
-	}
-
-	c.JSON(http.StatusOK, schema.RespApiKey{
-		EstimateCap: estimateCapDe.String(),
-		Tokens:      tokens,
-	})
-}
-
-func (s *Bungo) getApiKey(c *gin.Context) {
-	timestamp := c.Param("timestamp")
-	signature := c.Param("signature")
-	timestampNum, err := strconv.ParseInt(timestamp, 10, 64)
-	if err != nil {
-		internalErrorResponse(c, "timestamp incorrect")
-		return
-	}
-	now := time.Now().Unix()
-	if now-timestampNum > 60 { // can not lose 60s
-		internalErrorResponse(c, "timestamp expired")
-		return
-	}
-
-	_, addr, err := goether.Ecrecover(accounts.TextHash([]byte(timestamp)), common.FromHex(signature))
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-
-	detail, err := s.database.GetApiKeyDetailByAddress(addr.String())
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-	c.JSON(http.StatusOK, detail.ApiKey)
-}
-
-func (s *Bungo) getApikeyDepositRecords(c *gin.Context) {
-	address := c.Param("address")
-	_, addr, err := account.IDCheck(address)
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-
-	rawId, err := strconv.ParseInt(c.DefaultQuery("rawId", "0"), 10, 64)
-	if err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-	num, err := strconv.ParseInt(c.DefaultQuery("num", "20"), 10, 64)
-	if err != nil {
-		errorResponse(c, err.Error())
-		return
-	}
-
-	receiptTxs, err := s.database.GetApiKeyDepositRecords(addr, rawId, int(num))
-	if err != nil {
-		internalErrorResponse(c, err.Error())
-		return
-	}
-	respRecords := make([]schema.RespReceiptEverTx, 0, len(receiptTxs))
-	for _, tx := range receiptTxs {
-		perFee := s.GetPerFee(tx.Symbol)
-		if perFee == nil {
-			continue
-		}
-		respRecords = append(respRecords, schema.RespReceiptEverTx{
-			RawId:     tx.RawId,
-			EverHash:  tx.EverHash,
-			Timestamp: tx.Nonce,
-			Symbol:    tx.Symbol,
-			Amount:    tx.Amount,
-			Decimals:  perFee.Decimals,
-		})
-	}
-
-	c.JSON(http.StatusOK, respRecords)
 }
 
 func (s *Bungo) getRealTimeOrderStatistic(c *gin.Context) {

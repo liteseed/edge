@@ -69,14 +69,14 @@ func (s *Bungo) broadcastTxTask(arId string) (err error) {
 		return
 	}
 
-	if !s.store.IsExistTxMeta(arId) { // if the arId not exist local db, then wait sync to local
+	if !s.store.DoesMetadataExist(arId) { // if the arId not exist local db, then wait sync to local
 		if err = s.FetchAndStoreTx(arId); err != nil {
 			log.Error("processBroadcast FetchAndStoreTx failed", "err", err, "arId", arId)
 			return err
 		}
 	}
 
-	txMeta, err := s.store.LoadTxMeta(arId)
+	txMeta, err := s.store.LoadTransactionMetadata(arId)
 	if err != nil {
 		log.Error("s.store.LoadTxMeta(arId)", "err", err, "arId", arId)
 		return err
@@ -115,10 +115,10 @@ func (s *Bungo) broadcastTxTask(arId string) (err error) {
 }
 
 func (s *Bungo) broadcastTxMetaTask(arId string) (err error) {
-	if !s.store.IsExistTxMeta(arId) {
+	if !s.store.DoesMetadataExist(arId) {
 		return schema.ErrNotExist
 	}
-	txMeta, err := s.store.LoadTxMeta(arId)
+	txMeta, err := s.store.LoadTransactionMetadata(arId)
 	if err != nil {
 		log.Error("s.store.LoadTxMeta(arId)", "err", err, "arId", arId)
 		return err

@@ -10,6 +10,7 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/store"
 )
 
 type TaskManager struct {
@@ -26,7 +27,7 @@ func NewTaskMg() *TaskManager {
 	}
 }
 
-func (m *TaskManager) InitTaskMg(boltDb *Store) error {
+func (m *TaskManager) InitTaskMg(boltDb *store.Store) error {
 	taskIds, err := boltDb.LoadAllPendingTaskIds()
 	if err != nil {
 		return err

@@ -7,11 +7,10 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/liteseed/bungo/config/schema"
 	"github.com/liteseed/bungo/store"
-	"github.com/liteseed/bungo/store/bolt"
 )
 
 type Config struct {
-	store          store.Store
+	store          *store.Store
 	wdb            *Wdb
 	speedTxFee     int64
 	bundleServeFee int64
@@ -20,12 +19,12 @@ type Config struct {
 	Param          schema.Param
 }
 
-func New(boltDirectory string, sqliteDir string) *Config {
-	memory, err := bolt.NewBoltDB(boltDirectory)
+func New(bolt string, sqlite string) *Config {
+	store, err := store.NewBoltStore(bolt)
 	if err != nil {
 		panic(err)
 	}
-	wdb := NewSqliteDb(sqliteDir)
+	wdb := NewSqliteDb(sqlite)
 	err = wdb.Migrate()
 	if err != nil {
 		panic(err)
@@ -39,7 +38,7 @@ func New(boltDirectory string, sqliteDir string) *Config {
 		panic(err)
 	}
 	return &Config{
-		store:          memory,
+		store:          store,
 		wdb:            wdb,
 		speedTxFee:     fee.SpeedTxFee,
 		bundleServeFee: fee.BundleServeFee,

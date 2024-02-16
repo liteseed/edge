@@ -1,18 +1,17 @@
-package store
+package bolt
 
 import (
 	"fmt"
 	"sort"
 	"testing"
 
-	"github.com/liteseed/bungo/store/bolt"
 	"github.com/liteseed/bungo/schema"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBoltDB(t *testing.T) {
 	dataPath := "./tmp/seed.db"
-	bktName := schema.ConstantsBucket // cne be replaced by any bucket in schema
+	bktName := schema.Constants // cne be replaced by any bucket in schema
 	keyNum := 100
 	// prepare key&val to test
 	keys := make([]string, keyNum)
@@ -25,7 +24,7 @@ func TestBoltDB(t *testing.T) {
 	}
 	assert.Equal(t, keyNum, len(keys))
 	// create a bolt db
-	boltDb, err := bolt.NewBoltDB(dataPath)
+	boltDb, err := NewBoltDB(dataPath)
 	assert.NoError(t, err)
 
 	// test Put & Get

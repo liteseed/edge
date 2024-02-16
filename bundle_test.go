@@ -7,6 +7,7 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/store"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,7 +53,7 @@ func TestSaveDelItem(t *testing.T) {
 	assert.NoError(t, err)
 	item, err := bundlSigner.CreateAndSignItem([]byte("data 01"), "", "", nil)
 	assert.NoError(t, err)
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	aa := &Bungo{
 		store: s,
@@ -73,7 +74,7 @@ func TestParseAndSaveBundleItems(t *testing.T) {
 	cli := goar.NewClient(arNode)
 	data, err := cli.GetTransactionData(arId)
 	assert.NoError(t, err)
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	aa := &Bungo{
 		store: s,

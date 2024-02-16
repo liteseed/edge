@@ -2,7 +2,6 @@ package bungo
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/everFinance/go-everpay/account"
 	"github.com/everFinance/go-everpay/config"
 	sdkSchema "github.com/everFinance/go-everpay/sdk/schema"
@@ -24,11 +22,9 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
-	"github.com/google/uuid"
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/schema"
 	"github.com/panjf2000/ants/v2"
-	"github.com/shopspring/decimal"
 	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
 )
@@ -232,7 +228,7 @@ func (s *Bungo) watchEverReceiptTxs() {
 	}
 }
 
-func processPayItems(query *database.Query, itemIds []string, urtx schema.ReceiptEverTx) error {
+func processPayItems(query *database.Database, itemIds []string, urtx schema.ReceiptEverTx) error {
 	// get orders by itemIds
 	ordArr, err := getUnPaidOrdersByItemIds(query, itemIds)
 	if err != nil {
@@ -283,84 +279,6 @@ func processPayItems(query *database.Query, itemIds []string, urtx schema.Receip
 	return nil
 }
 
-func processPayApikey(query *database.Query, urtx schema.ReceiptEverTx) error {
-	if urtx.Amount == "0" {
-		if err := query.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-			log.Error("s.query.UpdateReceiptStatus5", "err", err, "id", urtx.RawId)
-		}
-		return errors.New("amount can not be 0")
-	}
-
-	from := common.HexToAddress(urtx.From).String()
-	exist, apikey := query.ExistApikey(from)
-	if !exist {
-		// create new record
-		newKey, err := uuid.NewUUID()
-		if err != nil {
-			log.Error("uuid.NewUUID()", "err", err)
-			return err
-		}
-		newKeyStr := newKey.String()
-		// ecrcover public
-		public, err := ecrecoverPubkey(urtx.EverHash, urtx.Sig)
-		if err != nil {
-			log.Error("EcrecoverPubkey(urtx.EverHash,urtx.Sig)", "everHash", urtx.EverHash, "sig", urtx.Sig)
-			return err
-		}
-
-		publicKey, err := crypto.UnmarshalPubkey(common.Hex2Bytes(public))
-		if err != nil {
-			log.Error("crypto.UnmarshalPubkey(common.Hex2Bytes(public))", "err", err)
-			return err
-		}
-		encPub, err := ecies.Encrypt(rand.Reader, ecies.ImportECDSAPublic(publicKey), []byte(newKeyStr), nil, nil)
-		if err != nil {
-			log.Error("ecies.Encrypt", "err", err)
-			return err
-		}
-
-		err = query.InsertApiKey(schema.AutoApiKey{
-			ApiKey:       newKeyStr,
-			PubKey:       public,
-			Address:      from,
-			EncryptedKey: common.Bytes2Hex(encPub),
-			TokenBalance: map[string]interface{}{
-				strings.ToUpper(urtx.Symbol): urtx.Amount,
-			},
-		})
-		if err != nil {
-			log.Error("s.query.InsertApiKey", "err", err)
-			return err
-		}
-	} else {
-		// add token balance
-		tokBalMap := make(map[string]interface{})
-		for k, v := range apikey.TokenBalance {
-			tokBalMap[k] = v
-		}
-		amountDe, _ := decimal.NewFromString(urtx.Amount)
-		if oldBal, ok := tokBalMap[strings.ToUpper(urtx.Symbol)]; ok {
-			oldBalDe, _ := decimal.NewFromString(oldBal.(string))
-			newBalDe := amountDe.Add(oldBalDe)
-			tokBalMap[strings.ToUpper(urtx.Symbol)] = newBalDe.String()
-		} else {
-			tokBalMap[strings.ToUpper(urtx.Symbol)] = urtx.Amount
-		}
-
-		// update db
-		if err := query.UpdateApikeyTokenBal(from, tokBalMap); err != nil {
-			log.Error("s.query.UpdateApikeyTokenBal(from,tokBalMap)", "err", err)
-			return err
-		}
-	}
-	//  更新 spent 状态
-	if err := query.UpdateReceiptStatus(urtx.RawId, schema.Spent, nil); err != nil {
-		log.Error("s.query.UpdateReceiptStatus8(urtx.ID,schema.Spent,nil)", "err", err, "id", urtx.RawId)
-		return err
-	}
-	return nil
-}
-
 func (s *Bungo) mergeReceiptEverTxs() {
 	unspentRpts, err := s.database.GetReceiptsByStatus(schema.UnSpent)
 	if err != nil {
@@ -381,19 +299,6 @@ func (s *Bungo) mergeReceiptEverTxs() {
 		case ItemPaymentAction:
 			if err := processPayItems(s.database, itemIds, urtx); err != nil {
 				log.Error("processPayItemOrder", "err", err)
-				continue
-			}
-
-		case ApikeyPaymentAction:
-			if s.GetPerFee(urtx.Symbol) == nil {
-				log.Error("s.bundlePerFeeMap[strings.ToUpper(urtx.Symbol)]", "symbol", urtx.Symbol)
-				if err = s.database.UpdateReceiptStatus(urtx.RawId, schema.UnRefund, nil); err != nil {
-					log.Error("s.query.UpdateReceiptStatus6", "err", err, "id", urtx.RawId)
-				}
-				continue
-			}
-			if err := processPayApikey(s.database, urtx); err != nil {
-				log.Error("processPayApikey", "err", err)
 				continue
 			}
 		default:
@@ -487,7 +392,7 @@ func parseTxData(txData string) (action string, itemIds []string, err error) {
 	}
 }
 
-func getUnPaidOrdersByItemIds(query *database.Query, itemIds []string) ([]schema.Order, error) {
+func getUnPaidOrdersByItemIds(query *database.Database, itemIds []string) ([]schema.Order, error) {
 	ordArr := make([]schema.Order, 0, len(itemIds))
 	for _, itemId := range itemIds {
 		ord, err := query.GetUnPaidOrder(itemId)
@@ -630,7 +535,7 @@ func (s *Bungo) onChainOrds(ords []schema.Order) (arTx types.Transaction, onChai
 		}
 		od, exist := s.database.ExistProcessedOrderItem(ord.ItemId)
 		if exist {
-			if err = s.database.UpdateOrdOnChainStatus(od.ItemId, od.OnChainStatus, nil); err != nil {
+			if err = s.database.UpdateOrdOnChainStatus(od.ItemId, od.Status, nil); err != nil {
 				log.Error("s.query.UpdateOrdOnChainStatus(od.ItemId,od.OnChainStatus)", "err", err, "itemId", od.ItemId)
 			}
 			continue
@@ -927,7 +832,7 @@ func (s *Bungo) parseAndSaveBundleTx() {
 	}
 	for _, arId := range arIds {
 		// get tx data
-		arTxMeta, err := s.store.LoadTxMeta(arId)
+		arTxMeta, err := s.store.LoadTransactionMetadata(arId)
 		if err != nil {
 			log.Error("s.store.LoadTxMeta(arId)", "err", err, "arId", arId)
 			continue

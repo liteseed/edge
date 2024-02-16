@@ -19,7 +19,7 @@ type RespReceiptEverTx struct {
 	Decimals  int    `json:"decimals"`
 }
 
-type RespOrder struct {
+type ResponseOrder struct {
 	ItemId             string `json:"itemId"` // bundleItem id
 	Size               int64  `json:"size"`
 	Bundler            string `json:"bundler"`  // fee receiver address
@@ -30,9 +30,9 @@ type RespOrder struct {
 	ExpectedBlock      int64  `json:"expectedBlock"`
 }
 
-type RespGetOrder struct {
+type ResponseGetOrder struct {
 	ID uint `json:"id"`
-	RespOrder
+	ResponseOrder
 	PaymentStatus string `json:"paymentStatus"` // "unpaid", "paid", "expired"
 	PaymentId     string `json:"paymentId"`
 	OnChainStatus string `json:"onChainStatus"` // "waiting","pending","success","failed"
@@ -72,10 +72,10 @@ type TokBal struct {
 	Balance  string `json:"balance"`
 }
 
-type RespErr struct {
+type ErrorResponse struct {
 	Err string `json:"error"`
 }
 
-func (r RespErr) Error() string {
+func (r ErrorResponse) Error() string {
 	return r.Err
 }

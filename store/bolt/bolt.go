@@ -22,15 +22,15 @@ type BoltDB struct {
 	Db *bolt.DB
 }
 
-func NewBoltDB(boltDirPath string) (*BoltDB, error) {
-	if len(boltDirPath) == 0 {
-		return nil, errors.New("boltDb dir path can not null")
+func NewBoltDB(directory string) (*BoltDB, error) {
+	if len(directory) == 0 {
+		return nil, errors.New("bolt: directory can not null")
 	}
-	if err := os.MkdirAll(boltDirPath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(directory, os.ModePerm); err != nil {
 		return nil, err
 	}
 
-	Db, err := bolt.Open(path.Join(boltDirPath, boltName), 0660, &bolt.Options{Timeout: 2 * time.Second, InitialMmapSize: 10e6})
+	Db, err := bolt.Open(path.Join(directory, boltName), 0660, &bolt.Options{Timeout: 2 * time.Second, InitialMmapSize: 10e6})
 	if err != nil {
 		if err == bolt.ErrTimeout {
 			return nil, errors.New("cannot obtain database lock, database may be in use by another process")
@@ -43,17 +43,17 @@ func NewBoltDB(boltDirPath string) (*BoltDB, error) {
 	}
 	if err := boltDB.Db.Update(func(tx *bolt.Tx) error {
 		bucketNames := []string{
-			schema.ChunkBucket,
-			schema.TxDataEndOffSetBucket,
-			schema.TxMetaBucket,
-			schema.ConstantsBucket,
-			schema.TaskIdPendingPoolBucket,
-			schema.TaskBucket,
+			schema.Chunks,
+			schema.TransactionOffset,
+			schema.TransactionMetadata,
+			schema.Constants,
+			schema.PendingTasks,
+			schema.Tasks,
 			schema.BundleItemBinary,
 			schema.BundleItemMeta,
 			schema.BundleWaitParseArIdBucket,
 			schema.BundleArIdToItemIdsBucket,
-			schema.StatisticBucket,
+			schema.OrderStatistics,
 		}
 		return createBuckets(tx, bucketNames)
 	}); err != nil {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/everFinance/goar"
+	"github.com/liteseed/bungo/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +14,7 @@ func TestFetchAndStoreTx(t *testing.T) {
 	dbPath := "./data/tmp.db"
 	arNode := "https://arweave.net"
 	cli := goar.NewClient(arNode)
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	aa := &Bungo{store: s, arCli: cli}
 	err = aa.FetchAndStoreTx(arId)
@@ -27,7 +28,7 @@ func TestSaveSubmitTx(t *testing.T) {
 	dbPath := "./data/tmp.db"
 	arNode := "https://arweave.net"
 	cli := goar.NewClient(arNode)
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	aa := &Bungo{store: s, arCli: cli}
 	tx, err := cli.GetTransactionByID(arId)
@@ -43,7 +44,7 @@ func TestSyncAddTxDataEndOffset(t *testing.T) {
 	dbPath := "./data/tmp.db"
 	arNode := "https://arweave.net"
 	cli := goar.NewClient(arNode)
-	s, err := NewBoltStore(dbPath)
+	s, err := store.NewBoltStore(dbPath)
 	assert.NoError(t, err)
 	aa := &Bungo{store: s, arCli: cli}
 	tx, err := cli.GetTransactionByID(arId)

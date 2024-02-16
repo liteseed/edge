@@ -42,9 +42,7 @@ func (s *Bungo) ProcessSubmitItem(item types.BundleItem, currency string, isNoFe
 		SignType:      item.SignatureType,
 		Size:          size,
 		ExpectedBlock: s.cache.GetInfo().Height + s.expectedRange,
-		OnChainStatus: schema.WaitOnChain,
-		ApiKey:        apiKey,
-		Sort:          isSort,
+		Status:        schema.WaitOnChain,
 	}
 	// calc fee
 	respFee, err := s.CalcItemFee(currency, order.Size)

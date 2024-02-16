@@ -21,8 +21,5 @@ type Order struct {
 	PaymentStatus string `gorm:"index:idx0" json:"paymentStatus"` // "unpaid", "paid", "expired"
 	PaymentId     string `json:"paymentId"`                       // everHash
 
-	OnChainStatus string `gorm:"index:idx5" json:"onChainStatus"` // "waiting","pending","success","failed"
-	ApiKey        string `gorm:"index:idx2" json:"-"`
-	Sort          bool   `json:"sort"`                     // upload items to arweave by sequence
-	Kafka         bool   `gorm:"index:idx0"  json:"kafka"` // send to kafka
+	Status string `gorm:"index:idx5" json:"status"` // "waiting","pending","success","failed"
 }

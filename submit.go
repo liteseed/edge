@@ -9,6 +9,7 @@ import (
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
 	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/store"
 	"gorm.io/gorm"
 )
 
@@ -49,12 +50,12 @@ func (s *Bungo) SaveSubmitTx(arTx types.Transaction) error {
 	}
 
 	// 2. check meta exist
-	if s.store.IsExistTxMeta(arTx.ID) {
+	if s.store.DoesMetadataExist(arTx.ID) {
 		return schema.ErrExistTx
 	}
 
 	// 3. save tx meta
-	if err := s.store.SaveTxMeta(arTx); err != nil {
+	if err := s.store.SaveTransactionMetadata(arTx); err != nil {
 		log.Error("s.store.SaveTxMeta(arTx)", "err", err, "arTx", arTx.ID)
 		return err
 	}
@@ -94,7 +95,7 @@ func (s *Bungo) SaveSubmitTx(arTx types.Transaction) error {
 func (s *Bungo) FetchAndStoreTx(arId string) (err error) {
 	// 1. sync arTxMeta
 	arTxMeta := &types.Transaction{}
-	arTxMeta, err = s.store.LoadTxMeta(arId)
+	arTxMeta, err = s.store.LoadTransactionMetadata(arId)
 	if err != nil {
 		// get txMeta from arweave network
 		arTxMeta, err = s.arCli.GetUnconfirmedTx(arId) // this api can return all tx (unconfirmed and confirmed)
@@ -111,9 +112,9 @@ func (s *Bungo) FetchAndStoreTx(arId string) (err error) {
 	}
 
 	// if arTxMeta not exist local, store it
-	if !s.store.IsExistTxMeta(arId) {
+	if !s.store.DoesMetadataExist(arId) {
 		// store txMeta
-		if err := s.store.SaveTxMeta(*arTxMeta); err != nil {
+		if err := s.store.SaveTransactionMetadata(*arTxMeta); err != nil {
 			log.Error("s.store.SaveTxMeta(arTx)", "err", err, "arTx", arTxMeta.ID)
 			return err
 		}
@@ -200,10 +201,10 @@ func (s *Bungo) syncAddTxDataEndOffset(dataRoot, dataSize string) error {
 	curEndOffset := s.store.LoadAllDataEndOffset()
 	newEndOffset := curEndOffset + txSize
 
-	return s.store.AtomicSyncDataEndOffset(curEndOffset, newEndOffset, dataRoot, dataSize)
+	return s.store.AtomicSync(curEndOffset, newEndOffset, dataRoot, dataSize)
 }
 
-func setTxDataChunks(arTx types.Transaction, txData []byte, db *Store) error {
+func setTxDataChunks(arTx types.Transaction, txData []byte, db *store.Store) error {
 	if len(txData) == 0 {
 		return schema.ErrNullData
 	}
@@ -245,7 +246,7 @@ func generateChunks(arTxMeta types.Transaction, data []byte) ([]*types.GetChunk,
 	return chunks, nil
 }
 
-func storeChunk(chunk types.GetChunk, db *Store) error {
+func storeChunk(chunk types.GetChunk, db *store.Store) error {
 	// generate chunkStartOffset
 	txDataEndOffset, err := db.LoadTxDataEndOffSet(chunk.DataRoot, chunk.DataSize)
 	if err != nil {

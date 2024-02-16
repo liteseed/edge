@@ -16,12 +16,13 @@ import (
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/schema"
 	"github.com/liteseed/bungo/sdk"
+	"github.com/liteseed/bungo/store"
 )
 
 var log = common.NewLog("bungo")
 
 type Bungo struct {
-	store           *Store
+	store           *store.Store
 	engine          *gin.Engine
 	submitLocker    sync.Mutex
 	endOffsetLocker sync.Mutex
@@ -37,7 +38,7 @@ type Bungo struct {
 	// ANS-104 bundle
 	arseedCli           *sdk.ArSeedCli
 	everpaySdk          *paySdk.SDK
-	database            *database.Query
+	database            *database.Database
 	bundler             *goar.Wallet
 	bundlerItemSigner   *goar.ItemSigner
 	EnableManifest      bool
@@ -54,7 +55,7 @@ func New(
 	port string, useKafka bool, kafkaUri string,
 ) *Bungo {
 
-	store, err := NewBoltStore(boltDirectory)
+	store, err := store.NewBoltStore(boltDirectory)
 	if err != nil {
 		panic(err)
 	}
