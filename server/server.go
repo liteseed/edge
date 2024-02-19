@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/liteseed/bungo/api"
 	"github.com/liteseed/bungo/cache"
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/store"
@@ -9,20 +10,19 @@ import (
 
 type Server struct {
 	engine *gin.Engine
-	cache  *cache.Cache
-	db     *database.Database
-	store  *store.Store
 }
 
 func New(c *cache.Cache, db *database.Database, s *store.Store) *Server {
+	a := api.New(c, db, s)
+
 	r := gin.Default()
-	return &Server{engine: r, cache: c, db: db, store: s}
+
+	r.GET("/status", a.GetStatus)
+	r.POST("/data", a.PostData)
+
+	return &Server{engine: r}
 }
 
 func (s *Server) Run(port string) {
-	s.registerRoutes()
 	s.engine.Run(port)
-}
-
-func (s *Server) registerRoutes() {
 }

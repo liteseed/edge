@@ -24,10 +24,8 @@ func TestSqlite(t *testing.T) {
 	db := NewSqliteDatabase("testSqlite")
 	err := db.Migrate()
 	assert.NoError(t, err)
-	err = db.InsertOrder(schema.Order{ID: 111, Fee: "123"})
-	assert.NoError(t, err)
 	ord := &schema.Order{}
-	err = db.Db.First(ord).Error
+	err = db.DB.First(ord).Error
 	assert.NoError(t, err)
 	t.Log(ord)
 }

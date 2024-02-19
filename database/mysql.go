@@ -14,5 +14,5 @@ func NewMysqlDatabase(DSN string) *Database {
 	if err != nil {
 		panic(err)
 	}
-	return &Database{Db: db}
+	return &Database{DB: db}
 }

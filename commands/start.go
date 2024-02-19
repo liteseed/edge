@@ -40,6 +40,7 @@ func start(context *cli.Context) error {
 	if err = db.Migrate(); err != nil {
 		log.Fatal(err)
 	}
+
 	store, err := store.NewBoltStore(bolt)
 	if err != nil {
 		log.Fatal(err)
