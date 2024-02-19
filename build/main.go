@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/liteseed/bungo/commands"
-	_ "github.com/mkevac/debugcharts"
 	"github.com/urfave/cli/v2"
 )
 

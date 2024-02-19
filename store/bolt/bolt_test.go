@@ -5,13 +5,13 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/utils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBoltDB(t *testing.T) {
 	dataPath := "./tmp/seed.db"
-	bktName := schema.Constants // cne be replaced by any bucket in schema
+	bktName := utils.DataStore // cne be replaced by any bucket in schema
 	keyNum := 100
 	// prepare key&val to test
 	keys := make([]string, keyNum)
@@ -54,7 +54,7 @@ func TestBoltDB(t *testing.T) {
 	}
 	for i := 0; i < keyNum; i++ {
 		_, err = boltDb.Get(bktName, keys[i])
-		assert.Equal(t, err, schema.ErrNotExist)
+		assert.Equal(t, err, utils.ErrDoesNotExist)
 	}
 }
 

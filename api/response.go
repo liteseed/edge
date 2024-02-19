@@ -1,29 +1,20 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/schema"
 )
 
 func BadRequest(c *gin.Context, err string) {
-	// client error
-	c.JSON(http.StatusBadRequest, schema.ErrorResponse{
-		Err: err,
-	})
+	c.JSON(http.StatusBadRequest, err)
 }
 
-func NotFound(c *gin.Context, err string) {
-	c.JSON(http.StatusNotFound, schema.ErrorResponse{
-		Err: err,
-	})
+func NotFound(c *gin.Context) {
+	c.JSON(http.StatusNotFound, errors.New("not found"))
 }
 
-func InternalServerError(c *gin.Context, err string) {
-	// internal error
-	c.JSON(http.StatusInternalServerError, schema.ErrorResponse{
-		Err: err,
-	})
+func InternalServerError(c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, errors.New("something went wrong"))
 }
-

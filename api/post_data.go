@@ -2,25 +2,23 @@ package api
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
+	"github.com/google/uuid"
+	"github.com/liteseed/bungo/database/schema"
 )
 
 type PostDataResponse struct {
-	Id   string `json:"id"`
-	Size int64  `json:"size"`
+	Id string `json:"id"`
 }
 
 // PostData
 //
 // POST /data
 func (a *API) PostData(c *gin.Context) {
-	log.Println("POST DATA")
 	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
 	if err != nil {
 		log.Println("request has no content length header!")
@@ -32,8 +30,49 @@ func (a *API) PostData(c *gin.Context) {
 			fmt.Sprintf("Data item size is currently limited to %d bytes!", MAX_DATA_ITEM_SIZE),
 		)
 	}
-	data, err := io.ReadAll(c.Request.Body)
+	form, err := c.MultipartForm()
+	if err != nil {
+		BadRequest(
+			c,
+			"Unable to parse data",
+		)
+	}
+	files := form.File["files"]
 
-	id, err := a.store.Save(data)
-	c.Render(http.StatusOK, render.JSON{Data: (PostDataResponse{Id: id, Size: int64(contentLength)})})
+	o := &schema.Order{
+		ID:     uuid.New(),
+		Status: schema.Queued,
+	}
+	// SAVE TO DATABASE TO TRACK STATUS
+	err = a.db.CreateOrder(o)
+	if err != nil {
+		log.Println(err)
+		InternalServerError(c)
+	}
+
+	for _, file := range files {
+		// SAVE FILE TO OBJECT STORE
+		data := []byte{}
+		f, err := file.Open()
+		if err != nil {
+			BadRequest(c, err.Error())
+		}
+		f.Read(data)
+
+		id, err := a.store.Save(data)
+		if err != nil {
+			log.Println(err)
+			InternalServerError(c)
+		}
+		a.db.CreateStore(&schema.Store{
+			ID:      id,
+			OrderID: o.ID,
+		})
+		if err != nil {
+			log.Println(err)
+			InternalServerError(c)
+		}
+	}
+
+	c.JSON(http.StatusOK, PostDataResponse{Id: o.ID.String()})
 }

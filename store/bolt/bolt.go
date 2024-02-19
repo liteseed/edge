@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/liteseed/bungo/schema"
+	"github.com/liteseed/bungo/utils"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -42,20 +42,10 @@ func NewBoltDB(directory string) (*BoltDB, error) {
 		Db: Db,
 	}
 	if err := boltDB.Db.Update(func(tx *bolt.Tx) error {
-		bucketNames := []string{
-			schema.Chunks,
-			schema.TransactionOffset,
-			schema.TransactionMetadata,
-			schema.Constants,
-			schema.PendingTasks,
-			schema.Tasks,
-			schema.BundleItemBinary,
-			schema.BundleItemMeta,
-			schema.BundleWaitParseArIdBucket,
-			schema.BundleArIdToItemIdsBucket,
-			schema.OrderStatistics,
+		buckets := []string{
+			utils.DataStore,
 		}
-		return createBuckets(tx, bucketNames)
+		return createBuckets(tx, buckets)
 	}); err != nil {
 		return nil, err
 	}
@@ -80,17 +70,11 @@ func (s *BoltDB) Get(bucket, key string) (data []byte, err error) {
 	err = s.Db.View(func(tx *bolt.Tx) error {
 		data = tx.Bucket([]byte(bucket)).Get([]byte(key))
 		if data == nil {
-			err = schema.ErrNotExist
-			return err
+			return utils.ErrDoesNotExist
 		}
 		return nil
 	})
 	return
-}
-
-func (s *BoltDB) GetStream(bucket, key string) (data *os.File, err error) {
-
-	return nil, schema.ErrNotImplement
 }
 
 func (s *BoltDB) GetAllKey(bucket string) (keys []string, err error) {
@@ -102,6 +86,10 @@ func (s *BoltDB) GetAllKey(bucket string) (keys []string, err error) {
 		})
 	})
 	return
+}
+
+func (s *BoltDB) GetStream() error {
+	return utils.ErrUnimplemented
 }
 
 func (s *BoltDB) Delete(bucket, key string) (err error) {

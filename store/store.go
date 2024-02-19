@@ -1,17 +1,14 @@
 package store
 
 import (
-	"os"
-
 	"github.com/google/uuid"
+	"github.com/liteseed/bungo/utils"
 )
 
 type IStore interface {
 	Put(bucket string, key string, value interface{}) (err error)
 
 	Get(bucket string, key string) (data []byte, err error)
-
-	GetStream(bucket string, key string) (data *os.File, err error)
 
 	GetAllKey(bucket string) (keys []string, err error)
 
@@ -28,8 +25,8 @@ type Store struct {
 	KVDb IStore
 }
 
-func (s *Store) Save(data []byte) (string, error) {
-	id := uuid.New().String()
-	s.KVDb.Put(data_store, id, data)
-	return id, nil
+func (s *Store) Save(data []byte) (uuid.UUID, error) {
+	id := uuid.New()
+	err := s.KVDb.Put(utils.DataStore, id.String(), data)
+	return id, err
 }

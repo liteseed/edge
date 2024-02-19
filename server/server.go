@@ -18,7 +18,9 @@ func New(c *cache.Cache, db *database.Database, s *store.Store) *Server {
 	r := gin.Default()
 
 	r.GET("/status", a.GetStatus)
-	r.POST("/data", a.PostData)
+
+	r.GET("/:id", a.GetData)
+	r.POST("/", a.PostData)
 
 	return &Server{engine: r}
 }
