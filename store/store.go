@@ -10,8 +10,6 @@ type IStore interface {
 
 	Get(bucket string, key string) (data []byte, err error)
 
-	GetAllKey(bucket string) (keys []string, err error)
-
 	Delete(bucket string, key string) (err error)
 
 	Close() (err error)
@@ -29,4 +27,8 @@ func (s *Store) Save(data []byte) (uuid.UUID, error) {
 	id := uuid.New()
 	err := s.KVDb.Put(utils.DataStore, id.String(), data)
 	return id, err
+}
+
+func (s *Store) Get(id string) ([]byte, error) {
+	return s.KVDb.Get(utils.DataStore, id)
 }

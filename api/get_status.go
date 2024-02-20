@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetStatus reports if the server is operational.
+// GET Status reports if the server is operational.
 //
 // GET /status
 func (a *API) GetStatus(c *gin.Context) {

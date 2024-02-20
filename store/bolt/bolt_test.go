@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/liteseed/bungo/utils"
-	"github.com/stretchr/testify/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestBoltDB(t *testing.T) {
@@ -25,17 +25,17 @@ func TestBoltDB(t *testing.T) {
 	assert.Equal(t, keyNum, len(keys))
 	// create a bolt db
 	boltDb, err := NewBoltDB(dataPath)
-	assert.NoError(t, err)
+	assert.NilError(t, err)
 
 	// test Put & Get
 	for i := 0; i < keyNum; i++ {
 		err = boltDb.Put(bktName, keys[i], values[i])
-		assert.NoError(t, err)
+		assert.NilError(t, err)
 	}
 
 	for i := 0; i < keyNum; i++ {
 		val, err := boltDb.Get(bktName, keys[i])
-		assert.NoError(t, err)
+		assert.NilError(t, err)
 		assert.Equal(t, values[i], val)
 	}
 
@@ -44,13 +44,13 @@ func TestBoltDB(t *testing.T) {
 	// GetAllKey return order may different from keys
 	sort.Strings(allKeys)
 	sort.Strings(keys)
-	assert.NoError(t, err)
+	assert.NilError(t, err)
 	assert.Equal(t, keys, allKeys)
 
 	// test Delete
 	for i := 0; i < keyNum; i++ {
 		err = boltDb.Delete(bktName, keys[i])
-		assert.NoError(t, err)
+		assert.NilError(t, err)
 	}
 	for i := 0; i < keyNum; i++ {
 		_, err = boltDb.Get(bktName, keys[i])
@@ -80,23 +80,23 @@ func TestBoltDB(t *testing.T) {
 // 	// create S3DB
 // 	s, err := NewS3DB(accKey, secretKey, Region, prefix)
 // 	// if the bucket exist try a complex prefix, because the bucket name is unique in a specific aws region
-// 	assert.NoError(t, err)
+// 	assert.NilError(t, err)
 //
 // 	// test Put & Get
 // 	for i := 0; i < keyNum; i++ {
 // 		err = s.Put(bktName, keys[i], values[i])
-// 		assert.NoError(t, err)
+// 		assert.NilError(t, err)
 // 	}
 //
 // 	for i := 0; i < keyNum; i++ {
 // 		val, err := s.Get(bktName, keys[i])
-// 		assert.NoError(t, err)
+// 		assert.NilError(t, err)
 // 		assert.Equal(t, values[i], val)
 // 	}
 //
 // 	// test GetAllKey from a bucket
 // 	allKeys, err := s.GetAllKey(bktName)
-// 	assert.NoError(t, err)
+// 	assert.NilError(t, err)
 // 	// GetAllKey return order may different from keys
 // 	sort.Strings(allKeys)
 // 	sort.Strings(keys)
@@ -107,7 +107,7 @@ func TestBoltDB(t *testing.T) {
 // 	// test Delete
 // 	for i := 0; i < keyNum; i++ {
 // 		err = s.Delete(bktName, keys[i])
-// 		assert.NoError(t, err)
+// 		assert.NilError(t, err)
 // 	}
 // 	for i := 0; i < keyNum; i++ {
 // 		_, err = s.Get(bktName, keys[i])

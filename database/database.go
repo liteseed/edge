@@ -1,14 +1,14 @@
 package database
 
 import (
-	"github.com/google/uuid"
 	"github.com/liteseed/bungo/database/schema"
 	"gorm.io/gorm"
 )
 
 const (
-	SQLite = "sqlite"
-	MySQL  = "mysql"
+	SQLite     = "sqlite"
+	MySQL      = "mysql"
+	PostgreSQL = "postgres"
 )
 
 type Database struct {
@@ -20,13 +20,13 @@ func New(path string, database string) (*Database, error) {
 	switch database {
 	default:
 		db = NewSqliteDatabase(path)
-
 	}
-	return db, nil
+	err := db.Migrate()
+	return db, err
 }
 
 func (db *Database) Migrate() error {
-	err := db.DB.AutoMigrate(&schema.Order{})
+	err := db.DB.AutoMigrate(&schema.Order{}, &schema.Store{})
 	return err
 }
 
@@ -38,14 +38,16 @@ func (db *Database) CreateStore(s *schema.Store) error {
 	return db.DB.Create(&s).Error
 }
 
-func (db *Database) GetOrder(key string) (*schema.Order, error) {
-	o := schema.Order{}
-	id, err := uuid.Parse(key)
-	if err != nil {
-		return nil, err
-	}
-	err = db.DB.Where("id = ?", id).First(&o).Error
-	return &o, err
+func (db *Database) GetOrder(id string) (*schema.Order, error) {
+	o := &schema.Order{}
+	err := db.DB.Where("id = ?", id).First(&o).Error
+	return o, err
+}
+
+func (db *Database) GetStores(oid string) (*[]schema.Store, error) {
+	s := &[]schema.Store{}
+	err := db.DB.Where("id = ?", oid).Find(&s).Error
+	return s, err
 }
 
 func (db *Database) UpdateStatus(status schema.Status) error {

@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/cache"
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/store"
 )
@@ -17,13 +15,8 @@ import (
 func NewApiTest() (*gin.Engine, *API) {
 	gin.SetMode(gin.TestMode)
 
-	cache, err := cache.NewBigCache(60 * time.Minute)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	db := database.NewSqliteDatabase("./tmp/sqlite")
-	if err = db.Migrate(); err != nil {
+	if err := db.Migrate(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -31,7 +24,7 @@ func NewApiTest() (*gin.Engine, *API) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	a := New(cache, db, store)
+	a := New(db, store)
 
 	r := gin.Default()
 

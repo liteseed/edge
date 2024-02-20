@@ -2,9 +2,7 @@ package commands
 
 import (
 	"log"
-	"time"
 
-	"github.com/liteseed/bungo/cache"
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/server"
 	"github.com/liteseed/bungo/store"
@@ -31,13 +29,8 @@ func start(context *cli.Context) error {
 	bolt := context.String("bolt")
 	sqlite := context.String("sqlite")
 
-	cache, err := cache.NewBigCache(60 * time.Minute)
+	db, err := database.New(sqlite, "sqlite")
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	db := database.NewSqliteDatabase(sqlite)
-	if err = db.Migrate(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -46,7 +39,7 @@ func start(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	s := server.New(cache, db, store)
+	s := server.New(db, store)
 	s.Run(":8080")
 	return nil
 }

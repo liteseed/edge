@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/liteseed/bungo/database/schema"
-	"github.com/stretchr/testify/assert"
+	"gotest.tools/v3/assert"
 )
 
 func TestSqlite(t *testing.T) {
 	db := NewSqliteDatabase("testSqlite")
 	err := db.Migrate()
-	assert.NoError(t, err)
+	assert.NilError(t, err)
 	ord := &schema.Order{}
 	err = db.DB.First(ord).Error
-	assert.NoError(t, err)
+	assert.NilError(t, err)
 	t.Log(ord)
 }

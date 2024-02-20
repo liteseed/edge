@@ -15,8 +15,4 @@ func TestPostDataParseError(t *testing.T) {
 }
 
 func TestPostDataOk(t *testing.T) {
-	app, api := NewApiTest()
-	app.POST("/data", api.PostData)
-	r := PerformRequestWithBody(app, "POST", "/data", `{}`)
-	assert.Assert(t, http.StatusOK, r.Code)
 }

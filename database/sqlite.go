@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	sqliteName = "bungo.sqlite"
+	sqliteName = "data.sqlite"
 )
 
 func NewSqliteDatabase(directory string) *Database {
@@ -27,5 +27,4 @@ func NewSqliteDatabase(directory string) *Database {
 	}
 	log.Println("sqlite connected - directory: " + directory)
 	return &Database{DB: db}
-
 }
