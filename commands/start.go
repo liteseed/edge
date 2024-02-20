@@ -3,6 +3,7 @@ package commands
 import (
 	"log"
 
+	"github.com/liteseed/bungo/api"
 	"github.com/liteseed/bungo/database"
 	"github.com/liteseed/bungo/server"
 	"github.com/liteseed/bungo/store"
@@ -29,7 +30,7 @@ func start(context *cli.Context) error {
 	bolt := context.String("bolt")
 	sqlite := context.String("sqlite")
 
-	db, err := database.New(sqlite, "sqlite")
+	database, err := database.New(sqlite, "sqlite")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +40,11 @@ func start(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	s := server.New(db, store)
+	a := api.New(database, store)
+
+	s := server.New()
+	s.Register(a)
 	s.Run(":8080")
+
 	return nil
 }

@@ -3,25 +3,23 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/liteseed/bungo/api"
-	"github.com/liteseed/bungo/database"
-	"github.com/liteseed/bungo/store"
 )
 
 type Server struct {
 	engine *gin.Engine
 }
 
-func New(db *database.Database, s *store.Store) *Server {
-	a := api.New(db, s)
-
+func New() *Server {
 	r := gin.Default()
-
-	r.GET("/status", a.GetStatus)
-
-	r.GET("/:id", a.GetData)
-	r.POST("/", a.PostData)
+	r.Use(ErrorHandler)
 
 	return &Server{engine: r}
+}
+
+func (s *Server) Register(a *api.API) {
+	s.engine.GET("/status", a.GetStatus)
+	s.engine.GET("/:id", a.GetData)
+	s.engine.POST("/", a.PostData)
 }
 
 func (s *Server) Run(port string) {

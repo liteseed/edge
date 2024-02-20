@@ -2,7 +2,6 @@ package store
 
 import (
 	"github.com/google/uuid"
-	"github.com/liteseed/bungo/utils"
 )
 
 type IStore interface {
@@ -25,10 +24,10 @@ type Store struct {
 
 func (s *Store) Save(data []byte) (uuid.UUID, error) {
 	id := uuid.New()
-	err := s.KVDb.Put(utils.DataStore, id.String(), data)
+	err := s.KVDb.Put(DataStore, id.String(), data)
 	return id, err
 }
 
 func (s *Store) Get(id string) ([]byte, error) {
-	return s.KVDb.Get(utils.DataStore, id)
+	return s.KVDb.Get(DataStore, id)
 }

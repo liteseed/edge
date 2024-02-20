@@ -1,10 +1,9 @@
-package tasks
+package queue
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/hibiken/asynq"
 )
@@ -35,16 +34,23 @@ func HandleDataPostTask(ctx context.Context, t *asynq.Task) error {
 	return nil
 }
 
-func (task *Task) ProcessTask(oid string) error {
-	stores, err := task.db.GetStores(oid)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	for _, store := range *stores {
-		data, err := task.store.Get(store.ID.String())
-		if err != nil {
-			log.Println(err)
-		}
-	}
+type AsynqClient struct {
+	client *asynq.Client
+}
+
+func NewAsynqClient(address string) *Queue {
+	client := &AsynqClient{client: asynq.NewClient(asynq.RedisClientOpt{Addr: address})}
+	return &Queue{Queue: client}
+}
+
+func (q *AsynqClient) Process() {
+
+}
+
+func (q *AsynqClient) Schedule() error {
+	return nil
+}
+
+func (q *AsynqClient) Close() {
+
 }

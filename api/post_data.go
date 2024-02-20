@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,24 +17,20 @@ type PostDataResponse struct {
 // PostData
 //
 // POST /data
-func (a *API) PostData(c *gin.Context) {
+func (api *API) PostData(c *gin.Context) {
 	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
 	if err != nil {
 		log.Println("request has no content length header!")
 	}
 
 	if contentLength > MAX_DATA_ITEM_SIZE {
-		BadRequest(
-			c,
-			fmt.Sprintf("Data item size is currently limited to %d bytes!", MAX_DATA_ITEM_SIZE),
-		)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 	form, err := c.MultipartForm()
 	if err != nil {
-		BadRequest(
-			c,
-			"Unable to parse data",
-		)
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 	files := form.File["files"]
 
@@ -44,10 +39,10 @@ func (a *API) PostData(c *gin.Context) {
 		Status: schema.Queued,
 	}
 	// SAVE TO DATABASE TO TRACK STATUS
-	err = a.db.CreateOrder(o)
+	err = api.database.CreateOrder(o)
 	if err != nil {
-		log.Println(err)
-		InternalServerError(c)
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	for _, file := range files {
@@ -55,24 +50,23 @@ func (a *API) PostData(c *gin.Context) {
 		data := []byte{}
 		f, err := file.Open()
 		if err != nil {
-			BadRequest(c, err.Error())
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
 		}
 		f.Read(data)
 
-		id, err := a.store.Save(data)
+		id, err := api.store.Save(data)
 		if err != nil {
-			log.Println(err)
-			InternalServerError(c)
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
-		a.db.CreateStore(&schema.Store{
+		api.database.CreateStore(&schema.Store{
 			ID:      id,
 			OrderID: o.ID,
 		})
 		if err != nil {
-			log.Println(err)
-			InternalServerError(c)
+			c.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
-
 	c.JSON(http.StatusOK, PostDataResponse{Id: o.ID.String()})
 }

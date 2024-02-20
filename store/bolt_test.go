@@ -1,17 +1,16 @@
-package bolt
+package store
 
 import (
 	"fmt"
 	"sort"
 	"testing"
 
-	"github.com/liteseed/bungo/utils"
 	"gotest.tools/v3/assert"
 )
 
 func TestBoltDB(t *testing.T) {
 	dataPath := "./tmp/seed.db"
-	bktName := utils.DataStore // cne be replaced by any bucket in schema
+	bktName := DataStore // cne be replaced by any bucket in schema
 	keyNum := 100
 	// prepare key&val to test
 	keys := make([]string, keyNum)
@@ -54,7 +53,7 @@ func TestBoltDB(t *testing.T) {
 	}
 	for i := 0; i < keyNum; i++ {
 		_, err = boltDb.Get(bktName, keys[i])
-		assert.Equal(t, err, utils.ErrDoesNotExist)
+		assert.Equal(t, err, ErrDoesNotExist)
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var Bungo = []*cli.Command{
+var Commands = []*cli.Command{
 	Benchmark,
 	Start,
 }

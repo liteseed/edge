@@ -14,15 +14,15 @@ type GetDataResponse struct {
 // GetData - Get status of data sent to upload
 //
 // GET /:id
-func (a *API) GetData(c *gin.Context) {
+func (api *API) GetData(c *gin.Context) {
 	id := c.Param("id")
-	o, err := a.db.GetOrder(id)
+	o, err := api.database.GetOrder(id)
 	if err != nil {
-		NotFound(c)
+		c.AbortWithError(http.StatusNotFound, err)
+		return
 	}
-	res := &GetDataResponse{
+	c.JSON(http.StatusOK, &GetDataResponse{
 		Id:     id,
 		Status: string(o.Status),
-	}
-	c.JSON(http.StatusOK, res)
+	})
 }

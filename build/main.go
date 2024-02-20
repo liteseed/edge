@@ -37,7 +37,7 @@ func main() {
 		Description: appDescription,
 		Version:     version,
 		Metadata:    Metadata,
-		Commands:    commands.Bungo,
+		Commands:    commands.Commands,
 	}
 
 	err := app.Run(os.Args)
