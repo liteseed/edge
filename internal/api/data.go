@@ -7,8 +7,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/liteseed/bungo/database/schema"
+
+	"github.com/liteseed/bungo/internal/database/schema"
 )
+
+type GetDataResponse struct {
+	Id     string `json:"id"`
+	Status string `json:"status"`
+}
+
+// GetData - Get status of data sent to upload
+//
+// GET /:id
+func (api *API) GetData(c *gin.Context) {
+	id := c.Param("id")
+	o, err := api.database.GetOrder(id)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	c.JSON(http.StatusOK, &GetDataResponse{
+		Id:     id,
+		Status: string(o.Status),
+	})
+}
 
 type PostDataResponse struct {
 	Id string `json:"id"`

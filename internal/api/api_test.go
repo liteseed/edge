@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/database"
-	"github.com/liteseed/bungo/store"
+	"github.com/liteseed/bungo/internal/database"
+	"github.com/liteseed/bungo/internal/store"
 )
 
 // NewApiTest returns new API test helper.

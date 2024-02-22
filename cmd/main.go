@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/liteseed/bungo/commands"
+	"github.com/liteseed/bungo/internal/commands"
 	"github.com/urfave/cli/v2"
 )
 

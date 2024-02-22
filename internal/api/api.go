@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/liteseed/bungo/database"
-	"github.com/liteseed/bungo/store"
+	"github.com/liteseed/bungo/internal/database"
+	"github.com/liteseed/bungo/internal/store"
 )
 
 const MAX_DATA_ITEM_SIZE = 1_073_824

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/liteseed/bungo/database/schema"
+	"github.com/liteseed/bungo/internal/database/schema"
 	"gorm.io/gorm"
 )
 

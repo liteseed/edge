@@ -3,10 +3,10 @@ package commands
 import (
 	"log"
 
-	"github.com/liteseed/bungo/api"
-	"github.com/liteseed/bungo/database"
-	"github.com/liteseed/bungo/server"
-	"github.com/liteseed/bungo/store"
+	"github.com/liteseed/bungo/internal/api"
+	"github.com/liteseed/bungo/internal/database"
+	"github.com/liteseed/bungo/internal/server"
+	"github.com/liteseed/bungo/internal/store"
 	"github.com/urfave/cli/v2"
 )
 

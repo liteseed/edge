@@ -1,13 +1,13 @@
-FROM alpine:latest
+FROM golang:latest
 
-ENV PATH /go/bin:/usr/local/go/bin:$PATH
-ENV GOPATH /go
 
-WORKDIR /bungo
+WORKDIR /app
+COPY . .
 
-VOLUME ["/bungo/data"]
+RUN go mod tidy
+RUN go build -o ./build/bungo ./cmd
 
-COPY cmd/bungo /bungo/bungo
 EXPOSE 8080
 
-ENTRYPOINT [ "/bungo/bungo" ]
+CMD [ "./build/bungo" ]
+

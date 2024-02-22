@@ -3,7 +3,7 @@ package database
 import (
 	"testing"
 
-	"github.com/liteseed/bungo/database/schema"
+	"github.com/liteseed/bungo/internal/database/schema"
 	"gotest.tools/v3/assert"
 )
 
