@@ -86,9 +86,7 @@ func (api *Routes) PostData(c *gin.Context) {
 			ID:      id,
 			OrderID: o.ID,
 		})
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-		}
+
 	}
 	c.JSON(http.StatusOK, PostDataResponse{Id: o.ID.String()})
 }
