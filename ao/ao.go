@@ -23,6 +23,7 @@ type SendMessageArgs struct {
 	Tags []Tag  `json:"tags"`
 }
 
+
 func SendMessage(args SendMessageArgs) (string, error) {
 	reqBody, err := json.Marshal(args)
 	if err != nil {
