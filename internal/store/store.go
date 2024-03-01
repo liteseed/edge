@@ -1,33 +1,58 @@
 package store
 
 import (
+	"log"
+
 	"github.com/google/uuid"
+	"github.com/liteseed/bungo/internal/store/pebble"
 )
 
 type IStore interface {
-	Put(bucket string, key string, value interface{}) (err error)
-
-	Get(bucket string, key string) (data []byte, err error)
-
-	Delete(bucket string, key string) (err error)
-
 	Close() (err error)
 
-	Type() string
+	Delete(key []byte) (err error)
 
-	Exist(bucket, key string) bool
+	Get(key []byte) (data []byte, err error)
+
+	Has(key []byte) (bool, error)
+
+	Put(key []byte, value []byte) (err error)
 }
 
 type Store struct {
-	KVDb IStore
+	store IStore
 }
 
-func (s *Store) Save(data []byte) (uuid.UUID, error) {
+func New(storeOption string) *Store {
+	store := &Store{}
+	switch storeOption {
+	default:
+		store.store = pebble.New("pebble")
+	}
+	return store
+}
+
+func (s *Store) Close() {
+	err := s.store.Close()
+	if err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func (s *Store) Delete(id uuid.UUID) error {
+	return s.store.Delete([]byte(id.String()))
+}
+
+func (s *Store) Get(id uuid.UUID) ([]byte, error) {
+	return s.store.Get([]byte(id.String()))
+}
+
+func (s *Store) Has(id uuid.UUID) (bool, error) {
+	return s.store.Has([]byte(id.String()))
+}
+
+func (s *Store) Put(data []byte) (uuid.UUID, error) {
 	id := uuid.New()
-	err := s.KVDb.Put(DataStore, id.String(), data)
+	err := s.store.Put([]byte(id.String()), data)
 	return id, err
-}
-
-func (s *Store) Get(id string) ([]byte, error) {
-	return s.KVDb.Get(DataStore, id)
 }

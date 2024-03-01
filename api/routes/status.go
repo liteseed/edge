@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 // GET Status reports if the server is operational.
 //
 // GET /status
-func (api *API) GetStatus(c *gin.Context) {
+func (api *Routes) GetStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name":    "Bungo",
 		"Version": "v0.0.1",

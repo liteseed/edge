@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"log"
@@ -19,7 +19,7 @@ type GetDataResponse struct {
 // GetData - Get status of data sent to upload
 //
 // GET /:id
-func (api *API) GetData(c *gin.Context) {
+func (api *Routes) GetData(c *gin.Context) {
 	id := c.Param("id")
 	o, err := api.database.GetOrder(id)
 	if err != nil {
@@ -39,7 +39,7 @@ type PostDataResponse struct {
 // PostData
 //
 // POST /data
-func (api *API) PostData(c *gin.Context) {
+func (api *Routes) PostData(c *gin.Context) {
 	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
 	if err != nil {
 		log.Println("request has no content length header!")
@@ -77,7 +77,7 @@ func (api *API) PostData(c *gin.Context) {
 		}
 		f.Read(data)
 
-		id, err := api.store.Save(data)
+		id, err := api.store.Put(data)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return

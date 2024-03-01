@@ -3,31 +3,28 @@ package commands
 import (
 	"log"
 
-	"github.com/liteseed/bungo/internal/api"
+	"github.com/liteseed/bungo/api/routes"
+	"github.com/liteseed/bungo/api/server"
 	"github.com/liteseed/bungo/internal/database"
-	"github.com/liteseed/bungo/internal/server"
 	"github.com/liteseed/bungo/internal/store"
 	"github.com/urfave/cli/v2"
 )
 
 var Start = &cli.Command{
 	Name:  "start",
-	Usage: "Start the bundler on this system",
+	Usage: "Start the bundler node on this system",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "bolt", Value: "./data/bolt", Usage: "bolt db dir path", EnvVars: []string{"BOLT"}},
-		&cli.StringFlag{Name: "sqlite", Value: "./data/sqlite", Usage: "sqlite db dir path", EnvVars: []string{"SQLITE"}},
+		&cli.StringFlag{Name: "store", Value: "pebble", Usage: "store to use", EnvVars: []string{"STORE"}},
+		&cli.StringFlag{Name: "database", Value: "sqlite", Usage: "database to use", EnvVars: []string{"DATABASE"}},
 		&cli.StringFlag{Name: "key_path", Value: "./data/bundler-keyfile.json", Usage: "ar keyfile path", EnvVars: []string{"KEY_PATH"}},
 		&cli.StringFlag{Name: "node", Value: "https://arweave.net", EnvVars: []string{"NODE"}},
-		&cli.StringFlag{Name: "payment_url", Value: "https://api-dev.everpay.io", Usage: "pay url", EnvVars: []string{"PAYMENT_URL"}},
-		&cli.BoolFlag{Name: "manifest", Value: true, EnvVars: []string{"MANIFEST"}},
-		&cli.IntFlag{Name: "bundle_interval", Value: 120, Usage: "bundle tx on chain time interval(seconds)", EnvVars: []string{"BUNDLE_INTERVAL"}},
 		&cli.StringFlag{Name: "port", Value: ":8080", EnvVars: []string{"PORT"}},
 	},
 	Action: start,
 }
 
 func start(context *cli.Context) error {
-	bolt := context.String("bolt")
+	storeOption := context.String("STORE")
 	sqlite := context.String("sqlite")
 
 	database, err := database.New(sqlite, "sqlite")
@@ -35,12 +32,9 @@ func start(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	store, err := store.NewBoltStore(bolt)
-	if err != nil {
-		log.Fatal(err)
-	}
+	store := store.New(storeOption)
 
-	a := api.New(database, store)
+	a := routes.New(database, store)
 
 	s := server.New()
 	s.Register(a)

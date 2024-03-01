@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/internal/api"
+	"github.com/liteseed/bungo/api/routes"
 )
 
 type Server struct {
@@ -16,7 +16,7 @@ func New() *Server {
 	return &Server{engine: r}
 }
 
-func (s *Server) Register(a *api.API) {
+func (s *Server) Register(a *routes.Routes) {
 	s.engine.GET("/status", a.GetStatus)
 	s.engine.GET("/:id", a.GetData)
 	s.engine.POST("/", a.PostData)

@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"log"
@@ -12,7 +12,7 @@ import (
 )
 
 // NewApiTest returns new API test helper.
-func NewApiTest() (*gin.Engine, *API) {
+func NewApiTest() (*gin.Engine, *Routes) {
 	gin.SetMode(gin.TestMode)
 
 	db := database.NewSqliteDatabase("./tmp/sqlite")
@@ -20,10 +20,8 @@ func NewApiTest() (*gin.Engine, *API) {
 		log.Fatal(err)
 	}
 
-	store, err := store.NewBoltStore("./tmp/sqlite")
-	if err != nil {
-		log.Fatal(err)
-	}
+	store := store.New("pebble")
+
 	a := New(db, store)
 
 	r := gin.Default()

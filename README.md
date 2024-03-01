@@ -1,6 +1,6 @@
 # bungo
 
-Implementation of a Bundler in Go
+Implementation of a Liteseed Bundler Node in Go
 
 ## Getting Started
 

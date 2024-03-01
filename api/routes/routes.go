@@ -1,4 +1,4 @@
-package api
+package routes
 
 import (
 	"github.com/liteseed/bungo/internal/database"
@@ -7,7 +7,7 @@ import (
 
 const MAX_DATA_ITEM_SIZE = 1_073_824
 
-type API struct {
+type Routes struct {
 	database *database.Database
 	store    *store.Store
 }
@@ -15,6 +15,6 @@ type API struct {
 func New(
 	database *database.Database,
 	store *store.Store,
-) *API {
-	return &API{database: database, store: store}
+) *Routes {
+	return &Routes{database: database, store: store}
 }
