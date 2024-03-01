@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/liteseed/bungo/internal/types"
 )
 
 // TODO: Replace with complete golang ao-connect implementation
@@ -13,14 +15,10 @@ import (
 var URL = os.Getenv("AO_CONNECT_URL")
 var PROCESS = os.Getenv("NETWORK_CONTRACT_ID")
 
-type Tag struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
 
 type SendMessageArgs struct {
 	Data string `json:"data"`
-	Tags []Tag  `json:"tags"`
+	Tags []types.Tag  `json:"tags"`
 }
 
 

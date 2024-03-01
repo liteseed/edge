@@ -3,11 +3,12 @@ package ao
 import (
 	"testing"
 
+	"github.com/liteseed/bungo/internal/types"
 	"gotest.tools/v3/assert"
 )
 
 func TestSendMessage(t *testing.T) {
-	args := SendMessageArgs{Data: "", Tags: []Tag{{Name: "Action", Value: "Staker"}}}
+	args := SendMessageArgs{Data: "", Tags: []types.Tag{{Name: "Action", Value: "Staker"}}}
 	mId, err := SendMessage(args)
 	assert.NilError(t, err)
 	t.Log(mId)
