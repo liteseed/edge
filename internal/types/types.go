@@ -1,7 +1,5 @@
 package types
 
-import "os"
-
 const (
 	Arweave  = 1
 	ED25519  = 2
@@ -43,9 +41,8 @@ type Tag struct {
 	Value string `json:"value"`
 }
 type Bundle struct {
-	Items            []DataItem `json:"items"`
-	BundleBinary     []byte
-	BundleDataReader *os.File
+	Items   []DataItem `json:"items"`
+	RawData []byte
 }
 
 type DataItem struct {
@@ -55,10 +52,9 @@ type DataItem struct {
 	Target        string `json:"target"` // optional, if exist must length 32, and is base64 str
 	Anchor        string `json:"anchor"` // optional, if exist must length 32, and is base64 str
 	Tags          []Tag  `json:"tags"`
-	Data          string `json:"data"`
+	RawData       string `json:"data"`
 	Id            string `json:"id"`
 	TagsBy        string `json:"tagsBy"` // utils.Base64Encode(TagsBytes) for retry assemble item
 
-	ItemBinary []byte   `json:"-"`
-	DataReader *os.File `json:"-"`
+	ItemBinary []byte `json:"-"`
 }
