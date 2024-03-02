@@ -73,11 +73,6 @@ func decodeTags(data *[]byte, startAt int) (*[]types.Tag, int, error) {
 	return tags, tagsEnd, nil
 }
 
-type avroTag struct {
-	name  []byte
-	value []byte
-}
-
 func decodeAvro(data []byte) (*[]types.Tag, error) {
 	codec, err := avro.Parse(`
 	{
