@@ -57,7 +57,6 @@ func decodeTags(data *[]byte, startAt int) (*[]types.Tag, int, error) {
 		numberOfTagBytesEnd := numberOfTagBytesStart + 8
 		numberOfTagBytes := int(binary.LittleEndian.Uint16((*data)[numberOfTagBytesStart:numberOfTagBytesEnd]))
 
-		println(numberOfTagBytes)
 		bytesDataStart := numberOfTagBytesEnd
 		bytesDataEnd := numberOfTagBytesEnd + numberOfTagBytes
 		bytesData := (*data)[bytesDataStart:bytesDataEnd]
@@ -142,44 +141,43 @@ func DecodeDataItem(data []byte) (*types.DataItem, error) {
 	}, nil
 }
 
+type bundleHeader struct {
+	id   int
+	size int
+}
+
+func decodeBundleHeader(data *[]byte) ( *[]bundleHeader, int) {
+	N := int(binary.LittleEndian.Uint16((*data)[:32]))
+	headers := []bundleHeader{}
+	for i := 32; i < 32+64*N; i += 64 {
+		size := int(binary.LittleEndian.Uint16((*data)[i : i+32]))
+		id := int(binary.LittleEndian.Uint16((*data)[i+32 : i+64]))
+		headers = append(headers, bundleHeader{id: id, size: size})
+	}
+	return &headers, N
+}
+
 func DecodeBundle(data []byte) (*types.Bundle, error) {
 	// length must more than 32
 	if len(data) < 32 {
 		return nil, errors.New("binary length must more than 32")
 	}
-	N := int(binary.LittleEndian.Uint16(data[:32]))
-
-	if len(data) < 32+N*64 {
-		return nil, errors.New("binary length incorrect")
-	}
-
+	headers, N := decodeBundleHeader(&data)
 	bundle := &types.Bundle{
-		Items:   make([]types.DataItem, 0),
-		RawData: data,
+		Items:   make([]types.DataItem, N),
+		RawData: base64.URLEncoding.EncodeToString(data),
 	}
-	bundleItemStart := 32 + N*64
+	bundleStart := 32 + 64*N
 	for i := 0; i < N; i++ {
-		headerBegin := 32 + i*64
-		end := headerBegin + 64
-		if len(data) < end {
-			return nil, errors.New("binary length incorrect")
-		}
-		headerByte := data[headerBegin:end]
-		itemBinaryLength := int(binary.LittleEndian.Uint16(headerByte[:32]))
-		id := base64.URLEncoding.EncodeToString(headerByte[32:64])
-		if len(data) < bundleItemStart+itemBinaryLength || itemBinaryLength < 0 {
-			return nil, errors.New("binary length incorrect")
-		}
-		bundleItemBytes := data[bundleItemStart : bundleItemStart+itemBinaryLength]
-		bundleItem, err := DecodeDataItem(bundleItemBytes)
+		header := (*headers)[i]
+		bundleEnd := bundleStart + header.size
+		dataItem, err := DecodeDataItem(data[bundleStart:bundleEnd])
 		if err != nil {
 			return nil, err
 		}
-		if bundleItem.Id != id {
-			return nil, fmt.Errorf("bundleItem.Id != id, bundleItem.Id: %s, id: %s", bundleItem.Id, id)
-		}
-		bundle.Items = append(bundle.Items, *bundleItem)
-		bundleItemStart += itemBinaryLength
+		bundle.Items[i] = *dataItem
+		bundleStart = bundleEnd
 	}
 	return bundle, nil
 }
+

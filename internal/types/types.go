@@ -42,7 +42,7 @@ type Tag struct {
 }
 type Bundle struct {
 	Items   []DataItem `json:"items"`
-	RawData []byte
+	RawData string
 }
 
 type DataItem struct {

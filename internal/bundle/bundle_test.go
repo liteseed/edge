@@ -9,8 +9,8 @@ import (
 	"gotest.tools/v3/assert"
 )
 
-func TestDecodeDataItemStub1115Byte(t *testing.T) {
-	data, err := os.ReadFile("../../test/stubs/stub1115ByteDataItem")
+func TestDecodeDataItem(t *testing.T) {
+	data, err := os.ReadFile("../../test/stubs/1115BDataItem")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func TestDecodeDataItemStub1115Byte(t *testing.T) {
 	assert.Equal(t, dataItem.Target, "")
 	assert.Equal(t, dataItem.Anchor, "")
 	assert.DeepEqual(
-		t, 
+		t,
 		dataItem.Tags,
 		[]types.Tag{
 			{Name: "Content-Type", Value: "text/plain"},
@@ -29,4 +29,16 @@ func TestDecodeDataItemStub1115Byte(t *testing.T) {
 			{Name: "App-Version", Value: "1.21.0"},
 		},
 	)
+	assert.Equal(t, dataItem.RawData, "NTY3MAo=")
+}
+
+func TestDecodeBundleHeader(t *testing.T) {
+	data, err := os.ReadFile("../../test/stubs/bundleHeader")
+	if err != nil {
+		log.Fatal(err)
+	}
+	headers, N := decodeBundleHeader(&data)
+	assert.Equal(t, N, 1)
+	assert.Equal(t, (*headers)[0].size, 1115)
+	assert.Equal(t, (*headers)[0].id, 39234)
 }
