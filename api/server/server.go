@@ -17,9 +17,8 @@ func New() *Server {
 }
 
 func (s *Server) Register(a *routes.Routes) {
-	s.engine.GET("/status", a.GetStatus)
-	s.engine.GET("/:id", a.GetData)
-	s.engine.POST("/", a.PostData)
+	s.engine.GET("/status", a.Status)
+	s.engine.POST("/data", a.UploadData)
 }
 
 func (s *Server) Run(port string) {

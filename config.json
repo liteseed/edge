@@ -1,0 +1,18 @@
+{
+
+  "Port": "8080",
+  "Signer": "./data/signer.json",
+
+  "Database": {
+    "Name": "sqlite",
+    "URL": "./data/sqlite"
+  },
+  "Node": {
+    "Name": "arweave",
+    "URL": "https://arweave.dev"
+  },
+  "Store": {
+    "Name": "pebble",
+    "URL": "./data/pebble"
+  }
+}

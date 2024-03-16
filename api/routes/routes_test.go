@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/liteseed/argo/signer"
 	"github.com/liteseed/bungo/internal/database"
 	"github.com/liteseed/bungo/internal/store"
 )
@@ -20,14 +21,17 @@ func NewApiTest() (*gin.Engine, *Routes) {
 		log.Fatal(err)
 	}
 
-	store := store.New("pebble")
-
-	a := New(db, store)
+	store := store.New("pebble", "pebble")
+	signer, err := signer.New("../../data/wallet.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	a := New(db, store, signer)
 
 	r := gin.Default()
 
-	r.GET("/status", a.GetStatus)
-	r.POST("/data", a.PostData)
+	r.GET("/status", a.Status)
+	r.POST("/data", a.UploadData)
 
 	return r, a
 }

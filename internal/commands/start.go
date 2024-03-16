@@ -1,8 +1,11 @@
 package commands
 
 import (
+	"encoding/json"
 	"log"
+	"os"
 
+	"github.com/liteseed/argo/signer"
 	"github.com/liteseed/bungo/api/routes"
 	"github.com/liteseed/bungo/api/server"
 	"github.com/liteseed/bungo/internal/database"
@@ -10,35 +13,60 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+type ConfigJSONValue struct {
+	Name string 
+	URL  string 
+}
+
+type Config struct {
+	Port string
+	Signer string
+	Database ConfigJSONValue
+	Store ConfigJSONValue
+	Node ConfigJSONValue
+}
+
 var Start = &cli.Command{
 	Name:  "start",
 	Usage: "Start the bundler node on this system",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "store", Value: "pebble", Usage: "store to use", EnvVars: []string{"STORE"}},
-		&cli.StringFlag{Name: "database", Value: "sqlite", Usage: "database to use", EnvVars: []string{"DATABASE"}},
-		&cli.StringFlag{Name: "key_path", Value: "./data/bundler-keyfile.json", Usage: "ar keyfile path", EnvVars: []string{"KEY_PATH"}},
-		&cli.StringFlag{Name: "node", Value: "https://arweave.net", EnvVars: []string{"NODE"}},
-		&cli.StringFlag{Name: "port", Value: ":8080", EnvVars: []string{"PORT"}},
+		&cli.PathFlag{Name: "config", Aliases: []string{"c"}, Value: "./config.json", Usage: "path to config value", Required: true},
 	},
 	Action: start,
 }
 
 func start(context *cli.Context) error {
-	storeOption := context.String("STORE")
-	sqlite := context.String("sqlite")
-
-	database, err := database.New(sqlite, "sqlite")
+  configPath := context.Path("config")
+	configData, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	store := store.New(storeOption)
+	var config Config
 
-	a := routes.New(database, store)
+	err = json.Unmarshal(configData, &config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	database, err := database.New(config.Database.Name, config.Database.URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signer, err := signer.New(config.Signer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	store := store.New(config.Store.Name, config.Store.URL)
+	a := routes.New(database, store, signer)
 
 	s := server.New()
 	s.Register(a)
 	s.Run(":8080")
 
+	if err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }

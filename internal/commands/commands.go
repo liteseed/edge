@@ -5,6 +5,5 @@ import (
 )
 
 var Commands = []*cli.Command{
-	Benchmark,
 	Start,
 }

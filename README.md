@@ -1,4 +1,4 @@
-# bungo
+# Edge
 
 Implementation of a Liteseed Bundler Node in Go
 

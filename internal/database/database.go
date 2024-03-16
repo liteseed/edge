@@ -14,9 +14,9 @@ type Database struct {
 	DB *gorm.DB
 }
 
-func New(path string, database string) (*Database, error) {
+func New(databaseOption string, path string) (*Database, error) {
 	db := &Database{}
-	switch database {
+	switch databaseOption {
 	default:
 		db = NewSqliteDatabase(path)
 	}

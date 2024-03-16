@@ -2,57 +2,24 @@ package routes
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/everFinance/goar/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/bungo/internal/database/schema"
 )
 
-const (
-	CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
-)
-
-type GetDataResponse struct {
-	Id     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
-}
-
-// GetData - Get status of data sent to upload
-//
-// GET /:id
-func (api *Routes) GetData(c *gin.Context) {
-	param := c.Param("id")
-	id, err := uuid.Parse(param)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	o, err := api.database.GetOrder(id)
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, &GetDataResponse{
-		Id:     id,
-		Status: string(o.Status),
-	})
-}
-
-type PostDataResponse struct {
+type UploadDataItemResponse struct {
 	Id string `json:"id"`
 }
 
-// PostData
-//
 // POST /data
-func (api *Routes) PostData(c *gin.Context) {
+func (api *Routes) UploadDataItem(c *gin.Context) {
 	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
 	if err != nil {
 		log.Println("request has no content length header!")
@@ -70,13 +37,37 @@ func (api *Routes) PostData(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("unexpected content type")))
 		return
 	}
-	bundle := &types.Bundle{}
-	api.store.Put(bundle.BundleBinary)
 
-	o := &schema.Order{
-		ID:     uuid.New(),
-		Status: schema.Queued,
+	rawData, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("unable to decode data")))
+		return
 	}
+
+	dataItem, err := transaction.DecodeDataItem(rawData)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
+		return
+	}
+	
+	valid, err := transaction.VerifyDataItem(dataItem)
+	if !valid || err != nil {
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
+		return
+	}
+
+	storeId, err := api.store.Put(rawData)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("failed to save data")))
+		return
+	}
+	
+	o := &schema.Order{
+		ID:      uuid.New(),
+		Status:  schema.Queued,
+		StoreID: storeId,
+	}
+
 	// SAVE TO DATABASE TO TRACK STATUS
 	err = api.database.CreateOrder(o)
 	if err != nil {
@@ -84,5 +75,5 @@ func (api *Routes) PostData(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, PostDataResponse{Id: o.ID.String()})
+	c.JSON(http.StatusOK, UploadDataResponse{Id: o.ID.String()})
 }

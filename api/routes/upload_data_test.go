@@ -9,7 +9,7 @@ import (
 
 func TestPostDataParseError(t *testing.T) {
 	app, api := NewApiTest()
-	app.POST("/data", api.PostData)
+	app.POST("/data", api.UploadData)
 	r := PerformRequestWithBody(app, "POST", "/data", `{}`)
 	assert.Assert(t, http.StatusBadRequest, r.Code)
 }

@@ -27,7 +27,8 @@ func (s Status) Value() (driver.Value, error) {
 
 type Order struct {
 	gorm.Model
-	ID      uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
-	Status  Status    `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
-	StoreID uuid.UUID `json:"store_id"`
+	ID       uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
+	Status   Status    `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
+	StoreID  uuid.UUID `json:"store_id"`
+	PublicID uuid.UUID `json:"public_id"`
 }

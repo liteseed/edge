@@ -23,13 +23,13 @@ type Store struct {
 	store IStore
 }
 
-func New(storeOption string) *Store {
-	store := &Store{}
+func New(storeOption string, path string) *Store {
+	s := &Store{}
 	switch storeOption {
 	default:
-		store.store = pebble.New("pebble")
+		s.store = pebble.New(path)
 	}
-	return store
+	return s
 }
 
 func (s *Store) Close() {

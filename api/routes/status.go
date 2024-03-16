@@ -9,9 +9,9 @@ import (
 // GET Status reports if the server is operational.
 //
 // GET /status
-func (api *Routes) GetStatus(c *gin.Context) {
+func (api *Routes) Status(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"Name":    "Bungo",
+		"Name":    "Edge",
 		"Version": "v0.0.1",
 	})
 }
