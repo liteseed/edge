@@ -2,8 +2,8 @@ package cron
 
 import (
 	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/bungo/internal/database"
-	"github.com/liteseed/bungo/internal/store"
+	"github.com/liteseed/edge/internal/database"
+	"github.com/liteseed/edge/internal/store"
 	"github.com/robfig/cron/v3"
 )
 

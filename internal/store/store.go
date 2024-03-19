@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/liteseed/bungo/internal/store/pebble"
+	"github.com/liteseed/edge/internal/store/pebble"
 )
 
 type IStore interface {

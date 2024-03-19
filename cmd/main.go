@@ -4,14 +4,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/liteseed/bungo/internal/commands"
+	"github.com/liteseed/edge/internal/commands"
 	"github.com/urfave/cli/v2"
 )
 
-const appName = "Bungo"
-const appAbout = "Bungo"
+const appName = "Edge"
+const appAbout = "Edge"
 const appEdition = "ce"
-const appDescription = "bungo"
+const appDescription = "edge"
 
 var version = "development"
 

@@ -6,7 +6,7 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/liteseed/argo/transaction"
-	"github.com/liteseed/bungo/internal/database/schema"
+	"github.com/liteseed/edge/internal/database/schema"
 )
 
 func (c *Cron) postBundle() {

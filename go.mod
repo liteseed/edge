@@ -1,4 +1,4 @@
-module github.com/liteseed/bungo
+module github.com/liteseed/edge
 
 go 1.21.7
 

@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/google/uuid"
-	"github.com/liteseed/bungo/internal/database/schema"
+	"github.com/liteseed/edge/internal/database/schema"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +14,9 @@ type Database struct {
 	DB *gorm.DB
 }
 
-func New(databaseOption string, path string) (*Database, error) {
+func New(options string, path string) (*Database, error) {
 	db := &Database{}
-	switch databaseOption {
+	switch options {
 	default:
 		db = NewSqliteDatabase(path)
 	}

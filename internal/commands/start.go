@@ -6,11 +6,11 @@ import (
 	"os"
 
 	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/bungo/api/routes"
-	"github.com/liteseed/bungo/api/server"
-	"github.com/liteseed/bungo/internal/cron"
-	"github.com/liteseed/bungo/internal/database"
-	"github.com/liteseed/bungo/internal/store"
+	"github.com/liteseed/edge/api/routes"
+	"github.com/liteseed/edge/api/server"
+	"github.com/liteseed/edge/internal/cron"
+	"github.com/liteseed/edge/internal/database"
+	"github.com/liteseed/edge/internal/store"
 	"github.com/urfave/cli/v2"
 )
 

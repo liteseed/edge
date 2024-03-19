@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/liteseed/argo/transaction"
-	"github.com/liteseed/bungo/internal/database/schema"
+	"github.com/liteseed/edge/internal/database/schema"
 )
 
 type UploadDataResponse struct {

@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/liteseed/argo/transaction"
-	"github.com/liteseed/bungo/internal/database/schema"
+	"github.com/liteseed/edge/internal/database/schema"
 )
 
 type UploadDataItemResponse struct {
@@ -49,7 +49,7 @@ func (api *Routes) UploadDataItem(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
 		return
 	}
-	
+
 	valid, err := transaction.VerifyDataItem(dataItem)
 	if !valid || err != nil {
 		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
@@ -61,7 +61,7 @@ func (api *Routes) UploadDataItem(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("failed to save data")))
 		return
 	}
-	
+
 	o := &schema.Order{
 		ID:      uuid.New(),
 		Status:  schema.Queued,

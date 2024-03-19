@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/bungo/api/routes"
+	"github.com/liteseed/edge/api/routes"
 )
 
 type Server struct {

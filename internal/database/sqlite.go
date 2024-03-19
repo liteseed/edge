@@ -19,7 +19,7 @@ func NewSqliteDatabase(directory string) *Database {
 		panic(err)
 	}
 	db, err := gorm.Open(sqlite.Open(path.Join(directory, sqliteName)), &gorm.Config{
-		Logger:          logger.Default.LogMode(logger.Info),
+		Logger:          logger.Default.LogMode(logger.Silent),
 		CreateBatchSize: 200,
 	})
 	if err != nil {
