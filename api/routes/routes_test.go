@@ -32,7 +32,7 @@ func NewApiTest() (*gin.Engine, *Routes) {
 
 	r.GET("/status", a.Status)
 	r.POST("/data", a.UploadData)
-
+	r.POST("/dataitem", a.UploadDataItem)
 	return r, a
 }
 

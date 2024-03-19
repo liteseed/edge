@@ -11,8 +11,10 @@ type Status string
 type StoreIds []string
 
 const (
-	Queued  = "queued"
-	Error   = "error"
+	Queued = "queued"
+	Error  = "error"
+
+	Sent    = "sent"
 	Success = "success"
 )
 

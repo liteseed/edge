@@ -8,41 +8,42 @@ import (
 	"github.com/liteseed/argo/signer"
 	"github.com/liteseed/bungo/api/routes"
 	"github.com/liteseed/bungo/api/server"
+	"github.com/liteseed/bungo/internal/cron"
 	"github.com/liteseed/bungo/internal/database"
 	"github.com/liteseed/bungo/internal/store"
 	"github.com/urfave/cli/v2"
 )
 
-type ConfigJSONValue struct {
-	Name string 
-	URL  string 
+type JSONValue struct {
+	Name string
+	URL  string
 }
 
-type Config struct {
-	Port string
-	Signer string
-	Database ConfigJSONValue
-	Store ConfigJSONValue
-	Node ConfigJSONValue
+type StartConfig struct {
+	Port     string
+	Signer   string
+	Database JSONValue
+	Store    JSONValue
+	Node     JSONValue
 }
 
 var Start = &cli.Command{
 	Name:  "start",
 	Usage: "Start the bundler node on this system",
 	Flags: []cli.Flag{
-		&cli.PathFlag{Name: "config", Aliases: []string{"c"}, Value: "./config.json", Usage: "path to config value", Required: true},
+		&cli.PathFlag{Name: "config", Aliases: []string{"c"}, Value: "./config.json", Usage: "path to config value"},
 	},
 	Action: start,
 }
 
 func start(context *cli.Context) error {
-  configPath := context.Path("config")
+	configPath := context.Path("config")
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var config Config
+	var config StartConfig
 
 	err = json.Unmarshal(configData, &config)
 	if err != nil {
@@ -60,6 +61,16 @@ func start(context *cli.Context) error {
 
 	store := store.New(config.Store.Name, config.Store.URL)
 	a := routes.New(database, store, signer)
+
+	c, err := cron.New(cron.WithDatabase(database), cron.WithSigner(signer), cron.WithStore(store))
+	if err != nil {
+		log.Fatalln("failed to load cron", err)
+	}
+	err = c.Add("* * * * *")
+	if err != nil {
+		log.Fatalln("failed to load cron", err)
+	}
+	c.Start()
 
 	s := server.New()
 	s.Register(a)
