@@ -3,7 +3,6 @@ package cron
 import (
 	"log"
 
-	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/types"
 	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database/schema"
@@ -47,13 +46,7 @@ func (c *Context) postBundle() {
 		return
 	}
 
-	wallet, err := goar.NewWalletFromPath("./data/signer.json", "https://arweave.dev/")
-	if err != nil {
-		log.Println("failed to upload:", err)
-		return
-	}
-
-	tx, err := wallet.SendData([]byte(bundle.RawData), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}})
+	tx, err := c.wallet.SendData([]byte(bundle.RawData), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}})
 	if err != nil {
 		log.Println("failed to upload:", err)
 		return
