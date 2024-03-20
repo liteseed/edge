@@ -16,13 +16,13 @@ const (
 )
 
 type Context struct {
-	database *database.Database
+	database *database.Context
 	engine   *gin.Engine
 	signer   *signer.Signer
 	store    *store.Store
 }
 
-func New(database *database.Database, signer *signer.Signer, store *store.Store) *Context {
+func New(database *database.Context, signer *signer.Signer, store *store.Store) *Context {
 	engine := gin.Default()
 	s := &Context{database: database, engine: engine, signer: signer, store: store}
 

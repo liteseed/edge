@@ -9,7 +9,7 @@ import (
 
 type Cron struct {
 	C        *cron.Cron
-	database *database.Database
+	database *database.Context
 	store    *store.Store
 	signer   *signer.Signer
 }
@@ -22,7 +22,7 @@ func New(options ...func(*Cron)) (*Cron, error) {
 	return c, nil
 }
 
-func WithDatabase(db *database.Database) func(*Cron) {
+func WithDatabase(db *database.Context) func(*Cron) {
 	return func(c *Cron) {
 		c.database = db
 	}

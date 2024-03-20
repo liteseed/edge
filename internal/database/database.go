@@ -7,49 +7,52 @@ import (
 )
 
 const (
-	SQLite = "sqlite"
+	SQLite     = "sqlite"
+	PostgreSQL = "postgresql"
 )
 
-type Database struct {
+type Context struct {
 	DB *gorm.DB
 }
 
-func New(options string, path string) (*Database, error) {
-	db := &Database{}
+func New(options string, url string) (*Context, error) {
+	var c *Context
 	switch options {
+	case "postgres":
+		c = Postgres(url)
 	default:
-		db = NewSqliteDatabase(path)
+		c = Sqlite(url)
 	}
-	err := db.Migrate()
-	return db, err
+	err := c.Migrate()
+	return c, err
 }
 
-func (db *Database) Migrate() error {
-	err := db.DB.AutoMigrate(&schema.Order{})
+func (c *Context) Migrate() error {
+	err := c.DB.AutoMigrate(&schema.Order{})
 	return err
 }
 
-func (db *Database) CreateOrder(o *schema.Order) error {
-	return db.DB.Create(&o).Error
+func (c *Context) CreateOrder(o *schema.Order) error {
+	return c.DB.Create(&o).Error
 }
 
-func (db *Database) GetOrder(id uuid.UUID) (*schema.Order, error) {
+func (c *Context) GetOrder(id uuid.UUID) (*schema.Order, error) {
 	o := &schema.Order{}
-	err := db.DB.Where("id = ?", id).First(&o).Error
+	err := c.DB.Where("id = ?", id).First(&o).Error
 	return o, err
 }
 
-func (db *Database) GetQueuedOrders(limit int) (*[]schema.Order, error) {
+func (c *Context) GetQueuedOrders(limit int) (*[]schema.Order, error) {
 	o := &[]schema.Order{}
-	err := db.DB.Where("status = ?", schema.Queued).Find(&o).Limit(limit).Error
+	err := c.DB.Where("status = ?", schema.Queued).Find(&o).Limit(limit).Error
 	return o, err
 }
 
-func (db *Database) UpdateStatus(id uuid.UUID, status schema.Status) error {
-	return db.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
+func (c *Context) UpdateStatus(id uuid.UUID, status schema.Status) error {
+	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
 }
 
-func (db *Database) DeleteOrder(id uuid.UUID) error {
+func (c *Context) DeleteOrder(id uuid.UUID) error {
 	o := &schema.Order{ID: id}
-	return db.DB.Delete(o).Error
+	return c.DB.Delete(o).Error
 }
