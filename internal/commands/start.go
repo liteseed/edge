@@ -6,10 +6,9 @@ import (
 	"os"
 
 	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/edge/api/routes"
-	"github.com/liteseed/edge/api/server"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
+	"github.com/liteseed/edge/internal/server"
 	"github.com/liteseed/edge/internal/store"
 	"github.com/urfave/cli/v2"
 )
@@ -60,7 +59,6 @@ func start(context *cli.Context) error {
 	}
 
 	store := store.New(config.Store.Name, config.Store.URL)
-	a := routes.New(database, store, signer)
 
 	c, err := cron.New(cron.WithDatabase(database), cron.WithSigner(signer), cron.WithStore(store))
 	if err != nil {
@@ -72,8 +70,7 @@ func start(context *cli.Context) error {
 	}
 	c.Start()
 
-	s := server.New()
-	s.Register(a)
+	s := server.New(database, signer, store)
 	s.Run(":8080")
 
 	if err != nil {

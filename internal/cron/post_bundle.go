@@ -11,7 +11,7 @@ import (
 
 func (c *Cron) postBundle() {
 	log.Println("posting bundle")
-	o, err := c.database.GetOrders(25)
+	o, err := c.database.GetQueuedOrders(25)
 	if err != nil {
 		return
 	}

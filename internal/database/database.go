@@ -39,7 +39,7 @@ func (db *Database) GetOrder(id uuid.UUID) (*schema.Order, error) {
 	return o, err
 }
 
-func (db *Database) GetOrders(limit int) (*[]schema.Order, error) {
+func (db *Database) GetQueuedOrders(limit int) (*[]schema.Order, error) {
 	o := &[]schema.Order{}
 	err := db.DB.Where("status = ?", schema.Queued).Find(&o).Limit(limit).Error
 	return o, err

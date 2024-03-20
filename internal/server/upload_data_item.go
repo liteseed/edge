@@ -1,4 +1,4 @@
-package routes
+package server
 
 import (
 	"errors"
@@ -14,18 +14,18 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-type UploadDataResponse struct {
+type UploadDataItemResponse struct {
 	Id string `json:"id"`
 }
 
 // POST /data
-func (api *Routes) UploadData(c *gin.Context) {
+func (s *Context) UploadDataItem(c *gin.Context) {
 	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
 	if err != nil {
 		log.Println("request has no content length header!")
 	}
 
-	if contentLength > MAX_DATA_SIZE {
+	if contentLength > MAX_DATA_ITEM_SIZE {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -44,19 +44,24 @@ func (api *Routes) UploadData(c *gin.Context) {
 		return
 	}
 
-	dataItem, err := transaction.NewDataItem(rawData, *api.signer, "", "", []transaction.Tag{})
+	dataItem, err := transaction.DecodeDataItem(rawData)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("could not create a data item")))
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
 		return
 	}
 
-	storeId, err := api.store.Put(dataItem.Raw)
+	valid, err := transaction.VerifyDataItem(dataItem)
+	if !valid || err != nil {
+		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
+		return
+	}
+
+	storeId, err := s.store.Put(rawData)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("failed to save data")))
 		return
 	}
 
-	// ADD TO NEXT BUNDLE
 	o := &schema.Order{
 		ID:      uuid.New(),
 		Status:  schema.Queued,
@@ -64,7 +69,7 @@ func (api *Routes) UploadData(c *gin.Context) {
 	}
 
 	// SAVE TO DATABASE TO TRACK STATUS
-	err = api.database.CreateOrder(o)
+	err = s.database.CreateOrder(o)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

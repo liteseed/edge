@@ -16,7 +16,7 @@ require (
 	github.com/everFinance/goar v1.6.0
 	github.com/liteseed/argo v0.0.2
 	github.com/robfig/cron/v3 v3.0.1
-	gotest.tools/v3 v3.5.1
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
@@ -33,6 +33,7 @@ require (
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.20 // indirect
 	github.com/everFinance/arseeding v1.0.3 // indirect
@@ -50,7 +51,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hamba/avro v1.8.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -70,6 +70,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.6.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect

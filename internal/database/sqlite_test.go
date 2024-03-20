@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"gotest.tools/v3/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSqlite(t *testing.T) {
@@ -13,5 +13,5 @@ func TestSqlite(t *testing.T) {
 	db := NewSqliteDatabase("./data/testSQLITE")
 
 	err := db.Migrate()
-	assert.NilError(t, err)
+	quy.NoError(t, err)
 }
