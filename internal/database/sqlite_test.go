@@ -8,9 +8,10 @@ import (
 )
 
 func TestSqlite(t *testing.T) {
-	defer os.Remove("./temp/testSQLITE")
+	defer os.RemoveAll("./temp")
+	_ = os.Mkdir("./temp", os.ModePerm)
 
-	db := Sqlite("./temp/testSQLITE")
+	db := Sqlite("./temp/data")
 
 	err := db.Migrate()
 	assert.NoError(t, err)

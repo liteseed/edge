@@ -16,6 +16,6 @@ func Postgres(url string) *Context {
 	if err != nil {
 		log.Fatalln("error: database connection failed", err)
 	}
-	log.Println("database: postgres: ", url)
+	log.Println("url: ", url)
 	return &Context{DB: db}
 }
