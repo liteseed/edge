@@ -9,7 +9,7 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func (c *Cron) postBundle() {
+func (c *Context) postBundle() {
 	log.Println("posting bundle")
 	o, err := c.database.GetQueuedOrders(25)
 	if err != nil {

@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/liteseed/argo/signer"
 	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/database/schema"
@@ -24,9 +24,8 @@ func TestUploadData(t *testing.T) {
 
 	t.Parallel()
 	database, _ := database.New("sqlite", "./temp-upload-data/sqlite")
-	signer, _ := signer.New("../../data/signer.json")
+	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
 	store := store.New("pebble", "./temp-upload-data/pebble")
-
 	gin.SetMode(gin.TestMode)
 	server := New(database, signer, store)
 

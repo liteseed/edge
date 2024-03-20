@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/liteseed/argo/signer"
 	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database/schema"
 )
@@ -53,7 +54,7 @@ func (s *Context) UploadData(c *gin.Context) {
 		return
 	}
 
-	dataItem, err := transaction.NewDataItem(rawData, *s.signer, "", "", []transaction.Tag{})
+	dataItem, err := transaction.NewDataItem(rawData, signer.Signer{S: s.signer}, "", "", []transaction.Tag{})
 	if err != nil {
 		log.Println("data-item: failed to parse", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

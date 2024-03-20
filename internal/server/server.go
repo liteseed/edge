@@ -3,8 +3,9 @@ package server
 import (
 	"log"
 
+	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/argo/signer"
+
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 )
@@ -18,12 +19,14 @@ const (
 type Context struct {
 	database *database.Context
 	engine   *gin.Engine
-	signer   *signer.Signer
+	signer   *goar.Signer
 	store    *store.Store
 }
 
-func New(database *database.Context, signer *signer.Signer, store *store.Store) *Context {
-	engine := gin.Default()
+func New(database *database.Context, signer *goar.Signer, store *store.Store) *Context {
+	engine := gin.New()
+
+	engine.Use(gin.Recovery())
 	s := &Context{database: database, engine: engine, signer: signer, store: store}
 
 	s.engine.Use(ErrorHandler)

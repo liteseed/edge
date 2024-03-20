@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/liteseed/argo/signer"
+	"github.com/everFinance/goar"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
@@ -39,28 +39,29 @@ func start(context *cli.Context) error {
 	configPath := context.Path("config")
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	var config StartConfig
 
 	err = json.Unmarshal(configData, &config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
+
 	database, err := database.New(config.Database.Name, config.Database.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	signer, err := signer.New(config.Signer)
+	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	store := store.New(config.Store.Name, config.Store.URL)
 
-	c, err := cron.New(cron.WithDatabase(database), cron.WithSigner(signer), cron.WithStore(store))
+	c, err := cron.New(cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
 	if err != nil {
 		log.Fatalln("failed to load cron", err)
 	}
@@ -70,7 +71,7 @@ func start(context *cli.Context) error {
 	}
 	c.Start()
 
-	s := server.New(database, signer, store)
+	s := server.New(database, wallet.Signer, store)
 	s.Run(":8080")
 
 	if err != nil {

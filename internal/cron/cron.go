@@ -1,54 +1,54 @@
 package cron
 
 import (
-	"github.com/liteseed/argo/signer"
+	"github.com/everFinance/goar"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 	"github.com/robfig/cron/v3"
 )
 
-type Cron struct {
+type Context struct {
 	C        *cron.Cron
 	database *database.Context
 	store    *store.Store
-	signer   *signer.Signer
+	wallet   *goar.Wallet
 }
 
-func New(options ...func(*Cron)) (*Cron, error) {
-	c := &Cron{C: cron.New()}
+func New(options ...func(*Context)) (*Context, error) {
+	c := &Context{C: cron.New()}
 	for _, o := range options {
 		o(c)
 	}
 	return c, nil
 }
 
-func WithDatabase(db *database.Context) func(*Cron) {
-	return func(c *Cron) {
+func WithDatabase(db *database.Context) func(*Context) {
+	return func(c *Context) {
 		c.database = db
 	}
 }
 
-func WithSigner(s *signer.Signer) func(*Cron) {
-	return func(c *Cron) {
-		c.signer = s
+func WithWallet(s *goar.Wallet) func(*Context) {
+	return func(c *Context) {
+		c.wallet = s
 	}
 }
 
-func WithStore(s *store.Store) func(*Cron) {
-	return func(c *Cron) {
+func WithStore(s *store.Store) func(*Context) {
+	return func(c *Context) {
 		c.store = s
 	}
 }
 
-func (c *Cron) Start() {
+func (c *Context) Start() {
 	c.C.Start()
 }
 
-func (c *Cron) Stop() {
+func (c *Context) Stop() {
 	c.C.Stop()
 }
 
-func (c *Cron) Add(spec string) error {
+func (c *Context) Add(spec string) error {
 	_, err := c.C.AddFunc(spec, c.postBundle)
 	return err
 }

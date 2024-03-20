@@ -13,6 +13,6 @@ func (s *Context) Status(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Name":    "Edge",
 		"Version": "v0.0.1",
-		"Signer":  s.signer.S.Address,
+		"Signer":  s.signer.Address,
 	})
 }
