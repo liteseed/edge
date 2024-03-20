@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -19,22 +18,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUploadData(t *testing.T) {
-	defer os.RemoveAll("./temp-upload-data")
-
+func TestUploadDataItem(t *testing.T) {
+	defer os.RemoveAll("./temp-upload-data-item")
 	t.Parallel()
-	database, _ := database.New("sqlite", "./temp-upload-data/sqlite")
+	database, _ := database.New("sqlite", "./temp-upload-data-item/sqlite")
 	signer, _ := signer.New("../../data/signer.json")
-	store := store.New("pebble", "./temp-upload-data/pebble")
+	store := store.New("pebble", "./temp-upload-data-item/pebble")
+	data, _ := os.ReadFile("../../test/1115BDataItem")
 
 	gin.SetMode(gin.TestMode)
 	server := New(database, signer, store)
 
-	t.Run("content-type:application/json, content-length:3, data:{1,2,3}", func(t *testing.T) {
-		headers := map[string]string{"content-type": "application/json", "content-length": "3"}
-		data := []byte{1, 2, 3}
+	t.Run("content-type:application/json, content-length:1115, data:1115BDataItem", func(t *testing.T) {
+		headers := map[string]string{"content-type": "application/json", "content-length": "1115"}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data-item", bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -48,11 +46,10 @@ func TestUploadData(t *testing.T) {
 		assert.Equal(t, responseError{Error: "content-type: unsupported"}, resErr)
 	})
 
-	t.Run("content-type:application/octet-stream, content-length:0, data:{1,2,3}", func(t *testing.T) {
+	t.Run("content-type:application/octet-stream, content-length:0,  data:1115BDataItem", func(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "0"}
-		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data-item", bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -64,10 +61,10 @@ func TestUploadData(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, responseError{Error: "content-length: supported range 1B - 1073824B"}, resErr)
 	})
-	t.Run("content-type:application/octet-stream, content-length:3, data:nil", func(t *testing.T) {
-		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "3"}
+	t.Run("content-type:application/octet-stream, content-length:1115, data:nil", func(t *testing.T) {
+		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "1115"}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", nil)
+		req := httptest.NewRequest("POST", "/data-item", nil)
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -80,11 +77,10 @@ func TestUploadData(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, responseError{Error: "body: required"}, resErr)
 	})
-	t.Run("content-type:application/octet-stream, content-length:4, data:{1,2,3}", func(t *testing.T) {
+	t.Run("content-type:application/octet-stream, content-length:4, data:1115BDataItem", func(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "4"}
-		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data-item", bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -95,13 +91,12 @@ func TestUploadData(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &resErr)
 
 		assert.NoError(t, err)
-		assert.Equal(t, responseError{Error: "content-length, body: length mismatch (4, 3)"}, resErr)
+		assert.Equal(t, responseError{Error: "content-length, body: length mismatch (4, 1115)"}, resErr)
 	})
-	t.Run("content-type:application/octet-stream, content-length:3, data:{1,2,3}", func(t *testing.T) {
-		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "3"}
-		data := []byte{1, 2, 3}
+	t.Run("content-type:application/octet-stream, content-length:1115, data:data-item", func(t *testing.T) {
+		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "1115"}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data-item", bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -126,6 +121,6 @@ func TestUploadData(t *testing.T) {
 
 		dataItem, err := transaction.DecodeDataItem(rawData)
 		assert.NoError(t, err)
-		assert.Equal(t, base64.RawURLEncoding.EncodeToString(data), dataItem.Data)
+		assert.ElementsMatch(t, data, dataItem.Raw)
 	})
 }

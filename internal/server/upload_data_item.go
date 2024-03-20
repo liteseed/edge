@@ -2,10 +2,9 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,51 +13,60 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
+type UploadDataItemRequestHeader struct {
+	ContentType   *string `header:"content-type" binding:"required"`
+	ContentLength *int    `header:"content-length" binding:"required"`
+}
+
 type UploadDataItemResponse struct {
 	Id string `json:"id"`
 }
 
 // POST /data
 func (s *Context) UploadDataItem(c *gin.Context) {
-	contentLength, err := strconv.Atoi(c.Request.Header.Get("content-length"))
-	if err != nil {
-		log.Println("request has no content length header!")
-	}
-
-	if contentLength > MAX_DATA_ITEM_SIZE {
-		c.AbortWithError(http.StatusBadRequest, err)
+	header := &UploadDataRequestHeader{}
+	if err := c.ShouldBindHeader(header); err != nil {
+		c.JSON(400, err.Error())
 		return
 	}
-
-	contentType := c.Request.Header.Get("content-type")
-	if contentType == "" {
-		log.Println("request has no content type")
-	} else if contentType != CONTENT_TYPE_OCTET_STREAM {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("unexpected content type")))
+	if *header.ContentLength == 0 || *header.ContentLength > MAX_DATA_SIZE {
+		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content-length: supported range 1B - %dB", MAX_DATA_SIZE))
+		return
+	}
+	if *header.ContentType != CONTENT_TYPE_OCTET_STREAM {
+		c.AbortWithError(http.StatusBadRequest, errors.New("content-type: unsupported"))
 		return
 	}
 
 	rawData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("unable to decode data")))
+		c.AbortWithError(http.StatusBadRequest, errors.New("body: failed to parse"))
+		return
+	}
+	if len(rawData) == 0 {
+		c.AbortWithError(http.StatusBadRequest, errors.New("body: required"))
+		return
+	}
+	if len(rawData) != *header.ContentLength {
+		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content-length, body: length mismatch (%d, %d)", *header.ContentLength, len(rawData)))
 		return
 	}
 
 	dataItem, err := transaction.DecodeDataItem(rawData)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
+		c.AbortWithError(http.StatusBadRequest, errors.New("invalid data item"))
 		return
 	}
 
 	valid, err := transaction.VerifyDataItem(dataItem)
 	if !valid || err != nil {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("invalid data item")))
+		c.AbortWithError(http.StatusBadRequest, errors.New("invalid data item"))
 		return
 	}
 
 	storeId, err := s.store.Put(rawData)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, c.Error(errors.New("failed to save data")))
+		c.AbortWithError(http.StatusBadRequest, errors.New("failed to save data"))
 		return
 	}
 
@@ -75,5 +83,5 @@ func (s *Context) UploadDataItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, UploadDataResponse{Id: o.ID.String()})
+	c.JSON(http.StatusCreated, UploadDataResponse{Id: o.ID.String()})
 }
