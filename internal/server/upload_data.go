@@ -12,12 +12,9 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-type UploadDataResponse struct {
-	Id string `json:"id"`
-}
-
 // POST /data
-func (s *Context) UploadData(c *gin.Context) {
+func (s *Context) uploadData(c *gin.Context) {
+	id := c.Param("id")
 	header, err := verifyHeaders(c)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -29,7 +26,6 @@ func (s *Context) UploadData(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	dataItem, err := transaction.NewDataItem(rawData, signer.Signer{S: s.signer}, "", "", []transaction.Tag{})
 	if err != nil {
 		log.Println("data-item: failed to create", err)
@@ -51,6 +47,7 @@ func (s *Context) UploadData(c *gin.Context) {
 		ID:       uuid.New(),
 		Status:   schema.Queued,
 		StoreID:  storeId,
+		PublicID: id,
 		Checksum: checksum,
 	}
 
@@ -62,5 +59,5 @@ func (s *Context) UploadData(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, UploadDataResponse{Id: o.ID.String()})
+	c.JSON(http.StatusCreated, nil)
 }

@@ -13,6 +13,7 @@ type UploadRequestHeader struct {
 	ContentType   *string `header:"content-type" binding:"required"`
 	ContentLength *int    `header:"content-length" binding:"required"`
 }
+
 func verifyHeaders(c *gin.Context) (*UploadRequestHeader, error) {
 	header := &UploadRequestHeader{}
 	if err := c.ShouldBindHeader(header); err != nil {

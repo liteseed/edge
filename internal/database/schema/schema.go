@@ -32,6 +32,6 @@ type Order struct {
 	ID       uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
 	Status   Status    `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
 	StoreID  uuid.UUID `json:"store_id"`
-	PublicID uuid.UUID `json:"public_id"`
-	Checksum string    `json:"md5"`
+	PublicID string    `json:"public_id"`
+	Checksum string    `json:"checksum"`
 }

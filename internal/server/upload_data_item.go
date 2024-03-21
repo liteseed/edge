@@ -1,8 +1,7 @@
 package server
 
 import (
-	"encoding/base64"
-	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,12 +11,9 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-type UploadDataItemResponse struct {
-	Id string `json:"id"`
-}
-
-// POST /data
-func (s *Context) UploadDataItem(c *gin.Context) {
+// POST /data-item
+func (s *Context) uploadDataItem(c *gin.Context) {
+	id := c.Param("id")
 	header, err := verifyHeaders(c)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -29,45 +25,44 @@ func (s *Context) UploadDataItem(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	dataItem, err := transaction.DecodeDataItem(rawData)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, errors.New("invalid data item"))
+		log.Println("data-item: failed to create", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
 	valid, err := transaction.VerifyDataItem(dataItem)
 	if !valid || err != nil {
-		c.AbortWithError(http.StatusBadRequest, errors.New("invalid data item"))
+		log.Println("data-item: failed to verify", err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
-	storeId, err := s.store.Put(rawData)
+	storeId, err := s.store.Put(dataItem.Raw)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, errors.New("failed to save data"))
+		log.Println("store: failed to save", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	dataItemData, err := base64.RawURLEncoding.DecodeString(dataItem.Data)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, errors.New("failed to decode data-item data"))
-		return
-	}
-	checksum := calculateChecksum(dataItemData)
+	checksum := calculateChecksum(rawData)
 
+	// ADD TO NEXT BUNDLE
 	o := &schema.Order{
 		ID:       uuid.New(),
 		Status:   schema.Queued,
 		StoreID:  storeId,
+		PublicID: id,
 		Checksum: checksum,
 	}
 
 	// SAVE TO DATABASE TO TRACK STATUS
 	err = s.database.CreateOrder(o)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		log.Println("database: create order failed", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusCreated, UploadDataResponse{Id: o.ID.String()})
+	c.JSON(http.StatusCreated, nil)
 }

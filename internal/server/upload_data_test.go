@@ -11,7 +11,6 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/database/schema"
@@ -19,13 +18,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type responseError struct {
+	Error string `json:"error"`
+}
+
 func TestUploadData(t *testing.T) {
 	defer os.RemoveAll("./temp-upload-data")
 
 	_ = os.Mkdir("./temp-upload-data", os.ModePerm)
+	id := "AVASWERFDHTRE"
 	database, _ := database.New("sqlite", "./temp-upload-data/sqlite")
-	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
 	store := store.New("pebble", "./temp-upload-data/pebble")
+	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
 	gin.SetMode(gin.TestMode)
 	server := New(database, signer, store)
 
@@ -35,7 +39,7 @@ func TestUploadData(t *testing.T) {
 		headers := map[string]string{"content-type": "application/json", "content-length": "3"}
 		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data/"+id, bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -53,7 +57,7 @@ func TestUploadData(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "0"}
 		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data/"+id, bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -68,7 +72,7 @@ func TestUploadData(t *testing.T) {
 	t.Run("content-type:application/octet-stream, content-length:3, data:nil", func(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "3"}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", nil)
+		req := httptest.NewRequest("POST", "/data/"+id, nil)
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -85,7 +89,7 @@ func TestUploadData(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "4"}
 		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data/"+id, bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
@@ -102,20 +106,14 @@ func TestUploadData(t *testing.T) {
 		headers := map[string]string{"content-type": "application/octet-stream", "content-length": "3"}
 		data := []byte{1, 2, 3}
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest("POST", "/data", bytes.NewReader(data))
+		req := httptest.NewRequest("POST", "/data/"+id, bytes.NewReader(data))
 		req.Header.Set("content-type", headers["content-type"])
 		req.Header.Set("content-length", headers["content-length"])
 		server.engine.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
 
-		var res UploadDataResponse
-		err := json.Unmarshal(w.Body.Bytes(), &res)
-
-		assert.NoError(t, err)
-		assert.NotEmpty(t, res.Id)
-
-		o, err := database.GetOrder(uuid.MustParse(res.Id))
+		o, err := database.GetOrder(id)
 		assert.NoError(t, err)
 
 		status, err := o.Status.Value()

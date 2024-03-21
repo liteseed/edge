@@ -36,9 +36,9 @@ func (c *Context) CreateOrder(o *schema.Order) error {
 	return c.DB.Create(&o).Error
 }
 
-func (c *Context) GetOrder(id uuid.UUID) (*schema.Order, error) {
+func (c *Context) GetOrder(id string) (*schema.Order, error) {
 	o := &schema.Order{}
-	err := c.DB.Where("id = ?", id).First(&o).Error
+	err := c.DB.Where("public_id = ?", id).First(&o).Error
 	return o, err
 }
 

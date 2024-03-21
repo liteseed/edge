@@ -31,8 +31,8 @@ func New(database *database.Context, signer *goar.Signer, store *store.Store) *C
 
 	s.engine.Use(ErrorHandler)
 	s.engine.GET("/status", s.Status)
-	s.engine.POST("/data", s.UploadData)
-	s.engine.POST("/data-item", s.UploadDataItem)
+	s.engine.POST("/data/:id", s.uploadData)
+	s.engine.POST("/data-item/:id", s.uploadDataItem)
 
 	return s
 }
