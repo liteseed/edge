@@ -33,4 +33,5 @@ type Order struct {
 	Status   Status    `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
 	StoreID  uuid.UUID `json:"store_id"`
 	PublicID uuid.UUID `json:"public_id"`
+	Checksum string    `json:"md5"`
 }

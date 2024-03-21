@@ -22,12 +22,14 @@ import (
 func TestUploadData(t *testing.T) {
 	defer os.RemoveAll("./temp-upload-data")
 
-	t.Parallel()
+	_ = os.Mkdir("./temp-upload-data", os.ModePerm)
 	database, _ := database.New("sqlite", "./temp-upload-data/sqlite")
 	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
 	store := store.New("pebble", "./temp-upload-data/pebble")
 	gin.SetMode(gin.TestMode)
 	server := New(database, signer, store)
+
+	t.Parallel()
 
 	t.Run("content-type:application/json, content-length:3, data:{1,2,3}", func(t *testing.T) {
 		headers := map[string]string{"content-type": "application/json", "content-length": "3"}

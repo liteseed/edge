@@ -1,9 +1,8 @@
 package server
 
 import (
+	"encoding/base64"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,42 +12,21 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-type UploadDataItemRequestHeader struct {
-	ContentType   *string `header:"content-type" binding:"required"`
-	ContentLength *int    `header:"content-length" binding:"required"`
-}
-
 type UploadDataItemResponse struct {
 	Id string `json:"id"`
 }
 
 // POST /data
 func (s *Context) UploadDataItem(c *gin.Context) {
-	header := &UploadDataRequestHeader{}
-	if err := c.ShouldBindHeader(header); err != nil {
-		c.JSON(400, err.Error())
-		return
-	}
-	if *header.ContentLength == 0 || *header.ContentLength > MAX_DATA_SIZE {
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content-length: supported range 1B - %dB", MAX_DATA_SIZE))
-		return
-	}
-	if *header.ContentType != CONTENT_TYPE_OCTET_STREAM {
-		c.AbortWithError(http.StatusBadRequest, errors.New("content-type: unsupported"))
+	header, err := verifyHeaders(c)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	rawData, err := io.ReadAll(c.Request.Body)
+	rawData, err := decodeBody(c, *header.ContentLength)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, errors.New("body: failed to parse"))
-		return
-	}
-	if len(rawData) == 0 {
-		c.AbortWithError(http.StatusBadRequest, errors.New("body: required"))
-		return
-	}
-	if len(rawData) != *header.ContentLength {
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("content-length, body: length mismatch (%d, %d)", *header.ContentLength, len(rawData)))
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -70,10 +48,18 @@ func (s *Context) UploadDataItem(c *gin.Context) {
 		return
 	}
 
+	dataItemData, err := base64.RawURLEncoding.DecodeString(dataItem.Data)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, errors.New("failed to decode data-item data"))
+		return
+	}
+	checksum := calculateChecksum(dataItemData)
+
 	o := &schema.Order{
-		ID:      uuid.New(),
-		Status:  schema.Queued,
-		StoreID: storeId,
+		ID:       uuid.New(),
+		Status:   schema.Queued,
+		StoreID:  storeId,
+		Checksum: checksum,
 	}
 
 	// SAVE TO DATABASE TO TRACK STATUS
