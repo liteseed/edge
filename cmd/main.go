@@ -10,7 +10,7 @@ import (
 
 const appName = "Edge"
 const appAbout = "Edge"
-const appEdition = "ce"
+const appEdition = "beta"
 const appDescription = "edge"
 
 var version = "development"

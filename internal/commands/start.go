@@ -18,8 +18,9 @@ type JSONValue struct {
 	URL  string
 }
 
-type StartConfig struct {
+type Config struct {
 	Port     string
+	Process  string
 	Signer   string
 	Database JSONValue
 	Store    JSONValue
@@ -42,7 +43,7 @@ func start(context *cli.Context) error {
 		log.Fatalln(err)
 	}
 
-	var config StartConfig
+	var config Config
 
 	err = json.Unmarshal(configData, &config)
 	if err != nil {
@@ -65,9 +66,13 @@ func start(context *cli.Context) error {
 	if err != nil {
 		log.Fatalln("failed to load cron", err)
 	}
-	err = c.Add("* * * * *")
+	err = c.PostBundle("* * * * *")
 	if err != nil {
-		log.Fatalln("failed to load cron", err)
+		log.Fatalln("failed to start bundle posting service", err)
+	}
+	err = c.Notify()
+	if err != nil {
+		log.Fatalln("failed to start notification service", err)
 	}
 	c.Start()
 

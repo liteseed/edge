@@ -2,7 +2,7 @@
 
   "Port": "8080",
   "Signer": "./data/signer.json",
-
+  "Process": "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk",
   "Database": {
     "Name": "sqlite",
     "URL": "./data/sqlite"

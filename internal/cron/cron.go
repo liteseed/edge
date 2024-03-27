@@ -48,7 +48,12 @@ func (c *Context) Stop() {
 	c.C.Stop()
 }
 
-func (c *Context) Add(spec string) error {
+func (c *Context) PostBundle(spec string) error {
 	_, err := c.C.AddFunc(spec, c.postBundle)
+	return err
+}
+
+func (c *Context) Notify() error {
+	_, err := c.C.AddFunc("* * * * *", c.notify)
 	return err
 }
