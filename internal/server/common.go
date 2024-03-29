@@ -7,7 +7,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/liteseed/argo/ao"
+	"github.com/liteseed/argo/signer"
+	"github.com/liteseed/argo/transaction"
 )
+
+const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
 
 type UploadRequestHeader struct {
 	ContentType   *string `header:"content-type" binding:"required"`
@@ -45,4 +50,28 @@ func decodeBody(c *gin.Context, contentLength int) ([]byte, error) {
 func calculateChecksum(rawData []byte) string {
 	rawChecksum := md5.Sum(rawData)
 	return hex.EncodeToString(rawChecksum[:])
+}
+
+func checkUploadOnContract(ao *ao.AO, s *signer.Signer, dataItem *transaction.DataItem) (bool, error) {
+	tags := []transaction.Tag{{Name: "Action", Value: "Upload"}, {Name: "Transaction", Value: dataItem.ID}}
+	message, err := ao.SendMessage(PROCESS, "initiate", tags, "", s)
+	if err != nil {
+		return false, err
+	}
+	result, err := ao.ReadResult(PROCESS, message)
+	if err != nil {
+		return false, err
+	}
+
+	checksum := ""
+	if checksum != result.Messages[0]["Checksum"] {
+		return false, errors.New("checksum doesn't match")
+	}
+
+	quantity := 100
+	if quantity != result.Messages[0]["Quantity"] {
+		return false, errors.New("quantity isn't enough")
+	}
+
+	return true, nil
 }

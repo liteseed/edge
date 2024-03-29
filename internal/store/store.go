@@ -3,7 +3,6 @@ package store
 import (
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/liteseed/edge/internal/store/pebble"
 )
 
@@ -39,20 +38,19 @@ func (s *Store) Close() {
 	}
 }
 
-func (s *Store) Delete(id uuid.UUID) error {
-	return s.store.Delete([]byte(id.String()))
+func (s *Store) Delete(id string) error {
+	return s.store.Delete([]byte(id))
 }
 
-func (s *Store) Get(id uuid.UUID) ([]byte, error) {
-	return s.store.Get([]byte(id.String()))
+func (s *Store) Get(id string) ([]byte, error) {
+	return s.store.Get([]byte(id))
 }
 
-func (s *Store) Has(id uuid.UUID) (bool, error) {
-	return s.store.Has([]byte(id.String()))
+func (s *Store) Has(id string) (bool, error) {
+	return s.store.Has([]byte(id))
 }
 
-func (s *Store) Put(data []byte) (uuid.UUID, error) {
-	id := uuid.New()
-	err := s.store.Put([]byte(id.String()), data)
-	return id, err
+func (s *Store) Put(id string, data []byte) error {
+	err := s.store.Put([]byte(id), data)
+	return err
 }

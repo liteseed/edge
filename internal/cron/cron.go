@@ -2,12 +2,14 @@ package cron
 
 import (
 	"github.com/everFinance/goar"
+	"github.com/liteseed/argo/ao"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 	"github.com/robfig/cron/v3"
 )
 
 type Context struct {
+	ao       *ao.AO
 	C        *cron.Cron
 	database *database.Context
 	store    *store.Store
@@ -20,6 +22,12 @@ func New(options ...func(*Context)) (*Context, error) {
 		o(c)
 	}
 	return c, nil
+}
+
+func WthAO(ao *ao.AO) func(*Context) {
+	return func (c *Context) {
+		c.ao = ao
+	}
 }
 
 func WithDatabase(db *database.Context) func(*Context) {

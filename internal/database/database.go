@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/google/uuid"
 	"github.com/liteseed/edge/internal/database/schema"
 	"gorm.io/gorm"
 )
@@ -42,17 +41,21 @@ func (c *Context) GetOrder(id string) (*schema.Order, error) {
 	return o, err
 }
 
-func (c *Context) GetQueuedOrders(limit int) (*[]schema.Order, error) {
+func (c *Context) GetOrdersByStatus(status schema.Status) (*[]schema.Order, error) {
 	o := &[]schema.Order{}
-	err := c.DB.Where("status = ?", schema.Queued).Find(&o).Limit(limit).Error
+	err := c.DB.Where("status = ?", status).Limit(25).Find(&o).Error
 	return o, err
 }
 
-func (c *Context) UpdateStatus(id uuid.UUID, status schema.Status) error {
+func (c *Context) UpdateStatus(id string, status schema.Status) error {
 	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
 }
 
-func (c *Context) DeleteOrder(id uuid.UUID) error {
+func (c *Context) UpdateTransactionID(id string, transactionId string) error {
+	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("transaction_id", transactionId).Error
+}
+
+func (c *Context) DeleteOrder(id string) error {
 	o := &schema.Order{ID: id}
 	return c.DB.Delete(o).Error
 }

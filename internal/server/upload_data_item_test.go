@@ -10,6 +10,7 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
+	"github.com/liteseed/argo/ao"
 	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/database/schema"
@@ -17,17 +18,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type responseError struct {
+	Error string `json:"error"`
+}
+
 func TestUploadDataItem(t *testing.T) {
 	defer os.RemoveAll("./temp-upload-data-item")
 
 	_ = os.Mkdir("./temp-upload-data-item", os.ModePerm)
 	id := "AVASWERFDHTRE"
+	ao := ao.New()
 	database, _ := database.New("sqlite", "./temp-upload-data-item/sqlite")
 	store := store.New("pebble", "./temp-upload-data-item/pebble")
 	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
 	data, _ := os.ReadFile("../../test/1115BDataItem")
 	gin.SetMode(gin.TestMode)
-	server := New(database, signer, store)
+	server := New(ao, database, signer, store)
 
 	t.Parallel()
 
@@ -112,7 +118,7 @@ func TestUploadDataItem(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, schema.Queued, status)
 
-		rawData, err := store.Get(o.StoreID)
+		rawData, err := store.Get(o.ID)
 		assert.NoError(t, err)
 
 		dataItem, err := transaction.DecodeDataItem(rawData)

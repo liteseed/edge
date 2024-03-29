@@ -6,6 +6,7 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
 
+	"github.com/liteseed/argo/ao"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 )
@@ -17,21 +18,21 @@ const (
 )
 
 type Context struct {
+	ao *ao.AO
 	database *database.Context
 	engine   *gin.Engine
 	signer   *goar.Signer
 	store    *store.Store
 }
 
-func New(database *database.Context, signer *goar.Signer, store *store.Store) *Context {
+func New(ao *ao.AO, database *database.Context, signer *goar.Signer, store *store.Store) *Context {
 	engine := gin.New()
 
 	engine.Use(gin.Recovery())
-	s := &Context{database: database, engine: engine, signer: signer, store: store}
+	s := &Context{ao: ao, database: database, engine: engine, signer: signer, store: store}
 
 	s.engine.Use(ErrorHandler)
 	s.engine.GET("/status", s.Status)
-	s.engine.POST("/data/:id", s.uploadData)
 	s.engine.POST("/data-item/:id", s.uploadDataItem)
 
 	return s

@@ -9,7 +9,7 @@ import (
 )
 
 func parseDataItemFromOrder(c *Context, o *schema.Order) (*transaction.DataItem, error) {
-	rawDataItem, err := c.store.Get(o.StoreID)
+	rawDataItem, err := c.store.Get(o.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func parseDataItemFromOrder(c *Context, o *schema.Order) (*transaction.DataItem,
 }
 
 func (c *Context) postBundle() {
-	o, err := c.database.GetQueuedOrders(25)
+	o, err := c.database.GetOrdersByStatus(schema.Queued)
 	if err != nil {
 		return
 	}
@@ -41,7 +41,7 @@ func (c *Context) postBundle() {
 		dataItem, err := parseDataItemFromOrder(c, &order)
 		if err != nil {
 			log.Println(err)
-			log.Println("failed to decode:", order.StoreID)
+			log.Println("failed to decode:", order.ID)
 			continue
 		}
 		dataItems = append(dataItems, *dataItem)
@@ -58,5 +58,11 @@ func (c *Context) postBundle() {
 		log.Println("failed to upload:", err)
 		return
 	}
-	log.Println(tx.ID)
+
+	for _, order := range *o {
+		err = c.database.UpdateTransactionID(order.ID, tx.ID)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

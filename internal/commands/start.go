@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/everFinance/goar"
+	"github.com/liteseed/argo/ao"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
@@ -62,7 +63,9 @@ func start(context *cli.Context) error {
 
 	store := store.New(config.Store.Name, config.Store.URL)
 
-	c, err := cron.New(cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
+	ao := ao.New()
+
+	c, err := cron.New(cron.WthAO(ao), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
 	if err != nil {
 		log.Fatalln("failed to load cron", err)
 	}
@@ -76,7 +79,7 @@ func start(context *cli.Context) error {
 	}
 	c.Start()
 
-	s := server.New(database, wallet.Signer, store)
+	s := server.New(ao, database, wallet.Signer, store)
 	s.Run(":8080")
 
 	if err != nil {
