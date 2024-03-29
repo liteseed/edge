@@ -26,7 +26,7 @@ func (c *Context) notify() {
 			log.Println(err, message)
 			continue
 		}
-		err = c.database.DeleteOrder(order.ID)
+		err = c.database.UpdateStatus(order.ID, schema.Reward)
 		if err != nil {
 			log.Println(err)
 			continue

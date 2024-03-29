@@ -15,6 +15,8 @@ const (
 
 	Sent      = "sent"
 	Permanent = "permanent"
+
+	Reward = "reward"
 )
 
 func (s *Status) Scan(value interface{}) error {
@@ -28,16 +30,8 @@ func (s Status) Value() (driver.Value, error) {
 
 type Order struct {
 	gorm.Model
-	ID          string `gorm:"primary_key;" json:"id"`
-	Status      Status `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
-	Checksum    string `json:"checksum"`
+	ID            string `gorm:"primary_key;" json:"id"`
+	Status        Status `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
+	Checksum      string `json:"checksum"`
 	TransactionID string `json:"transaction_id"`
-}
-
-func (o *Order) Network() string {
-	panic("TODO: Implement")
-}
-
-func (o *Order) String() string {
-	panic("TODO: Implement")
 }
