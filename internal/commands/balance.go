@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/liteseed/argo/ao"
-	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/argo/transaction"
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
+	"github.com/liteseed/aogo"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,7 +24,7 @@ var Balance = &cli.Command{
 func balance(context *cli.Context) error {
 
 	var data = "Balance"
-	var tags = []transaction.Tag{{Name: "Action", Value: "Balance"}}
+	var tags = []types.Tag{{Name: "Action", Value: "Balance"}}
 
 	configPath := context.Path("config")
 	configData, err := os.ReadFile(configPath)
@@ -39,14 +39,22 @@ func balance(context *cli.Context) error {
 		log.Fatalln(err)
 	}
 
-	signer, err := signer.New(config.Signer)
+	ao, err := aogo.New()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ao := ao.New()
+	signer, err := goar.NewSignerFromPath(config.Signer)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	messageId, err := ao.SendMessage(config.Process, data, tags, "", signer)
+	itemSigner, err := goar.NewItemSigner(signer)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	messageId, err := ao.SendMessage(config.Process, data, tags, "", itemSigner)
 	if err != nil {
 		log.Fatal(err)
 	}

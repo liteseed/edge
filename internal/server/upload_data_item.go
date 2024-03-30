@@ -4,10 +4,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/everFinance/goar/utils"
 	"github.com/gin-gonic/gin"
 
-	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/argo/transaction"
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
@@ -24,28 +23,28 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	dataItem, err := transaction.DecodeDataItem(rawData)
+	dataItem, err := utils.DecodeBundleItem(rawData)
 	if err != nil {
 		log.Println("data-item: failed to create", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	valid, err := transaction.VerifyDataItem(dataItem)
-	if !valid || err != nil {
+	err = utils.VerifyBundleItem(*dataItem)
+	if err != nil {
 		log.Println("data-item: failed to verify", err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
-	valid, err = checkUploadOnContract(s.ao, &signer.Signer{S: s.signer}, dataItem)
+	valid, err := checkUploadOnContract(s.ao, s.signer, dataItem)
 	if !valid || err != nil {
 		log.Println("data-item: failed to verify on ao", err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.store.Put(dataItem.ID, dataItem.Raw)
+	err = s.store.Put(dataItem.Id, dataItem.ItemBinary)
 	if err != nil {
 		log.Println("store: failed to save", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -55,7 +54,7 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 	checksum := calculateChecksum(rawData)
 
 	o := &schema.Order{
-		ID:       dataItem.ID,
+		ID:       dataItem.Id,
 		Status:   schema.Queued,
 		Checksum: checksum,
 	}

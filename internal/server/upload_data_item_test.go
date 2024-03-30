@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/argo/ao"
-	"github.com/liteseed/argo/transaction"
+	"github.com/liteseed/aogo"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/database/schema"
 	"github.com/liteseed/edge/internal/store"
@@ -27,7 +27,10 @@ func TestUploadDataItem(t *testing.T) {
 
 	_ = os.Mkdir("./temp-upload-data-item", os.ModePerm)
 	id := "AVASWERFDHTRE"
-	ao := ao.New()
+
+	ao, err := aogo.New()
+	assert.NoError(t, err)
+
 	database, _ := database.New("sqlite", "./temp-upload-data-item/sqlite")
 	store := store.New("pebble", "./temp-upload-data-item/pebble")
 	signer, _ := goar.NewSignerFromPath("../../data/signer.json")
@@ -121,8 +124,8 @@ func TestUploadDataItem(t *testing.T) {
 		rawData, err := store.Get(o.ID)
 		assert.NoError(t, err)
 
-		dataItem, err := transaction.DecodeDataItem(rawData)
+		dataItem, err := utils.DecodeBundleItem(rawData)
 		assert.NoError(t, err)
-		assert.ElementsMatch(t, data, dataItem.Raw)
+		assert.ElementsMatch(t, data, dataItem.ItemBinary)
 	})
 }

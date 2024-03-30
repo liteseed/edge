@@ -6,7 +6,7 @@ import (
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
 
-	"github.com/liteseed/argo/ao"
+	"github.com/liteseed/aogo"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 )
@@ -18,14 +18,14 @@ const (
 )
 
 type Context struct {
-	ao *ao.AO
+	ao       *aogo.AO
 	database *database.Context
 	engine   *gin.Engine
 	signer   *goar.Signer
 	store    *store.Store
 }
 
-func New(ao *ao.AO, database *database.Context, signer *goar.Signer, store *store.Store) *Context {
+func New(ao *aogo.AO, database *database.Context, signer *goar.Signer, store *store.Store) *Context {
 	engine := gin.New()
 
 	engine.Use(gin.Recovery())

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/argo/ao"
+	"github.com/liteseed/aogo"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
@@ -63,7 +63,10 @@ func start(context *cli.Context) error {
 
 	store := store.New(config.Store.Name, config.Store.URL)
 
-	ao := ao.New()
+	ao, err := aogo.New()
+	if err != nil {
+		log.Fatalln("failed to load ao", err)
+	}
 
 	c, err := cron.New(cron.WthAO(ao), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
 	if err != nil {

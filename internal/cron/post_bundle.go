@@ -4,16 +4,16 @@ import (
 	"log"
 
 	"github.com/everFinance/goar/types"
-	"github.com/liteseed/argo/transaction"
+	"github.com/everFinance/goar/utils"
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func parseDataItemFromOrder(c *Context, o *schema.Order) (*transaction.DataItem, error) {
+func parseDataItemFromOrder(c *Context, o *schema.Order) (*types.BundleItem, error) {
 	rawDataItem, err := c.store.Get(o.ID)
 	if err != nil {
 		return nil, err
 	}
-	dataItem, err := transaction.DecodeDataItem(rawDataItem)
+	dataItem, err := utils.DecodeBundleItem(rawDataItem)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (c *Context) postBundle() {
 		return
 	}
 
-	dataItems := []transaction.DataItem{}
+	dataItems := []types.BundleItem{}
 
 	for _, order := range *o {
 		dataItem, err := parseDataItemFromOrder(c, &order)
@@ -47,13 +47,13 @@ func (c *Context) postBundle() {
 		dataItems = append(dataItems, *dataItem)
 	}
 
-	bundle, err := transaction.NewBundle(&dataItems)
+	bundle, err := utils.NewBundle(dataItems...)
 	if err != nil {
 		log.Println("failed to bundle:", err)
 		return
 	}
 
-	tx, err := c.wallet.SendData([]byte(bundle.RawData), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}})
+	tx, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}})
 	if err != nil {
 		log.Println("failed to upload:", err)
 		return

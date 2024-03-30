@@ -3,8 +3,8 @@ package cron
 import (
 	"log"
 
-	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/argo/transaction"
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
@@ -20,8 +20,14 @@ func (c *Context) notify() {
 		return
 	}
 
+	itemSigner, err := goar.NewItemSigner(c.wallet.Signer)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	
 	for _, order := range *o {
-		message, err := c.ao.SendMessage(PROCESS, "notify", []transaction.Tag{{Name: "Action", Value: "Notify"}, {Name: "Transaction", Value: order.ID}, {Name: "Status", Value: "1"}}, "", &signer.Signer{S: c.wallet.Signer})
+		message, err := c.ao.SendMessage(PROCESS, "notify", []types.Tag{{Name: "Action", Value: "Notify"}, {Name: "Transaction", Value: order.ID}, {Name: "Status", Value: "1"}}, "", itemSigner)
 		if err != nil {
 			log.Println(err, message)
 			continue

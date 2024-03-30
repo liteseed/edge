@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/everFinance/goar"
+	"github.com/everFinance/goar/types"
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/argo/ao"
-	"github.com/liteseed/argo/signer"
-	"github.com/liteseed/argo/transaction"
+	"github.com/liteseed/aogo"
 )
 
 const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
@@ -52,9 +52,14 @@ func calculateChecksum(rawData []byte) string {
 	return hex.EncodeToString(rawChecksum[:])
 }
 
-func checkUploadOnContract(ao *ao.AO, s *signer.Signer, dataItem *transaction.DataItem) (bool, error) {
-	tags := []transaction.Tag{{Name: "Action", Value: "Upload"}, {Name: "Transaction", Value: dataItem.ID}}
-	message, err := ao.SendMessage(PROCESS, "initiate", tags, "", s)
+func checkUploadOnContract(ao *aogo.AO, s *goar.Signer, dataItem *types.BundleItem) (bool, error) {
+	itemSigner, err := goar.NewItemSigner(s)
+	if err != nil {
+		return false, err
+	}
+
+	tags := []types.Tag{{Name: "Action", Value: "Upload"}, {Name: "Transaction", Value: dataItem.Id}}
+	message, err := ao.SendMessage(PROCESS, "initiate", tags, "", itemSigner)
 	if err != nil {
 		return false, err
 	}
