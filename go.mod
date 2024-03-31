@@ -13,7 +13,7 @@ require (
 require (
 	github.com/cockroachdb/pebble v1.1.0
 	github.com/everFinance/goar v1.6.2
-	github.com/liteseed/aogo v0.0.3
+	github.com/liteseed/aogo v0.0.4
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0
 	gorm.io/driver/postgres v1.5.7
