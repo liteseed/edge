@@ -1,18 +1,8 @@
 {
-
   "Port": "8080",
   "Signer": "./data/signer.json",
   "Process": "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk",
-  "Database": {
-    "Name": "sqlite",
-    "URL": "./data/sqlite"
-  },
-  "Node": {
-    "Name": "arweave",
-    "URL": "https://arweave.dev"
-  },
-  "Store": {
-    "Name": "pebble",
-    "URL": "./data/pebble"
-  }
+  "Database": "postgresql://shauryasaklani13:iXt8qsFarAC2@ep-broad-wave-a5f1bt0a.us-east-2.aws.neon.tech/neondb?sslmode=require",
+  "Node": "https://arweave.net",
+  "Store": "./data/pebble"
 }

@@ -6,6 +6,7 @@ import (
 
 var Commands = []*cli.Command{
 	Balance,
+	Migrate,
 	Stake,
 	Start,
 	Unstake,

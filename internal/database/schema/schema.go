@@ -32,6 +32,5 @@ type Order struct {
 	gorm.Model
 	ID            string `gorm:"primary_key;" json:"id"`
 	Status        Status `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
-	Checksum      string `json:"checksum"`
 	TransactionID string `json:"transaction_id"`
 }

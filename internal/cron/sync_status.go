@@ -8,7 +8,7 @@ import (
 
 // Check status of the upload on Arweave
 
-func (c *Context) CheckStatus() {
+func (c *Context) SyncStatus() {
 	o, err := c.database.GetOrdersByStatus(schema.Sent)
 	if err != nil {
 		log.Println(err)
@@ -21,7 +21,7 @@ func (c *Context) CheckStatus() {
 			log.Println(err)
 			continue
 		}
-		if status.NumberOfConfirmations > 100 {
+		if status.NumberOfConfirmations > 10 {
 			err = c.database.UpdateStatus(order.ID, schema.Permanent)
 			if err != nil {
 				log.Println(err)

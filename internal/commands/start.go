@@ -15,18 +15,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-type JSONValue struct {
-	Name string
-	URL  string
-}
-
 type Config struct {
 	Port     string
 	Process  string
 	Signer   string
 	Database string
-	Store    JSONValue
-	Node     JSONValue
+	Store    string
+	Node     string
 }
 
 var Start = &cli.Command{
@@ -57,12 +52,12 @@ func start(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node.URL)
+	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	store := store.New(config.Store.Name, config.Store.URL)
+	store := store.New(config.Store)
 
 	ao, err := aogo.New()
 	if err != nil {
@@ -72,7 +67,7 @@ func start(context *cli.Context) error {
 	if err != nil {
 		log.Fatalln("failed to load ao", err)
 	}
-	
+
 	contracts := contracts.New(ao, itemSigner)
 
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))

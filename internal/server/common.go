@@ -51,11 +51,13 @@ func decodeBody(c *gin.Context, contentLength int) ([]byte, error) {
 }
 
 func checkUploadOnContract(contract *contracts.Context, dataItem *types.BundleItem) (bool, error) {
-	_, err := contract.GetUpload(dataItem.Id)
-	if err != nil {
+	res, err := contract.GetUpload(dataItem.Id)
+	if  err != nil {
 		return false, err
 	}
-
+	if res == nil {
+		return false, errors.New("no upload")
+	}
 	rawData, err := base64.RawURLEncoding.DecodeString(dataItem.Data)
 	if err != nil {
 		return false, err

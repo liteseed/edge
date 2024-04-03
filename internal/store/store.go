@@ -22,12 +22,9 @@ type Store struct {
 	store IStore
 }
 
-func New(storeOption string, path string) *Store {
+func New(path string) *Store {
 	s := &Store{}
-	switch storeOption {
-	default:
-		s.store = pebble.New(path)
-	}
+	s.store = pebble.New(path)
 	return s
 }
 

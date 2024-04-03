@@ -65,7 +65,7 @@ func (c *Context) PostBundle(spec string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.C.AddFunc(spec, c.CheckStatus)
+	_, err = c.C.AddFunc(spec, c.SyncStatus)
 	if err != nil {
 		return err
 	}
