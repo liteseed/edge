@@ -30,14 +30,14 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 		return
 	}
 
-	err = utils.VerifyBundleItem(*dataItem)
-	if err != nil {
-		log.Println("data-item: failed to verify", err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, err)
-		return
-	}
+	// err = utils.VerifyBundleItem(*dataItem)
+	// if err != nil {
+	// 	log.Println("data-item: failed to verify", err)
+	// 	c.AbortWithStatusJSON(http.StatusBadRequest, err)
+	// 	return
+	// }
 
-	valid, err := checkUploadOnContract(s.ao, s.signer, dataItem)
+	valid, err := checkUploadOnContract(s.contract, dataItem)
 	if !valid || err != nil {
 		log.Println("data-item: failed to verify on ao", err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
@@ -51,12 +51,9 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 		return
 	}
 
-	checksum := calculateChecksum(rawData)
-
 	o := &schema.Order{
-		ID:       dataItem.Id,
-		Status:   schema.Queued,
-		Checksum: checksum,
+		ID:     dataItem.Id,
+		Status: schema.Queued,
 	}
 
 	err = s.database.CreateOrder(o)

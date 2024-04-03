@@ -31,7 +31,7 @@ func (c *Context) postBundle() {
 	}
 
 	if len(*o) == 0 {
-		log.Println("no dataitem to post")
+		log.Println("no data-item to post")
 		return
 	}
 
@@ -53,14 +53,18 @@ func (c *Context) postBundle() {
 		return
 	}
 
-	tx, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}})
+	transaction, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
 	if err != nil {
 		log.Println("failed to upload:", err)
 		return
 	}
 
 	for _, order := range *o {
-		err = c.database.UpdateTransactionID(order.ID, tx.ID)
+		err = c.database.UpdateTransactionID(order.ID, transaction.ID)
+		if err != nil {
+			log.Println(err)
+		}
+		err = c.database.UpdateStatus(order.ID, schema.Sent)
 		if err != nil {
 			log.Println(err)
 		}

@@ -9,8 +9,9 @@ import (
 
 func TestPostgres(t *testing.T) {
 	url := os.Getenv("DATABASE_URL")
-	db := Postgres(url)
-
-	err := db.Migrate()
+	db, err := New(url)
+	assert.NoError(t, err)
+	
+	err = db.Migrate()
 	assert.NoError(t, err)
 }

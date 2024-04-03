@@ -14,8 +14,9 @@ func (c *Context) CheckStatus() {
 		log.Println(err)
 		return
 	}
+
 	for _, order := range *o {
-		status, err := c.wallet.Client.GetTransactionStatus(order.ID)
+		status, err := c.wallet.Client.GetTransactionStatus(order.TransactionID)
 		if err != nil {
 			log.Println(err)
 			continue

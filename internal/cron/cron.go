@@ -2,15 +2,15 @@ package cron
 
 import (
 	"github.com/everFinance/goar"
-	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
 	"github.com/robfig/cron/v3"
 )
 
 type Context struct {
-	ao       *aogo.AO
 	C        *cron.Cron
+	contract *contracts.Context
 	database *database.Context
 	store    *store.Store
 	wallet   *goar.Wallet
@@ -24,9 +24,9 @@ func New(options ...func(*Context)) (*Context, error) {
 	return c, nil
 }
 
-func WthAO(ao *aogo.AO) func(*Context) {
+func WthContracts(contract *contracts.Context) func(*Context) {
 	return func(c *Context) {
-		c.ao = ao
+		c.contract = contract
 	}
 }
 
@@ -58,7 +58,22 @@ func (c *Context) Stop() {
 
 func (c *Context) PostBundle(spec string) error {
 	_, err := c.C.AddFunc(spec, c.postBundle)
-	return err
+	if err != nil {
+		return err
+	}
+	_, err = c.C.AddFunc(spec, c.notify)
+	if err != nil {
+		return err
+	}
+	_, err = c.C.AddFunc(spec, c.CheckStatus)
+	if err != nil {
+		return err
+	}
+	_, err = c.C.AddFunc(spec, c.ReleaseReward)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Context) Notify() error {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
@@ -23,7 +24,7 @@ type Config struct {
 	Port     string
 	Process  string
 	Signer   string
-	Database JSONValue
+	Database string
 	Store    JSONValue
 	Node     JSONValue
 }
@@ -51,7 +52,7 @@ func start(context *cli.Context) error {
 		log.Fatalln(err)
 	}
 
-	database, err := database.New(config.Database.Name, config.Database.URL)
+	database, err := database.New(config.Database)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,8 +68,14 @@ func start(context *cli.Context) error {
 	if err != nil {
 		log.Fatalln("failed to load ao", err)
 	}
+	itemSigner, err := goar.NewItemSigner(wallet.Signer)
+	if err != nil {
+		log.Fatalln("failed to load ao", err)
+	}
+	
+	contracts := contracts.New(ao, itemSigner)
 
-	c, err := cron.New(cron.WthAO(ao), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
+	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
 	if err != nil {
 		log.Fatalln("failed to load cron", err)
 	}
@@ -82,7 +89,7 @@ func start(context *cli.Context) error {
 	}
 	c.Start()
 
-	s := server.New(ao, database, wallet.Signer, store)
+	s := server.New(contracts, database, store)
 	s.Run(":8080")
 
 	if err != nil {

@@ -1,15 +1,18 @@
 package server
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 
-	"github.com/everFinance/goar"
+	"strconv"
+
 	"github.com/everFinance/goar/types"
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 )
 
 const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
@@ -47,36 +50,46 @@ func decodeBody(c *gin.Context, contentLength int) ([]byte, error) {
 	return rawData, nil
 }
 
-func calculateChecksum(rawData []byte) string {
-	rawChecksum := md5.Sum(rawData)
-	return hex.EncodeToString(rawChecksum[:])
-}
-
-func checkUploadOnContract(ao *aogo.AO, s *goar.Signer, dataItem *types.BundleItem) (bool, error) {
-	itemSigner, err := goar.NewItemSigner(s)
+func checkUploadOnContract(contract *contracts.Context, dataItem *types.BundleItem) (bool, error) {
+	_, err := contract.GetUpload(dataItem.Id)
 	if err != nil {
 		return false, err
 	}
 
-	tags := []types.Tag{{Name: "Action", Value: "Upload"}, {Name: "Transaction", Value: dataItem.Id}}
-	message, err := ao.SendMessage(PROCESS, "initiate", tags, "", itemSigner)
-	if err != nil {
-		return false, err
-	}
-	result, err := ao.ReadResult(PROCESS, message)
+	rawData, err := base64.RawURLEncoding.DecodeString(dataItem.Data)
 	if err != nil {
 		return false, err
 	}
 
-	checksum := ""
-	if checksum != result.Messages[0]["Checksum"] {
-		return false, errors.New("checksum doesn't match")
+	price, err := getPrice(len(rawData))
+	if err != nil {
+		return false, err
 	}
 
-	quantity := 100
-	if quantity != result.Messages[0]["Quantity"] {
-		return false, errors.New("quantity isn't enough")
-	}
+	log.Println(price)
+	// if quantity >= 0 {
+	// 	return false, errors.New("quantity isn't enough")
+	// }
 
 	return true, nil
+}
+
+func getPrice(b int) (int, error) {
+
+	res, err := http.Get(fmt.Sprint("https://arweave.net/price/", b))
+	if err != nil {
+		return 0, err
+	}
+
+	r, err := io.ReadAll(res.Body)
+	if err != nil {
+		return 0, nil
+	}
+
+	i, err := strconv.Atoi(string(r))
+	if err != nil {
+		return 0, nil
+	}
+
+	return i, nil
 }
