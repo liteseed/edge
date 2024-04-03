@@ -19,7 +19,7 @@ const (
 	Reward = "reward"
 )
 
-func (s *Status) Scan(value interface{}) error {
+func (s *Status) Scan(value any) error {
 	*s = Status(value.(string))
 	return nil
 }
