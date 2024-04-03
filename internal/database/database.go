@@ -9,10 +9,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-const (
-	PostgreSQL = "postgresql"
-)
-
 type Context struct {
 	DB *gorm.DB
 }
