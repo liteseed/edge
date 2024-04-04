@@ -1,8 +1,7 @@
 {
   "Port": "8080",
   "Signer": "./data/signer.json",
-  "Process": "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk",
-  "Database": "postgresql://shauryasaklani13:iXt8qsFarAC2@ep-broad-wave-a5f1bt0a.us-east-2.aws.neon.tech/neondb?sslmode=require",
+  "Database": "postgresql",
   "Node": "https://arweave.net",
   "Store": "./data/pebble"
 }

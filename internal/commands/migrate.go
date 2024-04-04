@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"encoding/json"
 	"log"
-	"os"
 
 	"github.com/liteseed/edge/internal/database"
 	"github.com/urfave/cli/v2"
@@ -19,19 +17,7 @@ var Migrate = &cli.Command{
 }
 
 func migrate(context *cli.Context) error {
-
-	configPath := context.Path("config")
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var config Config
-
-	err = json.Unmarshal(configData, &config)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	config := readConfig(context)
 
 	database, err := database.New(config.Database)
 	if err != nil {

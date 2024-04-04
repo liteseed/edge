@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"encoding/json"
 	"log"
-	"os"
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
@@ -15,15 +13,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-type Config struct {
-	Port     string
-	Process  string
-	Signer   string
-	Database string
-	Store    string
-	Node     string
-}
-
 var Start = &cli.Command{
 	Name:  "start",
 	Usage: "Start the bundler node on this system",
@@ -34,18 +23,7 @@ var Start = &cli.Command{
 }
 
 func start(context *cli.Context) error {
-	configPath := context.Path("config")
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var config Config
-
-	err = json.Unmarshal(configData, &config)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	config := readConfig(context)
 
 	database, err := database.New(config.Database)
 	if err != nil {

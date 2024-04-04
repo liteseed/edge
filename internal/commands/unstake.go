@@ -1,13 +1,12 @@
 package commands
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
 	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 	"github.com/urfave/cli/v2"
 )
 
@@ -22,22 +21,7 @@ var Unstake = &cli.Command{
 
 func unstake(context *cli.Context) error {
 
-	var data = "Unstake"
-	var tags = []types.Tag{{Name: "Action", Value: "Unstake"}}
-
-	configPath := context.Path("config")
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var config Config
-
-	err = json.Unmarshal(configData, &config)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
+	config := readConfig(context)
 	ao, err := aogo.New()
 	if err != nil {
 		log.Fatal(err)
@@ -51,17 +35,13 @@ func unstake(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	contract := contracts.New(ao, itemSigner)
 
-	messageId, err := ao.SendMessage(config.Process, data, tags, "", itemSigner)
+	err = contract.Unstake()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = ao.ReadResult(config.Process, messageId)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Success")
+	fmt.Println("Success")
 	return nil
 }

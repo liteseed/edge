@@ -1,13 +1,12 @@
 package commands
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
 	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,30 +15,14 @@ var Stake = &cli.Command{
 	Usage: "Stake the current bundler",
 	Flags: []cli.Flag{
 		&cli.PathFlag{Name: "config", Aliases: []string{"c"}, Value: "./config.json", Usage: "path to config value"},
-		&cli.PathFlag{Name: "url", Value: "https://edge.liteseed.xyz", Usage: "url of bundler"},
+		&cli.StringFlag{Name: "url", Aliases: []string{"u"}, Usage: "url of bundler", Required: true},
 	},
 	Action: stake,
 }
 
 func stake(context *cli.Context) error {
-
-	var data = "Stake"
-	var tags = []types.Tag{{Name: "Action", Value: "Stake"}}
-
-	configPath := context.Path("config")
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	url := context.Path("url")
-
-	var config Config
-
-	err = json.Unmarshal(configData, &config)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	config := readConfig(context)
+	url := context.String("url")
 
 	ao, err := aogo.New()
 	if err != nil {
@@ -50,21 +33,19 @@ func stake(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	itemSigner, err := goar.NewItemSigner(signer)
 	if err != nil {
 		log.Fatal(err)
 	}
-	tags = append(tags, types.Tag{Name: "URL", Value: url})
-	messageId, err := ao.SendMessage(config.Process, data, tags, "", itemSigner)
+
+	contract := contracts.New(ao, itemSigner)
+
+	err = contract.Stake(url)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = ao.ReadResult(config.Process, messageId)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Success")
+	fmt.Println("Success")
 	return nil
 }

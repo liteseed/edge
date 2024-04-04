@@ -1,14 +1,12 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/everFinance/goar"
-	"github.com/everFinance/goar/types"
 	"github.com/liteseed/aogo"
+	"github.com/liteseed/edge/internal/contracts"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,62 +19,8 @@ var Balance = &cli.Command{
 	Action: balance,
 }
 
-func currentBalance(config Config, ao *aogo.AO, s *goar.ItemSigner) {
-
-	var data = "Balance"
-	var tags = []types.Tag{{Name: "Action", Value: "Balance"}}
-
-	messageId, err := ao.SendMessage(config.Process, data, tags, "", s)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result, err := ao.ReadResult(config.Process, messageId)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = fmt.Printf("Balance: %s BUN\n", result.Messages[0]["Data"])
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func staked(config Config, ao *aogo.AO, s *goar.ItemSigner) {
-
-	var data = "Staker"
-	var tags = []types.Tag{{Name: "Action", Value: "Staker"}}
-
-	messageId, err := ao.SendMessage(config.Process, data, tags, "", s)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result, err := ao.ReadResult(config.Process, messageId)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = fmt.Println("Staked: ", result.Messages[0]["Data"])
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func balance(context *cli.Context) error {
-
-	configPath := context.Path("config")
-	configData, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var config Config
-
-	err = json.Unmarshal(configData, &config)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	config := readConfig(context)
 
 	ao, err := aogo.New()
 	if err != nil {
@@ -92,9 +36,28 @@ func balance(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("Address: ", signer.Address)
 
-	currentBalance(config, ao, itemSigner)
-	staked(config, ao, itemSigner)
+	contract := contracts.New(ao, itemSigner)
+
+	b, err := contract.GetBalance()
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = fmt.Printf("Balance: %s BUN\n", b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := contract.GetStaker()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = fmt.Println("Staked: ", s)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return nil
 }

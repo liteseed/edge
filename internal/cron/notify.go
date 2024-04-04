@@ -19,7 +19,7 @@ func (c *Context) notify() {
 	}
 
 	for _, order := range *o {
-		err := c.contract.UpdateStatus(order.ID, order.TransactionID)
+		err := c.contract.Notify(order.ID, order.TransactionID)
 		if err != nil {
 			log.Println(err)
 			continue
