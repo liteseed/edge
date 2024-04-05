@@ -17,12 +17,12 @@ var Commands = []*cli.Command{
 }
 
 type Config struct {
-	Port     string
-	Process  string
-	Signer   string
 	Database string
-	Store    string
+	Log      string
+	Port     string
 	Node     string
+	Signer   string
+	Store    string
 }
 
 func readConfig(context *cli.Context) Config {

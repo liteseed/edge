@@ -1,8 +1,6 @@
 package cron
 
 import (
-	"log"
-
 	"github.com/everFinance/goar/types"
 	"github.com/everFinance/goar/utils"
 	"github.com/liteseed/edge/internal/database/schema"
@@ -27,11 +25,15 @@ func parseDataItemFromOrder(c *Context, o *schema.Order) (*types.BundleItem, err
 func (c *Context) postBundle() {
 	o, err := c.database.GetOrdersByStatus(schema.Queued)
 	if err != nil {
+		c.logger.Error(
+			"failed to fetch queued orders",
+			"error", err,
+		)
 		return
 	}
 
 	if len(*o) == 0 {
-		log.Println("no data-item to post")
+		c.logger.Info("no data item to post")
 		return
 	}
 
@@ -40,8 +42,11 @@ func (c *Context) postBundle() {
 	for _, order := range *o {
 		dataItem, err := parseDataItemFromOrder(c, &order)
 		if err != nil {
-			log.Println(err)
-			log.Println("failed to decode:", order.ID)
+			c.logger.Error(
+				"failed to decode data item",
+				"error", err,
+				"order", order.ID,
+			)
 			continue
 		}
 		dataItems = append(dataItems, *dataItem)
@@ -49,24 +54,29 @@ func (c *Context) postBundle() {
 
 	bundle, err := utils.NewBundle(dataItems...)
 	if err != nil {
-		log.Println("failed to bundle:", err)
+		c.logger.Error(
+			"failed to bundle data items",
+			"error", err,
+		)
 		return
 	}
 
 	transaction, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
 	if err != nil {
-		log.Println("failed to upload:", err)
+		c.logger.Error(
+			"failed to upload bundle",
+			"error", err,
+		)
 		return
 	}
 
 	for _, order := range *o {
-		err = c.database.UpdateTransactionID(order.ID, transaction.ID)
+		err = c.database.UpdateOrder(order.ID, &schema.Order{TransactionID: transaction.ID, Status: schema.Sent})
 		if err != nil {
-			log.Println(err)
-		}
-		err = c.database.UpdateStatus(order.ID, schema.Sent)
-		if err != nil {
-			log.Println(err)
+			c.logger.Error(
+				"failed to update order in database",
+				"error", err,
+			)
 		}
 	}
 }

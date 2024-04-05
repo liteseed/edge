@@ -1,7 +1,8 @@
 package commands
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
@@ -11,6 +12,7 @@ import (
 	"github.com/liteseed/edge/internal/server"
 	"github.com/liteseed/edge/internal/store"
 	"github.com/urfave/cli/v2"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var Start = &cli.Command{
@@ -24,49 +26,83 @@ var Start = &cli.Command{
 
 func start(context *cli.Context) error {
 	config := readConfig(context)
+	logger := slog.New(slog.NewJSONHandler(&lumberjack.Logger{
+		Filename:   config.Log,
+		MaxSize:    2, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28,   //days
+		Compress:   true, // disabled by default
+	}, nil))
 
 	database, err := database.New(config.Database)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(
+			"failed: database connect",
+			"error", err,
+		)
+		os.Exit(1)
 	}
 
 	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(
+			"failed: wallet load",
+			"error", err,
+		)
+		os.Exit(1)
+	}
+	itemSigner, err := goar.NewItemSigner(wallet.Signer)
+	if err != nil {
+		logger.Error(
+			"failed: item-signer create",
+			"error", err,
+		)
+		os.Exit(1)
 	}
 
 	store := store.New(config.Store)
 
 	ao, err := aogo.New()
 	if err != nil {
-		log.Fatalln("failed to load ao", err)
-	}
-	itemSigner, err := goar.NewItemSigner(wallet.Signer)
-	if err != nil {
-		log.Fatalln("failed to load ao", err)
+		logger.Error(
+			"failed to connect to AO",
+			"error", err,
+		)
+		os.Exit(1)
 	}
 
 	contracts := contracts.New(ao, itemSigner)
 
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
 	if err != nil {
-		log.Fatalln("failed to load cron", err)
+		logger.Error(
+			"failed: cron load",
+			"error", err,
+		)
+		os.Exit(1)
 	}
+
 	err = c.PostBundle("* * * * *")
 	if err != nil {
-		log.Fatalln("failed to start bundle posting service", err)
+		logger.Error(
+			"failed to start bundle posting service",
+			"error", err,
+		)
+		os.Exit(1)
 	}
+
 	err = c.Notify()
 	if err != nil {
-		log.Fatalln("failed to start notification service", err)
+		logger.Error(
+			"failed to start notification service",
+			"error", err,
+		)
+		os.Exit(1)
 	}
 	c.Start()
 
-	s := server.New(contracts, database, store)
+	s := server.New(contracts, database, logger, store)
 	s.Run(":8080")
 
-	if err != nil {
-		log.Fatal(err)
-	}
 	return nil
 }

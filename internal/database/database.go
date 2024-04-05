@@ -49,8 +49,8 @@ func (c *Context) UpdateStatus(id string, status schema.Status) error {
 	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
 }
 
-func (c *Context) UpdateTransactionID(id string, transactionId string) error {
-	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("transaction_id", transactionId).Error
+func (c *Context) UpdateOrder(id string, order *schema.Order) error {
+	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Updates(order).Error
 }
 
 func (c *Context) DeleteOrder(id string) error {

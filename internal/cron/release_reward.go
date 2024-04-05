@@ -1,22 +1,25 @@
 package cron
 
-import (
-	"log"
+import "github.com/liteseed/edge/internal/database/schema"
 
-	"github.com/liteseed/edge/internal/database/schema"
-)
 
 func (c *Context) ReleaseReward() {
 	o, err := c.database.GetOrdersByStatus(schema.Reward)
 	if err != nil {
-		log.Println(err)
+		c.logger.Error(
+			"failed to fetch reward orders",
+			"error", err,
+		)
 		return
 	}
 
 	for _, order := range *o {
 		err = c.contract.Release(order.ID)
 		if err != nil {
-			log.Println(err)
+			c.logger.Error(
+				"failed to release reward",
+				"error", err,
+			)
 			return
 		}
 	}

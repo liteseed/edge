@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/everFinance/goar/utils"
@@ -25,7 +24,10 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 	}
 	dataItem, err := utils.DecodeBundleItem(rawData)
 	if err != nil {
-		log.Println("data-item: failed to create", err)
+		s.logger.Error(
+			"failed to decode data item",
+			"error", err,
+		)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -39,14 +41,20 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 
 	valid, err := checkUploadOnContract(s.contract, dataItem)
 	if !valid || err != nil {
-		log.Println("data-item: failed to verify on ao", err)
+		s.logger.Error(
+			"failed to fetch verify on AO",
+			"error", err,
+		)
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
 	err = s.store.Put(dataItem.Id, dataItem.ItemBinary)
 	if err != nil {
-		log.Println("store: failed to save", err)
+		s.logger.Error(
+			"failed to save to store",
+			"error", err,
+		)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +66,10 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 
 	err = s.database.CreateOrder(o)
 	if err != nil {
-		log.Println("database: create order failed", err)
+		s.logger.Error(
+			"failed to create order",
+			"error", err,
+		)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

@@ -1,7 +1,8 @@
 package server
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
@@ -23,9 +24,10 @@ type Context struct {
 	engine   *gin.Engine
 	signer   *goar.Signer
 	store    *store.Store
+	logger   *slog.Logger
 }
 
-func New(contract *contracts.Context, database *database.Context, store *store.Store) *Context {
+func New(contract *contracts.Context, database *database.Context, logger *slog.Logger, store *store.Store) *Context {
 	engine := gin.New()
 
 	engine.Use(gin.Recovery())
@@ -41,6 +43,7 @@ func New(contract *contracts.Context, database *database.Context, store *store.S
 func (s *Context) Run(port string) {
 	err := s.engine.Run(port)
 	if err != nil {
-		log.Fatalln("failed to start server", err)
+		s.logger.Error("failed: server start", err)
+		os.Exit(1)
 	}
 }

@@ -1,6 +1,8 @@
 package cron
 
 import (
+	"log/slog"
+
 	"github.com/everFinance/goar"
 	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/database"
@@ -12,6 +14,7 @@ type Context struct {
 	C        *cron.Cron
 	contract *contracts.Context
 	database *database.Context
+	logger   *slog.Logger
 	store    *store.Store
 	wallet   *goar.Wallet
 }
@@ -36,15 +39,20 @@ func WithDatabase(db *database.Context) func(*Context) {
 	}
 }
 
-func WithWallet(s *goar.Wallet) func(*Context) {
+func WithLogger(logger *slog.Logger) func(*Context) {
 	return func(c *Context) {
-		c.wallet = s
+		c.logger = logger
 	}
 }
 
 func WithStore(s *store.Store) func(*Context) {
 	return func(c *Context) {
 		c.store = s
+	}
+}
+func WithWallet(s *goar.Wallet) func(*Context) {
+	return func(c *Context) {
+		c.wallet = s
 	}
 }
 
