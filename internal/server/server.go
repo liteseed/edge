@@ -76,6 +76,6 @@ func WithWallet(s *goar.Signer) func(*Config) {
 func (s *Config) Start() error {
 	return s.server.ListenAndServe()
 }
-func (s *Config) Shutdown(c context.Context) error {
-	return s.server.Shutdown(c)
+func (s *Config) Shutdown() error {
+	return s.server.Shutdown(context.TODO())
 }

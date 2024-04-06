@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"context"
 	"log"
 	"log/slog"
 	"os"
@@ -38,7 +37,7 @@ func start(ctx *cli.Context) error {
 		MaxBackups: 3,
 		MaxAge:     28,   //days
 		Compress:   true, // disabled by default
-	}, nil))
+	}, &slog.HandlerOptions{AddSource: true}))
 
 	db, err := database.New(config.Database)
 	if err != nil {
@@ -137,11 +136,8 @@ func start(ctx *cli.Context) error {
 		os.Exit(1)
 	}
 
-	cctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	time.Sleep(2 * time.Second)
-	if err = s.Shutdown(cctx); err != nil {
+	if err = s.Shutdown(); err != nil {
 		logger.Error(
 			"failed to stop server",
 			"error", err,
