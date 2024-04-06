@@ -10,7 +10,7 @@ import (
 )
 
 // POST /data-item
-func (s *Context) uploadDataItem(c *gin.Context) {
+func (s *Config) uploadDataItem(c *gin.Context) {
 	header, err := verifyHeaders(c)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -41,21 +41,13 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 
 	valid, err := checkUploadOnContract(s.contract, dataItem)
 	if !valid || err != nil {
-		s.logger.Error(
-			"failed to fetch verify on AO",
-			"error", err,
-		)
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
-	err = s.store.Put(dataItem.Id, dataItem.ItemBinary)
+	err = s.store.Set(dataItem.Id, dataItem.ItemBinary)
 	if err != nil {
-		s.logger.Error(
-			"failed to save to store",
-			"error", err,
-		)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -66,11 +58,7 @@ func (s *Context) uploadDataItem(c *gin.Context) {
 
 	err = s.database.CreateOrder(o)
 	if err != nil {
-		s.logger.Error(
-			"failed to create order",
-			"error", err,
-		)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 

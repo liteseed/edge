@@ -6,7 +6,7 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func parseDataItemFromOrder(c *Context, o *schema.Order) (*types.BundleItem, error) {
+func parseDataItemFromOrder(c *Config, o *schema.Order) (*types.BundleItem, error) {
 	rawDataItem, err := c.store.Get(o.ID)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func parseDataItemFromOrder(c *Context, o *schema.Order) (*types.BundleItem, err
 	return dataItem, nil
 }
 
-func (c *Context) postBundle() {
+func (c *Config) postBundle() {
 	o, err := c.database.GetOrdersByStatus(schema.Queued)
 	if err != nil {
 		c.logger.Error(

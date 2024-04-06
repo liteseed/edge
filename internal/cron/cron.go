@@ -10,8 +10,8 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type Context struct {
-	C        *cron.Cron
+type Config struct {
+	c        *cron.Cron
 	contract *contracts.Context
 	database *database.Context
 	logger   *slog.Logger
@@ -19,72 +19,65 @@ type Context struct {
 	wallet   *goar.Wallet
 }
 
-func New(options ...func(*Context)) (*Context, error) {
-	c := &Context{C: cron.New()}
+type Option = func(*Config)
+
+func New(options ...func(*Config)) (*Config, error) {
+	c := &Config{c: cron.New()}
 	for _, o := range options {
 		o(c)
 	}
 	return c, nil
 }
 
-func WthContracts(contract *contracts.Context) func(*Context) {
-	return func(c *Context) {
+func WthContracts(contract *contracts.Context) Option {
+	return func(c *Config) {
 		c.contract = contract
 	}
 }
 
-func WithDatabase(db *database.Context) func(*Context) {
-	return func(c *Context) {
+func WithDatabase(db *database.Context) Option {
+	return func(c *Config) {
 		c.database = db
 	}
 }
 
-func WithLogger(logger *slog.Logger) func(*Context) {
-	return func(c *Context) {
+func WithLogger(logger *slog.Logger) Option {
+	return func(c *Config) {
 		c.logger = logger
 	}
 }
 
-func WithStore(s *store.Store) func(*Context) {
-	return func(c *Context) {
+func WithStore(s *store.Store) Option {
+	return func(c *Config) {
 		c.store = s
 	}
 }
-func WithWallet(s *goar.Wallet) func(*Context) {
-	return func(c *Context) {
+func WithWallet(s *goar.Wallet) Option {
+	return func(c *Config) {
 		c.wallet = s
 	}
 }
 
-func (c *Context) Start() {
-	c.C.Start()
+func (c *Config) Start() {
+	c.c.Start()
 }
 
-func (c *Context) Stop() {
-	c.C.Stop()
-}
-
-func (c *Context) PostBundle(spec string) error {
-	_, err := c.C.AddFunc(spec, c.postBundle)
+func (c *Config) PostBundle(spec string) error {
+	_, err := c.c.AddFunc(spec, c.postBundle)
 	if err != nil {
 		return err
 	}
-	_, err = c.C.AddFunc(spec, c.notify)
+	_, err = c.c.AddFunc(spec, c.notify)
 	if err != nil {
 		return err
 	}
-	_, err = c.C.AddFunc(spec, c.SyncStatus)
+	_, err = c.c.AddFunc(spec, c.SyncStatus)
 	if err != nil {
 		return err
 	}
-	_, err = c.C.AddFunc(spec, c.ReleaseReward)
+	_, err = c.c.AddFunc(spec, c.ReleaseReward)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (c *Context) Notify() error {
-	_, err := c.C.AddFunc("* * * * *", c.notify)
-	return err
 }

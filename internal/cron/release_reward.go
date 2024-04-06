@@ -2,8 +2,7 @@ package cron
 
 import "github.com/liteseed/edge/internal/database/schema"
 
-
-func (c *Context) ReleaseReward() {
+func (c *Config) ReleaseReward() {
 	o, err := c.database.GetOrdersByStatus(schema.Reward)
 	if err != nil {
 		c.logger.Error(

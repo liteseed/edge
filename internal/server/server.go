@@ -2,11 +2,9 @@ package server
 
 import (
 	"log/slog"
-	"os"
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
-
 	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
@@ -18,7 +16,7 @@ const (
 	MAX_DATA_ITEM_SIZE        = 1_073_824
 )
 
-type Context struct {
+type Config struct {
 	contract *contracts.Context
 	database *database.Context
 	engine   *gin.Engine
@@ -27,23 +25,48 @@ type Context struct {
 	logger   *slog.Logger
 }
 
-func New(contract *contracts.Context, database *database.Context, logger *slog.Logger, store *store.Store) *Context {
-	engine := gin.New()
-
-	engine.Use(gin.Recovery())
-	s := &Context{contract: contract, database: database, engine: engine, store: store}
-
-	s.engine.Use(ErrorHandler)
-	s.engine.GET("/status", s.Status)
-	s.engine.POST("/data-item", s.uploadDataItem)
-
-	return s
+func New(options ...func(*Config)) (*Config, error) {
+	s := &Config{engine: gin.New()}
+	for _, o := range options {
+		o(s)
+	}
+	return s, nil
 }
 
-func (s *Context) Run(port string) {
-	err := s.engine.Run(port)
-	if err != nil {
-		s.logger.Error("failed: server start", err)
-		os.Exit(1)
+func WthContracts(contract *contracts.Context) func(*Config) {
+	return func(c *Config) {
+		c.contract = contract
 	}
+}
+
+func WithDatabase(db *database.Context) func(*Config) {
+	return func(c *Config) {
+		c.database = db
+	}
+}
+
+func WithLogger(logger *slog.Logger) func(*Config) {
+	return func(c *Config) {
+		c.logger = logger
+	}
+}
+
+func WithStore(s *store.Store) func(*Config) {
+	return func(c *Config) {
+		c.store = s
+	}
+}
+func WithWallet(s *goar.Signer) func(*Config) {
+	return func(c *Config) {
+		c.signer = s
+	}
+}
+
+func (s *Config) Run(port string) error {
+	s.engine = gin.New()
+
+	s.engine.Use(gin.Recovery())
+	s.engine.Use(JSONLogMiddleware(s.logger))
+	s.engine.GET("/status", s.Status)
+	return s.engine.Run(port)
 }

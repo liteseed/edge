@@ -6,7 +6,7 @@ import "github.com/liteseed/edge/internal/database/schema"
 
 const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
 
-func (c *Context) notify() {
+func (c *Config) notify() {
 
 	o, err := c.database.GetOrdersByStatus(schema.Permanent)
 	if err != nil {

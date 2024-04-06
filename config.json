@@ -1,6 +1,6 @@
 {
   "Database": "postgresql",
-  "Log": "./tmp/log",
+  "Log": "./temp",
   "Node": "https://arweave.net",
   "Port": "8080",
   "Signer": "./data/signer.json",

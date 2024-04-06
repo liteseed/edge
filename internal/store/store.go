@@ -3,51 +3,43 @@ package store
 import (
 	"log"
 
-	"github.com/liteseed/edge/internal/store/pebble"
+	"github.com/dgraph-io/badger"
 )
 
-type IStore interface {
-	Close() (err error)
-
-	Delete(key []byte) (err error)
-
-	Get(key []byte) (data []byte, err error)
-
-	Has(key []byte) (bool, error)
-
-	Put(key []byte, value []byte) (err error)
-}
-
 type Store struct {
-	store IStore
+	store *badger.DB
 }
 
 func New(path string) *Store {
-	s := &Store{}
-	s.store = pebble.New(path)
-	return s
-}
-
-func (s *Store) Close() {
-	err := s.store.Close()
+	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
-		log.Println(err.Error())
+		log.Fatal(err)
 	}
-}
-
-func (s *Store) Delete(id string) error {
-	return s.store.Delete([]byte(id))
+	return &Store{store: db}
 }
 
 func (s *Store) Get(id string) ([]byte, error) {
-	return s.store.Get([]byte(id))
+	var ival []byte
+	err := s.store.View(func(txn *badger.Txn) error {
+		item, err := txn.Get([]byte(id))
+		if err != nil {
+			return err
+		}
+
+		ival, err = item.ValueCopy(nil)
+		return err
+	})
+
+	return ival, err
 }
 
-func (s *Store) Has(id string) (bool, error) {
-	return s.store.Has([]byte(id))
-}
-
-func (s *Store) Put(id string, data []byte) error {
-	err := s.store.Put([]byte(id), data)
+func (s *Store) Set(id string, data []byte) error {
+	err := s.store.Update(func(txn *badger.Txn) error {
+		return txn.Set([]byte(id), data)
+	})
 	return err
+}
+
+func (s *Store) Close() error {
+	return s.store.Close()
 }

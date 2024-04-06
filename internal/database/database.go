@@ -1,12 +1,9 @@
 package database
 
 import (
-	"log"
-
 	"github.com/liteseed/edge/internal/database/schema"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type Context struct {
@@ -15,19 +12,17 @@ type Context struct {
 
 func New(url string) (*Context, error) {
 	db, err := gorm.Open(postgres.Open(url), &gorm.Config{
-		Logger:          logger.Default.LogMode(logger.Silent),
 		CreateBatchSize: 200,
 	})
 	if err != nil {
-		log.Fatalln("error: database connection failed", err)
+		return nil, err
 	}
-	log.Println("url: ", url)
 	c := &Context{DB: db}
 	err = c.Migrate()
 	if err != nil {
-		log.Fatalln("error: database connection failed", err)
+		return nil, err
 	}
-	return c, err
+	return c, nil
 }
 
 func (c *Context) Migrate() error {

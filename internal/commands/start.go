@@ -24,8 +24,9 @@ var Start = &cli.Command{
 	Action: start,
 }
 
-func start(context *cli.Context) error {
-	config := readConfig(context)
+func start(ctx *cli.Context) error {
+	config := readConfig(ctx)
+
 	logger := slog.New(slog.NewJSONHandler(&lumberjack.Logger{
 		Filename:   config.Log,
 		MaxSize:    2, // megabytes
@@ -34,7 +35,7 @@ func start(context *cli.Context) error {
 		Compress:   true, // disabled by default
 	}, nil))
 
-	database, err := database.New(config.Database)
+	db, err := database.New(config.Database)
 	if err != nil {
 		logger.Error(
 			"failed: database connect",
@@ -73,7 +74,16 @@ func start(context *cli.Context) error {
 
 	contracts := contracts.New(ao, itemSigner)
 
-	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(database), cron.WithWallet(wallet), cron.WithStore(store))
+	s, err := server.New(server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
+	if err != nil {
+		logger.Error(
+			"failed to start server",
+			"error", err,
+		)
+		os.Exit(1)
+	}
+
+	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {
 		logger.Error(
 			"failed: cron load",
@@ -81,28 +91,23 @@ func start(context *cli.Context) error {
 		)
 		os.Exit(1)
 	}
-
 	err = c.PostBundle("* * * * *")
 	if err != nil {
 		logger.Error(
-			"failed to start bundle posting service",
-			"error", err,
-		)
-		os.Exit(1)
-	}
-
-	err = c.Notify()
-	if err != nil {
-		logger.Error(
-			"failed to start notification service",
+			"failed: cron load",
 			"error", err,
 		)
 		os.Exit(1)
 	}
 	c.Start()
 
-	s := server.New(contracts, database, logger, store)
-	s.Run(":8080")
+	if err = s.Run(":8080"); err != nil {
+		logger.Error(
+			"failed to start server",
+			"error", err,
+		)
+		os.Exit(1)
+	}
 
 	return nil
 }
