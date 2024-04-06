@@ -23,6 +23,7 @@ func migrate(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer database.Shutdown()
 
 	err = database.Migrate()
 	if err != nil {

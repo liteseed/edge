@@ -1,8 +1,13 @@
 package commands
 
 import (
+	"context"
+	"log"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
@@ -74,15 +79,6 @@ func start(ctx *cli.Context) error {
 
 	contracts := contracts.New(ao, itemSigner)
 
-	s, err := server.New(server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
-	if err != nil {
-		logger.Error(
-			"failed to start server",
-			"error", err,
-		)
-		os.Exit(1)
-	}
-
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {
 		logger.Error(
@@ -91,7 +87,7 @@ func start(ctx *cli.Context) error {
 		)
 		os.Exit(1)
 	}
-	err = c.PostBundle("* * * * *")
+	err = c.Setup("* * * * *")
 	if err != nil {
 		logger.Error(
 			"failed: cron load",
@@ -101,13 +97,56 @@ func start(ctx *cli.Context) error {
 	}
 	c.Start()
 
-	if err = s.Run(":8080"); err != nil {
+	s, err := server.New(":8080", server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
+	if err != nil {
 		logger.Error(
 			"failed to start server",
 			"error", err,
 		)
 		os.Exit(1)
 	}
+	go func() {
+		if err = s.Start(); err != nil {
+			logger.Error(
+				"failed to start server",
+				"error", err,
+			)
+			os.Exit(1)
+		}
+	}()
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutdown")
+
+	c.Shutdown()
+	if err = db.Shutdown(); err != nil {
+		logger.Error(
+			"failed to stop database",
+			"error", err,
+		)
+		os.Exit(1)
+	}
+	if err = store.Shutdown(); err != nil {
+		logger.Error(
+			"failed to stop store",
+			"error", err,
+		)
+		os.Exit(1)
+	}
+
+	cctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	time.Sleep(2 * time.Second)
+	if err = s.Shutdown(cctx); err != nil {
+		logger.Error(
+			"failed to stop server",
+			"error", err,
+		)
+		os.Exit(1)
+	}
 	return nil
 }

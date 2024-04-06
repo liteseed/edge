@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
@@ -18,17 +20,27 @@ const (
 
 type Config struct {
 	contract *contracts.Context
-	database *database.Context
-	engine   *gin.Engine
+	database *database.Config
+	server   *http.Server
 	signer   *goar.Signer
 	store    *store.Store
 	logger   *slog.Logger
 }
 
-func New(options ...func(*Config)) (*Config, error) {
-	s := &Config{engine: gin.New()}
+func New(port string, options ...func(*Config)) (*Config, error) {
+
+	s := &Config{}
 	for _, o := range options {
 		o(s)
+	}
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+	engine.Use(JSONLogMiddleware(s.logger))
+	engine.GET("/status", s.Status)
+
+	s.server = &http.Server{
+		Addr:    port,
+		Handler: engine,
 	}
 	return s, nil
 }
@@ -39,7 +51,7 @@ func WthContracts(contract *contracts.Context) func(*Config) {
 	}
 }
 
-func WithDatabase(db *database.Context) func(*Config) {
+func WithDatabase(db *database.Config) func(*Config) {
 	return func(c *Config) {
 		c.database = db
 	}
@@ -61,12 +73,9 @@ func WithWallet(s *goar.Signer) func(*Config) {
 		c.signer = s
 	}
 }
-
-func (s *Config) Run(port string) error {
-	s.engine = gin.New()
-
-	s.engine.Use(gin.Recovery())
-	s.engine.Use(JSONLogMiddleware(s.logger))
-	s.engine.GET("/status", s.Status)
-	return s.engine.Run(port)
+func (s *Config) Start() error {
+	return s.server.ListenAndServe()
+}
+func (s *Config) Shutdown(c context.Context) error {
+	return s.server.Shutdown(c)
 }

@@ -2,7 +2,7 @@
   "Database": "postgresql",
   "Log": "./temp",
   "Node": "https://arweave.net",
-  "Port": "8080",
+  "Port": ":8080",
   "Signer": "./data/signer.json",
   "Store": "./data/pebble"
 }

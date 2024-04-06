@@ -40,6 +40,6 @@ func (s *Store) Set(id string, data []byte) error {
 	return err
 }
 
-func (s *Store) Close() error {
+func (s *Store) Shutdown() error {
 	return s.store.Close()
 }

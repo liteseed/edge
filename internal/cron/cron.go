@@ -13,7 +13,7 @@ import (
 type Config struct {
 	c        *cron.Cron
 	contract *contracts.Context
-	database *database.Context
+	database *database.Config
 	logger   *slog.Logger
 	store    *store.Store
 	wallet   *goar.Wallet
@@ -35,7 +35,7 @@ func WthContracts(contract *contracts.Context) Option {
 	}
 }
 
-func WithDatabase(db *database.Context) Option {
+func WithDatabase(db *database.Config) Option {
 	return func(c *Config) {
 		c.database = db
 	}
@@ -62,7 +62,11 @@ func (c *Config) Start() {
 	c.c.Start()
 }
 
-func (c *Config) PostBundle(spec string) error {
+func (c *Config) Shutdown() {
+	c.c.Stop()
+}
+
+func (c *Config) Setup(spec string) error {
 	_, err := c.c.AddFunc(spec, c.postBundle)
 	if err != nil {
 		return err
