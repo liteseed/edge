@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +11,9 @@ func JSONLogMiddleware(logger *slog.Logger) gin.HandlerFunc {
 		c.Next()
 		if len(c.Errors) > 0 {
 			for _, err := range c.Errors {
-				log.Println(err)
+				logger.Error("error", err.Err)
 			}
 			c.JSON(-1, c.Errors)
 		}
 	}
-
 }

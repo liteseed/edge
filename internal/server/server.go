@@ -37,6 +37,7 @@ func New(port string, options ...func(*Config)) (*Config, error) {
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
 	engine.GET("/status", s.Status)
+	engine.POST("/tx", s.uploadDataItem)
 
 	s.server = &http.Server{
 		Addr:    port,
