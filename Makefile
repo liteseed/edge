@@ -15,4 +15,4 @@ clean:
 	go clean
 	rm ./dist/${BINARY_NAME}-darwin-amd64
 	rm ./dist/${BINARY_NAME}-linux-amd64
-		rm ./dist/${BINARY_NAME}-linux-386
+	rm ./dist/${BINARY_NAME}-linux-386
