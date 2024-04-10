@@ -8,21 +8,10 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const appName = "Edge"
-const appAbout = "Edge"
-const appEdition = "beta"
-const appDescription = "edge"
+const Name = "Edge"
+const Description = "Edge is the bundler node for the Liteseed Network"
 
-var version = "development"
-
-// Metadata contains build specific information.
-var Metadata = map[string]interface{}{
-	"Name":        appName,
-	"About":       appAbout,
-	"Edition":     appEdition,
-	"Description": appDescription,
-	"Version":     version,
-}
+var Version string
 
 func main() {
 
@@ -33,11 +22,12 @@ func main() {
 	}()
 
 	app := &cli.App{
-		Name:        appName,
-		Description: appDescription,
-		Version:     version,
-		Metadata:    Metadata,
-		Commands:    commands.Commands,
+		Name:           Name,
+		Usage:          "Go to https://docs.liteseed.xyz to get started",
+		Description:    Description,
+		Version:        Version,
+		Commands:       commands.Commands,
+		DefaultCommand: "help",
 	}
 
 	err := app.Run(os.Args)

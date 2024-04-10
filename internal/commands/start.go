@@ -41,39 +41,23 @@ func start(ctx *cli.Context) error {
 
 	db, err := database.New(config.Database)
 	if err != nil {
-		logger.Error(
-			"failed: database connect",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to connect to database", err)
 	}
 
 	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node)
 	if err != nil {
-		logger.Error(
-			"failed: wallet load",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to load wallet", "error", err)
 	}
 	itemSigner, err := goar.NewItemSigner(wallet.Signer)
 	if err != nil {
-		logger.Error(
-			"failed: item-signer create",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to create item-signer", err)
 	}
 
 	store := store.New(config.Store)
 
 	ao, err := aogo.New()
 	if err != nil {
-		logger.Error(
-			"failed to connect to AO",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to connect to AO", err)
 	}
 
 	contracts := contracts.New(ao, itemSigner)

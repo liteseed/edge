@@ -9,9 +9,8 @@ import (
 // GET Signer reports if the server is operational.
 //
 // GET /status
-func (s *Config) Status(c *gin.Context) {
+func (s *Config) Signer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"Name": "Edge",
-		"Version": "0.0.2",
+		"Address": s.signer.Address,
 	})
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func (c *Context) GetStaker() (string, error) {
-	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Staker"}}, "", c.signer)
+	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Staked"}}, "", c.signer)
 	if err != nil {
 		return "", err
 	}

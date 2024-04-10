@@ -1,15 +1,16 @@
-BINARY_NAME=edge
+BINARY_NAME := edge
+PKG := github.com/liteseed/edge
+VERSION := 0.0.2
 
-all:
+dev:
 	go mod tidy
+	go build -o ./build/dev/${BINARY_NAME} -ldflags="-X main.Version=${VERSION}-dev"  ./cmd/main.go
 
 build:
-	GOARCH=amd64 GOOS=darwin go build -o ./dist/${BINARY_NAME}-darwin-amd64 ./cmd/main.go
-	GOARCH=amd64 GOOS=linux go build -o ./dist/${BINARY_NAME}-linux-amd64 ./cmd/main.go
-	GOARCH=386 GOOS=linux go build -o ./dist/${BINARY_NAME}-linux-386 ./cmd/main.go
-
-run: build
-	./dist/${BINARY_NAME}
+	go mod tidy
+	GOARCH=amd64 GOOS=darwin go build -o ./build/release/${BINARY_NAME}-${VERSION}-darwin-amd64 -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
+	GOARCH=amd64 GOOS=linux go build -o ./build/release/${BINARY_NAME}-${VERSION}-linux-amd64 -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
+	GOARCH=386 GOOS=linux go build -o ./build/release/${BINARY_NAME}-${VERSION}-linux-386 -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
 
 clean:
 	go clean

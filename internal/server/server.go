@@ -14,7 +14,6 @@ import (
 
 const (
 	CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
-	MAX_DATA_SIZE             = 1_073_824
 	MAX_DATA_ITEM_SIZE        = 1_073_824
 )
 
@@ -36,7 +35,9 @@ func New(port string, options ...func(*Config)) (*Config, error) {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
-	engine.GET("/status", s.Status)
+
+	engine.GET("/", s.Status)
+	engine.GET("/signer", s.Signer)
 	engine.POST("/tx", s.uploadDataItem)
 
 	s.server = &http.Server{
