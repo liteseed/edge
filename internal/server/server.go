@@ -26,7 +26,7 @@ type Config struct {
 	logger   *slog.Logger
 }
 
-func New(port string, options ...func(*Config)) (*Config, error) {
+func New(port string, version string, options ...func(*Config)) (*Config, error) {
 
 	s := &Config{}
 	for _, o := range options {
@@ -36,7 +36,7 @@ func New(port string, options ...func(*Config)) (*Config, error) {
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
 
-	engine.GET("/", s.Status)
+	engine.GET("/", getStatus(version))
 	engine.GET("/signer", s.Signer)
 	engine.POST("/tx", s.uploadDataItem)
 

@@ -64,37 +64,21 @@ func start(ctx *cli.Context) error {
 
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {
-		logger.Error(
-			"failed: cron load",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to load cron", err)
 	}
 	err = c.Setup("* * * * *")
 	if err != nil {
-		logger.Error(
-			"failed: cron load",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to setup cron", err)
 	}
 	c.Start()
 
-	s, err := server.New(":8080", server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
+	s, err := server.New(":8080", ctx.App.Version, server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
 	if err != nil {
-		logger.Error(
-			"failed to start server",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to setup server", err)
 	}
 	go func() {
 		if err = s.Start(); err != nil {
-			logger.Error(
-				"failed to start server",
-				"error", err,
-			)
-			os.Exit(1)
+			log.Fatal("failed to start server", err)
 		}
 	}()
 
@@ -106,27 +90,15 @@ func start(ctx *cli.Context) error {
 
 	c.Shutdown()
 	if err = db.Shutdown(); err != nil {
-		logger.Error(
-			"failed to stop database",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to shutdown database", err)
 	}
 	if err = store.Shutdown(); err != nil {
-		logger.Error(
-			"failed to stop store",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to shutdown store", err)
 	}
 
 	time.Sleep(2 * time.Second)
 	if err = s.Shutdown(); err != nil {
-		logger.Error(
-			"failed to stop server",
-			"error", err,
-		)
-		os.Exit(1)
+		log.Fatal("failed to shutdown server", "error")
 	}
 	return nil
 }
