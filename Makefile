@@ -1,6 +1,6 @@
 BINARY_NAME := edge
 PKG := github.com/liteseed/edge
-VERSION := 0.0.3
+VERSION := 0.0.2
 
 dev:
 	go mod tidy
