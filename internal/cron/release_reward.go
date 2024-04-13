@@ -19,7 +19,14 @@ func (c *Config) ReleaseReward() {
 				"failed to release reward",
 				"error", err,
 			)
-			return
 		}
+		err = c.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Done})
+		if err != nil {
+			c.logger.Error(
+				"failed to update order in database",
+				"error", err,
+			)
+		}
+
 	}
 }

@@ -17,6 +17,7 @@ const (
 	Permanent = "permanent"
 
 	Reward = "reward"
+	Done = "done"
 )
 
 func (s *Status) Scan(value any) error {
