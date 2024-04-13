@@ -13,8 +13,8 @@ type Context struct {
 
 func New(ao *aogo.AO, process string, signer *goar.ItemSigner) *Context {
 	return &Context{
-		ao:     ao,
+		ao:      ao,
 		process: process,
-		signer: signer,
+		signer:  signer,
 	}
 }
