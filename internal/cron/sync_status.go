@@ -15,7 +15,7 @@ func (c *Config) SyncStatus() {
 	}
 
 	for _, order := range *o {
-		status, err := c.wallet.Client.GetTransactionStatus(order.TransactionID)
+		status, err := c.wallet.Client.GetTransactionStatus(order.TransactionId)
 		if err != nil {
 			c.logger.Error(
 				"failed to fetch transaction status",

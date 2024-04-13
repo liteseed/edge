@@ -5,12 +5,12 @@ import (
 )
 
 func (c *Context) GetBalance() (string, error) {
-	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Balance"}}, "", c.signer)
+	mId, err := c.ao.SendMessage(c.process, "", []types.Tag{{Name: "Action", Value: "Balance"}}, "", c.signer)
 	if err != nil {
 		return "", err
 	}
 
-	result, err := c.ao.ReadResult(PROCESS, mId)
+	result, err := c.ao.ReadResult(c.process, mId)
 	if err != nil {
 		return "", err
 	}

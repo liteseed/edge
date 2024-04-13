@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Context) Release(dataItemId string) error {
-	message, err := c.ao.SendMessage(PROCESS, "release", []types.Tag{{Name: "Action", Value: "Release"}, {Name: "DataItemId", Value: dataItemId}}, "", c.signer)
+	message, err := c.ao.SendMessage(c.process, "release", []types.Tag{{Name: "Action", Value: "Release"}, {Name: "DataItemId", Value: dataItemId}}, "", c.signer)
 	if err != nil {
 		return err
 	}

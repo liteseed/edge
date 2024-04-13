@@ -14,12 +14,12 @@ type GetUploadResponse struct {
 }
 
 func (c *Context) GetUpload(dataItemId string) (*GetUploadResponse, error) {
-	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Upload"}, {Name: "DataItemId", Value: dataItemId}}, "", c.signer)
+	mId, err := c.ao.SendMessage(c.process, "", []types.Tag{{Name: "Action", Value: "Upload"}, {Name: "DataItemId", Value: dataItemId}}, "", c.signer)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := c.ao.ReadResult(PROCESS, mId)
+	result, err := c.ao.ReadResult(c.process, mId)
 	if err != nil {
 		return nil, err
 	}

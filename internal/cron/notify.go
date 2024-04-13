@@ -18,13 +18,13 @@ func (c *Config) notify() {
 	}
 
 	for _, order := range *o {
-		err := c.contract.Notify(order.ID, order.TransactionID)
+		err := c.contract.Notify(order.ID, order.TransactionId)
 		if err != nil {
 			c.logger.Error(
 				"failed to notify",
 				"error", err,
 				"order_id", order.ID,
-				"order_transaction_id", order.TransactionID,
+				"order_transaction_id", order.TransactionId,
 			)
 			continue
 		}
@@ -34,7 +34,7 @@ func (c *Config) notify() {
 				"failed to update status of order",
 				"error", err,
 				"order_id", order.ID,
-				"order_transaction_id", order.TransactionID,
+				"order_transaction_id", order.TransactionId,
 			)
 			continue
 		}

@@ -39,7 +39,7 @@ func (s *Config) uploadDataItem(c *gin.Context) {
 	// 	return
 	// }
 
-	valid, err := checkUploadOnContract(s.contract, dataItem)
+	valid, err := verify(s.contract, dataItem)
 	if !valid || err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return

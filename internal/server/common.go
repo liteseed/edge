@@ -50,9 +50,9 @@ func decodeBody(c *gin.Context, contentLength int) ([]byte, error) {
 	return rawData, nil
 }
 
-func checkUploadOnContract(contract *contracts.Context, dataItem *types.BundleItem) (bool, error) {
+func verify(contract *contracts.Context, dataItem *types.BundleItem) (bool, error) {
 	res, err := contract.GetUpload(dataItem.Id)
-	if  err != nil {
+	if err != nil {
 		return false, err
 	}
 	if res == nil {

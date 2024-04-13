@@ -20,6 +20,7 @@ type Config struct {
 	Database string
 	Log      string
 	Port     string
+	Process  string
 	Node     string
 	Signer   string
 	Store    string

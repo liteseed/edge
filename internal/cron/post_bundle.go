@@ -71,7 +71,7 @@ func (c *Config) postBundle() {
 	}
 
 	for _, order := range *o {
-		err = c.database.UpdateOrder(order.ID, &schema.Order{TransactionID: transaction.ID, Status: schema.Sent})
+		err = c.database.UpdateOrder(order.ID, &schema.Order{TransactionId: transaction.ID, Status: schema.Sent})
 		if err != nil {
 			c.logger.Error(
 				"failed to update order in database",

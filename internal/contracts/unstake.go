@@ -5,12 +5,12 @@ import (
 )
 
 func (c *Context) Unstake() error {
-	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Unstake"}}, "", c.signer)
+	mId, err := c.ao.SendMessage(c.process, "", []types.Tag{{Name: "Action", Value: "Unstake"}}, "", c.signer)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.ao.ReadResult(PROCESS, mId)
+	_, err = c.ao.ReadResult(c.process, mId)
 	if err != nil {
 		return err
 	}

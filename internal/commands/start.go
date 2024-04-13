@@ -59,8 +59,9 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		log.Fatal("failed to connect to AO", err)
 	}
+	process := config.Process
 
-	contracts := contracts.New(ao, itemSigner)
+	contracts := contracts.New(ao, process, itemSigner)
 
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {

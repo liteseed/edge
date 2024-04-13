@@ -5,12 +5,12 @@ import (
 )
 
 func (c *Context) GetStaker() (string, error) {
-	mId, err := c.ao.SendMessage(PROCESS, "", []types.Tag{{Name: "Action", Value: "Staked"}}, "", c.signer)
+	mId, err := c.ao.SendMessage(c.process, "", []types.Tag{{Name: "Action", Value: "Staked"}}, "", c.signer)
 	if err != nil {
 		return "", err
 	}
 
-	result, err := c.ao.ReadResult(PROCESS, mId)
+	result, err := c.ao.ReadResult(c.process, mId)
 	if err != nil {
 		return "", err
 	}

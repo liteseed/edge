@@ -34,12 +34,14 @@ func stake(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
+	process := config.Process
+
 	itemSigner, err := goar.NewItemSigner(signer)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	contract := contracts.New(ao, itemSigner)
+	contract := contracts.New(ao, process, itemSigner)
 
 	err = contract.Stake(url)
 	if err != nil {

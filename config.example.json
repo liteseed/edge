@@ -3,6 +3,7 @@
   "Log": "./temp",
   "Node": "https://arweave.net",
   "Port": ":8080",
+  "Process": "qAbHIghbi7lb0Y8KdZr8q9dvH8xwXpawCXgGSD8OpJk",
   "Signer": "./data/signer.json",
   "Store": "./data/pebble"
 }

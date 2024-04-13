@@ -27,6 +27,8 @@ func balance(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
+	process := config.Process
+
 	signer, err := goar.NewSignerFromPath(config.Signer)
 	if err != nil {
 		log.Fatal(err)
@@ -38,7 +40,7 @@ func balance(context *cli.Context) error {
 	}
 	fmt.Println("Address: ", signer.Address)
 
-	contract := contracts.New(ao, itemSigner)
+	contract := contracts.New(ao, process, itemSigner)
 
 	b, err := contract.GetBalance()
 	if err != nil {

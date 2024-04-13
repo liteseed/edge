@@ -26,7 +26,7 @@ func unstake(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	process := config.Process
 	signer, err := goar.NewSignerFromPath(config.Signer)
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +35,7 @@ func unstake(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	contract := contracts.New(ao, itemSigner)
+	contract := contracts.New(ao, process, itemSigner)
 
 	err = contract.Unstake()
 	if err != nil {
