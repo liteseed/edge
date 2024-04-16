@@ -87,5 +87,3 @@ chmod +x "$exe" ||
     error 'Failed to set permissions on edge executable'
 
 rm -r "$install_dir/edge-$target" "$exe.zip"
-
-quoted_install_dir=\"${install_dir//\"/\\\"}\"
