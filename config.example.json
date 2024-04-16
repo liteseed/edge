@@ -1,9 +1,9 @@
 {
-  "Database": "postgresql",
-  "Log": "./temp",
-  "Node": "https://arweave.net",
-  "Port": ":8080",
   "Process": "qAbHIghbi7lb0Y8KdZr8q9dvH8xwXpawCXgGSD8OpJk",
-  "Signer": "./data/signer.json",
-  "Store": "./data/pebble"
+  "Port": "8080",
+  "Signer": "./signer.json",
+  "Database": "postgres",
+  "Node": "https://arweave.net",
+  "Store": "./badger",
+  "Log": "./temp/log"
 }
