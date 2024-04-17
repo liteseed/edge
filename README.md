@@ -15,27 +15,9 @@ The requirements are expected to grow in the future.
 
 ## Getting Started
 
-First make a directory to store the binary
+Copy the `install.sh` file. Make it a executable and execute it on your system.
 
 ```sh
-  mkdir $HOME/.edge
-  cd $HOME/.edge
-```
-
-Fetch the latest release of edge from [github.com/liteseed/edge/releases](https://github.com/liteseed/edge/releases).
-
-```sh
-  wget https://github.com/liteseed/edge/latest/download/edge-linux-386
-```
-
-Set permission to execute the binary
-
-```sh
-  chmod +777 edge-linux-386
-```
-
-Export`EDGE_PATH` and source your shell file
-
-```sh
- echo 'export PATH=$HOME/.edge/edge:$PATH' >> ~/.bash_profile
+chmod +x install.sh
+./install.sh
 ```
