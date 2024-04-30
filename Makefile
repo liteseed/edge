@@ -1,10 +1,14 @@
 BINARY_NAME := edge
 PKG := github.com/liteseed/edge
-VERSION := 0.0.2
+VERSION := 0.0.3
 
 dev:
 	go mod tidy
 	go build -o ./build/dev/${BINARY_NAME} -ldflags="-X main.Version=${VERSION}-dev"  ./cmd/main.go
+
+docker:
+	go mod tidy
+	go build -o -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
 
 release:
 	go mod tidy

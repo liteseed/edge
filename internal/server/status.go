@@ -10,11 +10,16 @@ import (
 //
 // GET /status
 
-func getStatus(version string) gin.HandlerFunc   {
+func (s *Server) getStatus(version string) gin.HandlerFunc {
+
 	return func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-			"Name": "Edge",
-			"Version": version,
-		})
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"Name":    "Edge",
+				"Version": version,
+				"Address": s.signer.Address,
+			},
+		)
 	}
 }

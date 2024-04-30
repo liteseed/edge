@@ -1,9 +1,12 @@
 .DS_Store
 .env
 
+badger
 build
 dist
 data
+log
+sqlite
 temp
 
 wallet.json

@@ -1,11 +1,14 @@
 FROM golang:latest
 
-WORKDIR /app
-COPY . .
+ADD --keep-git-dir=true  https://github.com/liteseed/edge /repo
+WORKDIR /repo
+CMD ["make", "docker"]
 
-RUN go mod tidy
-RUN go build -o ./edge ./cmd
+WORKDIR /
+CP /repo/config.example.json /config.json
+CP ["/build/docker/edge", /edge]
+RUN rm -rf /repo
 
+CMD ["./edge", "generate"]
+CMD ["./edge", "start"]
 EXPOSE 8080
-
-CMD [ "./edge" ]

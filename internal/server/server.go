@@ -17,7 +17,7 @@ const (
 	MAX_DATA_ITEM_SIZE        = 1_073_824
 )
 
-type Config struct {
+type Server struct {
 	contract *contracts.Context
 	database *database.Config
 	server   *http.Server
@@ -26,9 +26,9 @@ type Config struct {
 	logger   *slog.Logger
 }
 
-func New(port string, version string, options ...func(*Config)) (*Config, error) {
+func New(port string, version string, options ...func(*Server)) (*Server, error) {
 
-	s := &Config{}
+	s := &Server{}
 	for _, o := range options {
 		o(s)
 	}
@@ -36,8 +36,7 @@ func New(port string, version string, options ...func(*Config)) (*Config, error)
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
 
-	engine.GET("/", getStatus(version))
-	engine.GET("/signer", s.Signer)
+	engine.GET("/", s.getStatus(version))
 	engine.POST("/tx", s.uploadDataItem)
 
 	s.server = &http.Server{
@@ -47,37 +46,37 @@ func New(port string, version string, options ...func(*Config)) (*Config, error)
 	return s, nil
 }
 
-func WthContracts(contract *contracts.Context) func(*Config) {
-	return func(c *Config) {
+func WthContracts(contract *contracts.Context) func(*Server) {
+	return func(c *Server) {
 		c.contract = contract
 	}
 }
 
-func WithDatabase(db *database.Config) func(*Config) {
-	return func(c *Config) {
+func WithDatabase(db *database.Config) func(*Server) {
+	return func(c *Server) {
 		c.database = db
 	}
 }
 
-func WithLogger(logger *slog.Logger) func(*Config) {
-	return func(c *Config) {
+func WithLogger(logger *slog.Logger) func(*Server) {
+	return func(c *Server) {
 		c.logger = logger
 	}
 }
 
-func WithStore(s *store.Store) func(*Config) {
-	return func(c *Config) {
+func WithStore(s *store.Store) func(*Server) {
+	return func(c *Server) {
 		c.store = s
 	}
 }
-func WithWallet(s *goar.Signer) func(*Config) {
-	return func(c *Config) {
+func WithWallet(s *goar.Signer) func(*Server) {
+	return func(c *Server) {
 		c.signer = s
 	}
 }
-func (s *Config) Start() error {
+func (s *Server) Start() error {
 	return s.server.ListenAndServe()
 }
-func (s *Config) Shutdown() error {
+func (s *Server) Shutdown() error {
 	return s.server.Shutdown(context.TODO())
 }

@@ -12,12 +12,3 @@ The node was tested on a system with the following specification:
 - OS - Linux
 
 The requirements are expected to grow in the future.
-
-## Getting Started
-
-Copy the `install.sh` file. Make it a executable and execute it on your system.
-
-```sh
-chmod +x install.sh
-./install.sh
-```

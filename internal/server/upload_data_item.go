@@ -10,7 +10,7 @@ import (
 )
 
 // POST /data-item
-func (s *Config) uploadDataItem(c *gin.Context) {
+func (s *Server) uploadDataItem(c *gin.Context) {
 	header, err := verifyHeaders(c)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)

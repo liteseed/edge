@@ -29,6 +29,9 @@ var Start = &cli.Command{
 }
 
 func start(ctx *cli.Context) error {
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	config := readConfig(ctx)
 
 	logger := slog.New(slog.NewJSONHandler(&lumberjack.Logger{
@@ -71,20 +74,20 @@ func start(ctx *cli.Context) error {
 	if err != nil {
 		log.Fatal("failed to setup cron", err)
 	}
-	c.Start()
+
+	go c.Start()
 
 	s, err := server.New(":8080", ctx.App.Version, server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
 	if err != nil {
 		log.Fatal("failed to setup server", err)
 	}
+
 	go func() {
 		if err = s.Start(); err != nil {
 			log.Fatal("failed to start server", err)
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Println("Shutdown")
