@@ -15,8 +15,6 @@ import (
 	"github.com/liteseed/edge/internal/contracts"
 )
 
-const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
-
 type UploadRequestHeader struct {
 	ContentType   *string `header:"content-type" binding:"required"`
 	ContentLength *int    `header:"content-length" binding:"required"`

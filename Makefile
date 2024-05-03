@@ -8,7 +8,7 @@ dev:
 
 docker:
 	go mod tidy
-	go build -o -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
+	go build -o ${BINARY_NAME} -ldflags="-X main.Version=${VERSION}" ./cmd/main.go
 
 release:
 	go mod tidy
