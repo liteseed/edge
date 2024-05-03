@@ -1,9 +1,8 @@
 FROM golang:latest
 
 WORKDIR /app
-COPY config.json go.mod ./
+COPY . .
 
 RUN make docker
-
+RUN ./edge generate
 CMD ["./edge", "start"]
-EXPOSE 8080
