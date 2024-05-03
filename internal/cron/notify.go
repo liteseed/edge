@@ -3,10 +3,7 @@ package cron
 import "github.com/liteseed/edge/internal/database/schema"
 
 // Notify the AO contract of Successful Data Post
-
-const PROCESS = "lJLnoDsq8z0NJrTbQqFQ1arJayfuqWPqwRaW_3aNCgk"
-
-func (c *Config) notify() {
+func (c *Cron) notify() {
 
 	o, err := c.database.GetOrdersByStatus(schema.Permanent)
 	if err != nil {
@@ -17,6 +14,7 @@ func (c *Config) notify() {
 		return
 	}
 
+	updatedOrders := []schema.Order{}
 	for _, order := range *o {
 		err := c.contract.Notify(order.ID, order.TransactionId)
 		if err != nil {
@@ -26,17 +24,14 @@ func (c *Config) notify() {
 				"order_id", order.ID,
 				"order_transaction_id", order.TransactionId,
 			)
-			continue
 		}
-		err = c.database.UpdateStatus(order.ID, schema.Reward)
-		if err != nil {
-			c.logger.Error(
-				"failed to update status of order",
-				"error", err,
-				"order_id", order.ID,
-				"order_transaction_id", order.TransactionId,
-			)
-			continue
-		}
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Reward})
+	}
+	err = c.database.UpdateOrder(&updatedOrders)
+	if err != nil {
+		c.logger.Error(
+			"failed to update database",
+			"error", err,
+		)
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type Config struct {
+type Cron struct {
 	c        *cron.Cron
 	contract *contracts.Context
 	database *database.Config
@@ -19,10 +19,10 @@ type Config struct {
 	wallet   *goar.Wallet
 }
 
-type Option = func(*Config)
+type Option = func(*Cron)
 
-func New(options ...func(*Config)) (*Config, error) {
-	c := &Config{c: cron.New()}
+func New(options ...func(*Cron)) (*Cron, error) {
+	c := &Cron{c: cron.New()}
 	for _, o := range options {
 		o(c)
 	}
@@ -30,43 +30,43 @@ func New(options ...func(*Config)) (*Config, error) {
 }
 
 func WthContracts(contract *contracts.Context) Option {
-	return func(c *Config) {
+	return func(c *Cron) {
 		c.contract = contract
 	}
 }
 
 func WithDatabase(db *database.Config) Option {
-	return func(c *Config) {
+	return func(c *Cron) {
 		c.database = db
 	}
 }
 
 func WithLogger(logger *slog.Logger) Option {
-	return func(c *Config) {
+	return func(c *Cron) {
 		c.logger = logger
 	}
 }
 
 func WithStore(s *store.Store) Option {
-	return func(c *Config) {
+	return func(c *Cron) {
 		c.store = s
 	}
 }
 func WithWallet(s *goar.Wallet) Option {
-	return func(c *Config) {
+	return func(c *Cron) {
 		c.wallet = s
 	}
 }
 
-func (c *Config) Start() {
+func (c *Cron) Start() {
 	c.c.Start()
 }
 
-func (c *Config) Shutdown() {
+func (c *Cron) Shutdown() {
 	c.c.Stop()
 }
 
-func (c *Config) Setup(spec string) error {
+func (c *Cron) Setup(spec string) error {
 	_, err := c.c.AddFunc(spec, c.postBundle)
 	if err != nil {
 		return err

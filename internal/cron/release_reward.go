@@ -2,7 +2,7 @@ package cron
 
 import "github.com/liteseed/edge/internal/database/schema"
 
-func (c *Config) ReleaseReward() {
+func (c *Cron) ReleaseReward() {
 	o, err := c.database.GetOrdersByStatus(schema.Reward)
 	if err != nil {
 		c.logger.Error(
@@ -12,6 +12,7 @@ func (c *Config) ReleaseReward() {
 		return
 	}
 
+	updatedOrders := []schema.Order{}
 	for _, order := range *o {
 		err = c.contract.Release(order.ID)
 		if err != nil {
@@ -20,13 +21,14 @@ func (c *Config) ReleaseReward() {
 				"error", err,
 			)
 		}
-		err = c.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Done})
-		if err != nil {
-			c.logger.Error(
-				"failed to update order in database",
-				"error", err,
-			)
-		}
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Done})
+	}
 
+	err = c.database.UpdateOrder(&updatedOrders)
+	if err != nil {
+		c.logger.Error(
+			"failed to update database",
+			"error", err,
+		)
 	}
 }

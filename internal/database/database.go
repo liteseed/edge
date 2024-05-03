@@ -46,13 +46,13 @@ func (c *Config) UpdateStatus(id string, status schema.Status) error {
 	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
 }
 
-func (c *Config) UpdateOrder(id string, order *schema.Order) error {
-	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Updates(order).Error
+
+func (c *Config) UpdateOrder(orders *[]schema.Order) error {
+	return c.DB.Updates(orders).Error
 }
 
 func (c *Config) DeleteOrder(id string) error {
-	o := &schema.Order{ID: id}
-	return c.DB.Delete(o).Error
+	return c.DB.Delete(&schema.Order{ID: id}).Error
 }
 
 func (c *Config) Shutdown() error {

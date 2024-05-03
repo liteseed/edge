@@ -6,7 +6,7 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func parseDataItemFromOrder(c *Config, o *schema.Order) (*types.BundleItem, error) {
+func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error) {
 	rawDataItem, err := c.store.Get(o.ID)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func parseDataItemFromOrder(c *Config, o *schema.Order) (*types.BundleItem, erro
 	return dataItem, nil
 }
 
-func (c *Config) postBundle() {
+func (c *Cron) postBundle() {
 	o, err := c.database.GetOrdersByStatus(schema.Queued)
 	if err != nil {
 		c.logger.Error(
@@ -70,13 +70,15 @@ func (c *Config) postBundle() {
 		return
 	}
 
+	updatedOrders := []schema.Order{}
 	for _, order := range *o {
-		err = c.database.UpdateOrder(order.ID, &schema.Order{TransactionId: transaction.ID, Status: schema.Sent})
-		if err != nil {
-			c.logger.Error(
-				"failed to update order in database",
-				"error", err,
-			)
-		}
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Sent, TransactionId: transaction.ID})
+	}
+	err = c.database.UpdateOrder(&updatedOrders)
+	if err != nil {
+		c.logger.Error(
+			"failed to update database",
+			"error", err,
+		)
 	}
 }

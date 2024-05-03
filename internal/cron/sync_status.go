@@ -3,8 +3,7 @@ package cron
 import "github.com/liteseed/edge/internal/database/schema"
 
 // Check status of the upload on Arweave
-
-func (c *Config) SyncStatus() {
+func (c *Cron) SyncStatus() {
 	o, err := c.database.GetOrdersByStatus(schema.Sent)
 	if err != nil {
 		c.logger.Error(
