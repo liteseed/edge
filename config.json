@@ -1,9 +1,9 @@
 {
   "Process": "qAbHIghbi7lb0Y8KdZr8q9dvH8xwXpawCXgGSD8OpJk",
   "Port": "8080",
-  "Signer": "./signer.json",
-  "Database": "./sqlite",
+  "Signer": "/data/signer.json",
+  "Database": "/data/sqlite",
   "Node": "https://arweave.net",
-  "Store": "./badger",
-  "Log": "./log"
+  "Store": "/data/badger",
+  "Log": "/data/log"
 }

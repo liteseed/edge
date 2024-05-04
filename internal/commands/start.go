@@ -29,7 +29,7 @@ var Start = &cli.Command{
 }
 
 func start(ctx *cli.Context) error {
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	config := readConfig(ctx)

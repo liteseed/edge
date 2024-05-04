@@ -14,10 +14,13 @@ var Generate = &cli.Command{
 	Name:   "generate",
 	Usage:  "Generate a new Arweave Private Wallet",
 	Action: generate,
+	Flags: []cli.Flag{
+		&cli.PathFlag{Name: "config", Aliases: []string{"c"}, Value: "./config.json", Usage: "path to config value"},
+	},
 }
 
 func generate(ctx *cli.Context) error {
-	filename := "signer.json"
+	config := readConfig(ctx)
 	bitSize := 4096
 
 	// Generate RSA key.
@@ -33,6 +36,6 @@ func generate(ctx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = os.WriteFile(filename, data, os.ModePerm)
+	err = os.WriteFile(config.Signer, data, os.ModePerm)
 	return nil
 }
