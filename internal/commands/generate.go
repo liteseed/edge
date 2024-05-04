@@ -37,5 +37,8 @@ func generate(ctx *cli.Context) error {
 		log.Fatal(err)
 	}
 	err = os.WriteFile(config.Signer, data, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }
