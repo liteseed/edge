@@ -21,7 +21,7 @@ type Server struct {
 	contract *contracts.Context
 	database *database.Config
 	server   *http.Server
-	signer   *goar.Signer
+	wallet   *goar.Wallet
 	store    *store.Store
 	logger   *slog.Logger
 }
@@ -36,8 +36,8 @@ func New(port string, version string, options ...func(*Server)) (*Server, error)
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
 
-	engine.GET("/", s.getStatus(version))
-	engine.POST("/tx", s.uploadDataItem)
+	engine.GET("/", s.StatusGet(version))
+	engine.POST("/tx", s.DataItemPost)
 
 	s.server = &http.Server{
 		Addr:    port,
@@ -69,9 +69,9 @@ func WithStore(s *store.Store) func(*Server) {
 		c.store = s
 	}
 }
-func WithWallet(s *goar.Signer) func(*Server) {
+func WithWallet(w *goar.Wallet) func(*Server) {
 	return func(c *Server) {
-		c.signer = s
+		c.wallet = w
 	}
 }
 func (s *Server) Start() error {

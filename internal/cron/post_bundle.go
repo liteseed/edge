@@ -61,7 +61,7 @@ func (c *Cron) postBundle() {
 		return
 	}
 
-	transaction, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
+	tx, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
 	if err != nil {
 		c.logger.Error(
 			"failed to upload bundle",
@@ -72,7 +72,7 @@ func (c *Cron) postBundle() {
 
 	updatedOrders := []schema.Order{}
 	for _, order := range *o {
-		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Sent, TransactionId: transaction.ID})
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Sent, TransactionId: tx.ID})
 	}
 	err = c.database.UpdateOrder(&updatedOrders)
 	if err != nil {

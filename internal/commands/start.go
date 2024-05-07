@@ -77,7 +77,7 @@ func start(ctx *cli.Context) error {
 
 	go c.Start()
 
-	s, err := server.New(":8080", ctx.App.Version, server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet.Signer), server.WithStore(store))
+	s, err := server.New(":8080", ctx.App.Version, server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet), server.WithStore(store))
 	if err != nil {
 		log.Fatal("failed to setup server", err)
 	}
