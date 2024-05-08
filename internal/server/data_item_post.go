@@ -16,6 +16,16 @@ type DataItemPostRequestHeader struct {
 	ContentLength *int    `header:"content-length" binding:"required"`
 }
 
+type DataItemPostResponse struct {
+	ID                  string   `json:"id"`
+	Owner               string   `json:"owner"`
+	DataCaches          []string `json:"dataCaches"`
+	DeadlineHeight      uint     `json:"deadlineHeight"`
+	FastFinalityIndexes []string `json:"fastFinalityIndexes"`
+	Price               uint64   `json:"price"`
+	Version             string   `json:"version"`
+}
+
 func parseHeaders(c *gin.Context) (*DataItemPostRequestHeader, error) {
 	header := &DataItemPostRequestHeader{}
 	if err := c.ShouldBindHeader(header); err != nil {
@@ -68,12 +78,24 @@ func (s *Server) DataItemPost(c *gin.Context) {
 		return
 	}
 
-	// err = utils.VerifyBundleItem(*dataItem)
-	// if err != nil {
-	// 	log.Println("data-item: failed to verify", err)
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, err)
-	// 	return
-	// }
+	p, err := s.wallet.Client.GetTransactionPrice(*header.ContentLength, nil)
+	if err != nil {
+		s.logger.Error(
+			"failed to calculate transaction price",
+			"error", err,
+		)
+		c.AbortWithError(http.StatusFailedDependency, err)
+		return
+	}
+	err = utils.VerifyBundleItem(*dataItem)
+	if err != nil {
+		s.logger.Error(
+			"failed to verify data item",
+			"error", err,
+		)
+		c.AbortWithStatusJSON(http.StatusBadRequest, err)
+		return
+	}
 
 	err = s.store.Set(dataItem.Id, dataItem.ItemBinary)
 	if err != nil {
@@ -84,6 +106,7 @@ func (s *Server) DataItemPost(c *gin.Context) {
 	o := &schema.Order{
 		ID:     dataItem.Id,
 		Status: schema.Queued,
+		Price:  uint64(p),
 	}
 
 	err = s.database.CreateOrder(o)
@@ -92,5 +115,12 @@ func (s *Server) DataItemPost(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, nil)
+	c.JSON(
+		http.StatusCreated,
+		&DataItemPostResponse{
+			ID:      o.ID,
+			Price:   o.Price,
+			Version: "1.0.0",
+		},
+	)
 }

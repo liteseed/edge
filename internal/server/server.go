@@ -20,18 +20,18 @@ const (
 type Server struct {
 	contract *contracts.Context
 	database *database.Config
-	server   *http.Server
-	wallet   *goar.Wallet
-	store    *store.Store
 	logger   *slog.Logger
+	server   *http.Server
+	store    *store.Store
+	wallet   *goar.Wallet
 }
 
 func New(port string, version string, options ...func(*Server)) (*Server, error) {
-
 	s := &Server{}
 	for _, o := range options {
 		o(s)
 	}
+
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
@@ -77,6 +77,7 @@ func WithWallet(w *goar.Wallet) func(*Server) {
 func (s *Server) Start() error {
 	return s.server.ListenAndServe()
 }
+
 func (s *Server) Shutdown() error {
 	return s.server.Shutdown(context.TODO())
 }

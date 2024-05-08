@@ -17,7 +17,7 @@ const (
 	Permanent = "permanent"
 
 	Reward = "reward"
-	Done = "done"
+	Done   = "done"
 )
 
 func (s *Status) Scan(value any) error {
@@ -34,4 +34,5 @@ type Order struct {
 	ID            string `gorm:"primary_key;" json:"id"`
 	Status        Status `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
 	TransactionId string `json:"transaction_id"`
+	Price         uint64 `json:"price"`
 }
