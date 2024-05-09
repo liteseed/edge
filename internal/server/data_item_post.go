@@ -119,6 +119,7 @@ func (s *Server) DataItemPost(c *gin.Context) {
 		http.StatusCreated,
 		&DataItemPostResponse{
 			ID:      o.ID,
+			Owner:   s.wallet.Signer.Address,
 			Price:   o.Price,
 			Version: "1.0.0",
 		},

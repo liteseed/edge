@@ -8,7 +8,7 @@ import (
 
 // GET /status
 
-func (s *Server) StatusGet(version string) gin.HandlerFunc {
+func (s *Server) StatusGet(version string, gatewayUrl string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
@@ -16,6 +16,9 @@ func (s *Server) StatusGet(version string) gin.HandlerFunc {
 				"Name":    "Edge",
 				"Version": version,
 				"Address": s.wallet.Signer.Address,
+				"Gateway": gin.H{
+					"URL": gatewayUrl,
+				},
 			},
 		)
 	}

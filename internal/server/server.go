@@ -26,7 +26,7 @@ type Server struct {
 	wallet   *goar.Wallet
 }
 
-func New(port string, version string, options ...func(*Server)) (*Server, error) {
+func New(port string, version string, gatewayUrl string, options ...func(*Server)) (*Server, error) {
 	s := &Server{}
 	for _, o := range options {
 		o(s)
@@ -36,7 +36,7 @@ func New(port string, version string, options ...func(*Server)) (*Server, error)
 	engine.Use(gin.Recovery())
 	engine.Use(JSONLogMiddleware(s.logger))
 
-	engine.GET("/", s.StatusGet(version))
+	engine.GET("/", s.StatusGet(version, gatewayUrl))
 	engine.POST("/tx", s.DataItemPost)
 
 	s.server = &http.Server{
