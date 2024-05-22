@@ -3,6 +3,7 @@ package commands
 import (
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,19 +29,24 @@ var Start = &cli.Command{
 	Action: start,
 }
 
-func start(ctx *cli.Context) error {
+func start(context *cli.Context) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	config := readConfig(ctx)
+	config := readConfig(context)
 
-	logger := slog.New(slog.NewJSONHandler(&lumberjack.Logger{
-		Filename:   config.Log,
-		MaxSize:    2, // megabytes
-		MaxBackups: 3,
-		MaxAge:     28,   //days
-		Compress:   true, // disabled by default
-	}, &slog.HandlerOptions{AddSource: true}))
+	logger := slog.New(
+		slog.NewJSONHandler(
+			&lumberjack.Logger{
+				Filename:   config.Log,
+				MaxSize:    2,
+				MaxBackups: 3,
+				MaxAge:     28,
+				Compress:   true,
+			},
+			&slog.HandlerOptions{AddSource: true},
+		),
+	)
 
 	db, err := database.New(config.Database)
 	if err != nil {
@@ -77,13 +83,14 @@ func start(ctx *cli.Context) error {
 
 	go c.Start()
 
-	s, err := server.New(":8080", ctx.App.Version, config.Node, server.WthContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet), server.WithStore(store))
+	s, err := server.New(":8080", context.App.Version, config.Node, server.WithContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet), server.WithStore(store))
 	if err != nil {
 		log.Fatal("failed to setup server", err)
 	}
 
 	go func() {
-		if err = s.Start(); err != nil {
+		err := s.Start()
+		if err != http.ErrServerClosed {
 			log.Fatal("failed to start server", err)
 		}
 	}()
@@ -102,7 +109,7 @@ func start(ctx *cli.Context) error {
 
 	time.Sleep(2 * time.Second)
 	if err = s.Shutdown(); err != nil {
-		log.Fatal("failed to shutdown server", "error")
+		log.Fatal("failed to shutdown server", err)
 	}
 	return nil
 }

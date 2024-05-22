@@ -3,9 +3,9 @@ package cron
 import "github.com/liteseed/edge/internal/database/schema"
 
 // Notify the AO contract of Successful Data Post
-func (c *Cron) notify() {
+func (c *Cron) Notify() {
 
-	o, err := c.database.GetOrdersByStatus(schema.Permanent)
+	o, err := c.database.GetOrders(&schema.Order{Status: schema.Permanent})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch order from database",
@@ -27,7 +27,7 @@ func (c *Cron) notify() {
 		}
 		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Reward})
 	}
-	err = c.database.UpdateOrder(&updatedOrders)
+	err = c.database.UpdateOrders(&updatedOrders)
 	if err != nil {
 		c.logger.Error(
 			"failed to update database",

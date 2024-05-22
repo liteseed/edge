@@ -6,7 +6,8 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
-	"github.com/liteseed/edge/internal/contracts"
+
+	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 )
 
@@ -38,20 +39,22 @@ func balance(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Println("Address: ", signer.Address)
 
-	contract := contracts.New(ao, process, itemSigner)
+	c := contract.New(ao, process, itemSigner)
 
-	b, err := contract.GetBalance()
-	if err != nil {
-		log.Fatal(err)
-	}
-	_, err = fmt.Printf("Balance: %s BUN\n", b)
+	b, err := c.Balance(signer.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	s, err := contract.GetStaker()
+	_, err = fmt.Printf("Balance: %s LSD\n", b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := c.Staked()
 	if err != nil {
 		log.Fatal(err)
 	}

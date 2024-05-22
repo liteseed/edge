@@ -67,11 +67,11 @@ func (c *Cron) Shutdown() {
 }
 
 func (c *Cron) Setup(spec string) error {
-	_, err := c.c.AddFunc(spec, c.postBundle)
+	_, err := c.c.AddFunc(spec, c.PostBundle)
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.notify)
+	_, err = c.c.AddFunc(spec, c.Notify)
 	if err != nil {
 		return err
 	}

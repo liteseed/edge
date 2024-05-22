@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/everFinance/goar"
@@ -14,16 +13,16 @@ import (
 
 const (
 	CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
-	MAX_DATA_ITEM_SIZE        = 1_073_824
+	MAX_DATA_ITEM_SIZE        = 2 * 1024 * 1024 * 1024
 )
 
 type Server struct {
-	contract *contracts.Context
-	database *database.Config
-	logger   *slog.Logger
-	server   *http.Server
-	store    *store.Store
-	wallet   *goar.Wallet
+	contract   *contracts.Context
+	database   *database.Config
+	gatewayUrl string
+	server     *http.Server
+	store      *store.Store
+	wallet     *goar.Wallet
 }
 
 func New(port string, version string, gatewayUrl string, options ...func(*Server)) (*Server, error) {
@@ -31,12 +30,11 @@ func New(port string, version string, gatewayUrl string, options ...func(*Server
 	for _, o := range options {
 		o(s)
 	}
-
+	s.gatewayUrl = gatewayUrl
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	engine.Use(JSONLogMiddleware(s.logger))
 
-	engine.GET("/", s.StatusGet(version, gatewayUrl))
+	engine.GET("/", s.StatusGet(version))
 	engine.POST("/tx", s.DataItemPost)
 
 	s.server = &http.Server{
@@ -46,7 +44,7 @@ func New(port string, version string, gatewayUrl string, options ...func(*Server
 	return s, nil
 }
 
-func WthContracts(contract *contracts.Context) func(*Server) {
+func WithContracts(contract *contracts.Context) func(*Server) {
 	return func(c *Server) {
 		c.contract = contract
 	}
@@ -55,12 +53,6 @@ func WthContracts(contract *contracts.Context) func(*Server) {
 func WithDatabase(db *database.Config) func(*Server) {
 	return func(c *Server) {
 		c.database = db
-	}
-}
-
-func WithLogger(logger *slog.Logger) func(*Server) {
-	return func(c *Server) {
-		c.logger = logger
 	}
 }
 

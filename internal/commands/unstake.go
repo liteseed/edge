@@ -6,7 +6,7 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
-	"github.com/liteseed/edge/internal/contracts"
+	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 )
 
@@ -35,9 +35,9 @@ func unstake(context *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	contract := contracts.New(ao, process, itemSigner)
+	c := contract.New(ao, process, itemSigner)
 
-	err = contract.Unstake()
+	err = c.Unstake()
 	if err != nil {
 		log.Fatal(err)
 	}

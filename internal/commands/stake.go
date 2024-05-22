@@ -6,7 +6,8 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/liteseed/aogo"
-	"github.com/liteseed/edge/internal/contracts"
+
+	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 )
 
@@ -41,9 +42,9 @@ func stake(context *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	contract := contracts.New(ao, process, itemSigner)
+	c := contract.New(ao, process, itemSigner)
 
-	err = contract.Stake(url)
+	err = c.Stake(url)
 	if err != nil {
 		log.Fatal(err)
 	}

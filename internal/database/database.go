@@ -36,18 +36,17 @@ func (c *Config) CreateOrder(o *schema.Order) error {
 	return c.DB.Create(&o).Error
 }
 
-func (c *Config) GetOrdersByStatus(status schema.Status) (*[]schema.Order, error) {
-	o := &[]schema.Order{}
-	err := c.DB.Where("status = ?", status).Limit(25).Find(&o).Error
-	return o, err
+func (c *Config) GetOrders(o *schema.Order) (*[]schema.Order, error) {
+	orders := &[]schema.Order{}
+	err := c.DB.Where(o).Limit(25).Find(&orders).Error
+	return orders, err
 }
 
-func (c *Config) UpdateStatus(id string, status schema.Status) error {
-	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Update("status", status).Error
+func (c *Config) UpdateOrder(o *schema.Order) error {
+	return c.DB.Updates(o).Error
 }
 
-
-func (c *Config) UpdateOrder(orders *[]schema.Order) error {
+func (c *Config) UpdateOrders(orders *[]schema.Order) error {
 	return c.DB.Updates(orders).Error
 }
 

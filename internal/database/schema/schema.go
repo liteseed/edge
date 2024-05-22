@@ -7,7 +7,8 @@ import (
 )
 
 type Status string
-type StoreIds []string
+
+type Payment string
 
 const (
 	Queued = "queued"
@@ -18,6 +19,8 @@ const (
 
 	Reward = "reward"
 	Done   = "done"
+
+	Paid = "paid"
 )
 
 func (s *Status) Scan(value any) error {
@@ -31,8 +34,9 @@ func (s Status) Value() (driver.Value, error) {
 
 type Order struct {
 	gorm.Model
-	ID            string `gorm:"primary_key;" json:"id"`
-	Status        Status `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
-	TransactionId string `json:"transaction_id"`
-	Price         uint64 `json:"price"`
+	ID            string  `gorm:"primary_key;" json:"id"`
+	Status        Status  `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
+	TransactionId string  `json:"transaction_id"`
+	Price         uint64  `json:"price"`
+	Payment       Payment `gorm:"index:idx_status;default:unpaid" sql:"type:payment" json:"payment"`
 }

@@ -15,15 +15,15 @@ func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error)
 	if err != nil {
 		return nil, err
 	}
-	err = c.database.UpdateStatus(o.ID, schema.Sent)
+	err = c.database.UpdateOrder(&schema.Order{ID: o.ID, Status: schema.Sent})
 	if err != nil {
 		return nil, err
 	}
 	return dataItem, nil
 }
 
-func (c *Cron) postBundle() {
-	o, err := c.database.GetOrdersByStatus(schema.Queued)
+func (c *Cron) PostBundle() {
+	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Queued, Payment: schema.Paid})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch queued orders",
@@ -32,14 +32,15 @@ func (c *Cron) postBundle() {
 		return
 	}
 
-	if len(*o) == 0 {
+	if len(*orders) == 0 {
 		c.logger.Info("no data item to post")
 		return
 	}
 
 	dataItems := []types.BundleItem{}
 
-	for _, order := range *o {
+	updatedOrders := []schema.Order{}
+	for _, order := range *orders {
 		dataItem, err := parseDataItemFromOrder(c, &order)
 		if err != nil {
 			c.logger.Error(
@@ -53,6 +54,7 @@ func (c *Cron) postBundle() {
 	}
 
 	bundle, err := utils.NewBundle(dataItems...)
+
 	if err != nil {
 		c.logger.Error(
 			"failed to bundle data items",
@@ -70,11 +72,11 @@ func (c *Cron) postBundle() {
 		return
 	}
 
-	updatedOrders := []schema.Order{}
-	for _, order := range *o {
+	for _, order := range *orders {
 		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Sent, TransactionId: tx.ID})
 	}
-	err = c.database.UpdateOrder(&updatedOrders)
+
+	err = c.database.UpdateOrders(&updatedOrders)
 	if err != nil {
 		c.logger.Error(
 			"failed to update database",
