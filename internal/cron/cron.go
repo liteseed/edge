@@ -4,15 +4,15 @@ import (
 	"log/slog"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
+	"github.com/liteseed/sdk-go/contract"
 	"github.com/robfig/cron/v3"
 )
 
 type Cron struct {
 	c        *cron.Cron
-	contract *contracts.Context
+	contract *contract.Contract
 	database *database.Config
 	logger   *slog.Logger
 	store    *store.Store
@@ -29,7 +29,7 @@ func New(options ...func(*Cron)) (*Cron, error) {
 	return c, nil
 }
 
-func WthContracts(contract *contracts.Context) Option {
+func WthContracts(contract *contract.Contract) Option {
 	return func(c *Cron) {
 		c.contract = contract
 	}
@@ -71,15 +71,15 @@ func (c *Cron) Setup(spec string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.Notify)
+	_, err = c.c.AddFunc(spec, c.Posted)
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.SyncStatus)
+	_, err = c.c.AddFunc(spec, c.Sync)
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.ReleaseReward)
+	_, err = c.c.AddFunc(spec, c.Release)
 	if err != nil {
 		return err
 	}

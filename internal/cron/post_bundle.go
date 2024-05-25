@@ -15,7 +15,7 @@ func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error)
 	if err != nil {
 		return nil, err
 	}
-	err = c.database.UpdateOrder(&schema.Order{ID: o.ID, Status: schema.Sent})
+	err = c.database.UpdateOrder(&schema.Order{ID: o.ID, Status: schema.Posted})
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *Cron) PostBundle() {
 	}
 
 	for _, order := range *orders {
-		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Sent, TransactionId: tx.ID})
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Posted, TransactionId: tx.ID})
 	}
 
 	err = c.database.UpdateOrders(&updatedOrders)

@@ -14,8 +14,7 @@ require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/everFinance/goar v1.6.3
 	github.com/everFinance/gojwk v1.0.0
-	github.com/liteseed/aogo v0.0.6
-	github.com/liteseed/sdk-go v0.1.1
+	github.com/liteseed/sdk-go v0.1.4
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -63,6 +62,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/linkedin/goavro/v2 v2.12.0 // indirect
+	github.com/liteseed/aogo v0.0.8 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect

@@ -3,7 +3,6 @@ package commands
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"log"
 	"os"
 
 	"github.com/everFinance/gojwk"
@@ -26,19 +25,19 @@ func generate(ctx *cli.Context) error {
 	// Generate RSA key.
 	key, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	jwk, err := gojwk.PrivateKey(key)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	data, err := gojwk.Marshal(jwk)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	err = os.WriteFile(config.Signer, data, os.ModePerm)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }

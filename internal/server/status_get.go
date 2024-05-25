@@ -17,7 +17,7 @@ func (s *Server) StatusGet(version string) gin.HandlerFunc {
 				"Version": version,
 				"Address": s.wallet.Signer.Address,
 				"Gateway": gin.H{
-					"URL": s.gatewayUrl,
+					"URL": s.gateway,
 				},
 			},
 		)

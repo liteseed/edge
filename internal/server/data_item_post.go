@@ -120,8 +120,8 @@ func (s *Server) DataItemPost(context *gin.Context) {
 			Price:               o.Price,
 			Version:             "1.0.0",
 			DeadlineHeight:      uint(info.Height + 200),
-			DataCaches:          []string{s.gatewayUrl},
-			FastFinalityIndexes: []string{s.gatewayUrl},
+			DataCaches:          []string{s.gateway},
+			FastFinalityIndexes: []string{s.gateway},
 		},
 	)
 }

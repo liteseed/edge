@@ -13,14 +13,12 @@ type Payment string
 const (
 	Queued = "queued"
 	Error  = "error"
+	Posted = "posted"
 
-	Sent      = "sent"
+	Release = "release"
+
 	Permanent = "permanent"
-
-	Reward = "reward"
-	Done   = "done"
-
-	Paid = "paid"
+	Paid      = "paid"
 )
 
 func (s *Status) Scan(value any) error {
@@ -39,4 +37,5 @@ type Order struct {
 	TransactionId string  `json:"transaction_id"`
 	Price         uint64  `json:"price"`
 	Payment       Payment `gorm:"index:idx_status;default:unpaid" sql:"type:payment" json:"payment"`
+	Confirmations uint    `uint:confirmations`
 }

@@ -1,11 +1,9 @@
 package commands
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/aogo"
 
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
@@ -25,30 +23,19 @@ func stake(context *cli.Context) error {
 	config := readConfig(context)
 	url := context.String("url")
 
-	ao, err := aogo.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	signer, err := goar.NewSignerFromPath(config.Signer)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	process := config.Process
 
-	itemSigner, err := goar.NewItemSigner(signer)
+	c := contract.New(process, signer)
+
+	res, err := c.Stake(url)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
-	c := contract.New(ao, process, itemSigner)
-
-	err = c.Stake(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Success")
+	log.Println(res)
 	return nil
 }

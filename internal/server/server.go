@@ -6,9 +6,9 @@ import (
 
 	"github.com/everFinance/goar"
 	"github.com/gin-gonic/gin"
-	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
+	"github.com/liteseed/sdk-go/contract"
 )
 
 const (
@@ -17,20 +17,20 @@ const (
 )
 
 type Server struct {
-	contract   *contracts.Context
-	database   *database.Config
-	gatewayUrl string
-	server     *http.Server
-	store      *store.Store
-	wallet     *goar.Wallet
+	contract *contract.Contract
+	database *database.Config
+	gateway  string
+	server   *http.Server
+	store    *store.Store
+	wallet   *goar.Wallet
 }
 
-func New(port string, version string, gatewayUrl string, options ...func(*Server)) (*Server, error) {
+func New(port string, version string, gateway string, options ...func(*Server)) (*Server, error) {
 	s := &Server{}
 	for _, o := range options {
 		o(s)
 	}
-	s.gatewayUrl = gatewayUrl
+	s.gateway = gateway
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 
@@ -44,7 +44,7 @@ func New(port string, version string, gatewayUrl string, options ...func(*Server
 	return s, nil
 }
 
-func WithContracts(contract *contracts.Context) func(*Server) {
+func WithContracts(contract *contract.Contract) func(*Server) {
 	return func(c *Server) {
 		c.contract = contract
 	}

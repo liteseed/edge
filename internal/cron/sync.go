@@ -1,10 +1,13 @@
 package cron
 
-import "github.com/liteseed/edge/internal/database/schema"
+import (
+	"github.com/liteseed/edge/internal/database"
+	"github.com/liteseed/edge/internal/database/schema"
+)
 
 // Check status of the upload on Arweave
-func (c *Cron) SyncStatus() {
-	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Sent})
+func (c *Cron) Sync() {
+	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Release}, database.ConfirmationsLessThan25)
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch sent orders",
@@ -22,8 +25,8 @@ func (c *Cron) SyncStatus() {
 			)
 			continue
 		}
-		if status.NumberOfConfirmations > 10 {
-			err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Permanent})
+		if status.NumberOfConfirmations >= 25 {
+			err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Confirmations: uint(status.NumberOfConfirmations)})
 			if err != nil {
 				c.logger.Error(
 					"failed to fetch transaction status",

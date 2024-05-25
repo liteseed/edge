@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/aogo"
-	"github.com/liteseed/edge/internal/contracts"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
 	"github.com/liteseed/edge/internal/store"
+	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -50,42 +49,34 @@ func start(context *cli.Context) error {
 
 	db, err := database.New(config.Database)
 	if err != nil {
-		log.Fatal("failed to connect to database", err)
+		return err
 	}
 
 	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node)
 	if err != nil {
-		log.Fatal("failed to load wallet", "error", err)
-	}
-	itemSigner, err := goar.NewItemSigner(wallet.Signer)
-	if err != nil {
-		log.Fatal("failed to create item-signer", err)
+		return err
 	}
 
 	store := store.New(config.Store)
 
-	ao, err := aogo.New()
-	if err != nil {
-		log.Fatal("failed to connect to AO", err)
-	}
 	process := config.Process
 
-	contracts := contracts.New(ao, process, itemSigner)
+	contracts := contract.New(process, wallet.Signer)
 
 	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {
-		log.Fatal("failed to load cron", err)
+		return err
 	}
 	err = c.Setup("* * * * *")
 	if err != nil {
-		log.Fatal("failed to setup cron", err)
+		return err
 	}
 
 	go c.Start()
 
 	s, err := server.New(":8080", context.App.Version, config.Node, server.WithContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet), server.WithStore(store))
 	if err != nil {
-		log.Fatal("failed to setup server", err)
+		return err
 	}
 
 	go func() {
@@ -101,15 +92,15 @@ func start(context *cli.Context) error {
 
 	c.Shutdown()
 	if err = db.Shutdown(); err != nil {
-		log.Fatal("failed to shutdown database", err)
+		return err
 	}
 	if err = store.Shutdown(); err != nil {
-		log.Fatal("failed to shutdown store", err)
+		return err
 	}
 
 	time.Sleep(2 * time.Second)
 	if err = s.Shutdown(); err != nil {
-		log.Fatal("failed to shutdown server", err)
+		return err
 	}
 	return nil
 }

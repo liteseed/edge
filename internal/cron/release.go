@@ -2,8 +2,8 @@ package cron
 
 import "github.com/liteseed/edge/internal/database/schema"
 
-func (c *Cron) ReleaseReward() {
-	o, err := c.database.GetOrders(&schema.Order{Status: schema.Reward})
+func (c *Cron) Release() {
+	o, err := c.database.GetOrders(&schema.Order{Status: schema.Release})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch reward orders",
@@ -14,14 +14,14 @@ func (c *Cron) ReleaseReward() {
 
 	updatedOrders := []schema.Order{}
 	for _, order := range *o {
-		err = c.contract.Release(order.ID)
+		err = c.contract.Release(order.ID, order.TransactionId)
 		if err != nil {
 			c.logger.Error(
 				"failed to release reward",
 				"error", err,
 			)
 		}
-		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Done})
+		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Permanent})
 	}
 
 	err = c.database.UpdateOrders(&updatedOrders)

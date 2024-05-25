@@ -1,11 +1,9 @@
 package commands
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/everFinance/goar"
-	"github.com/liteseed/aogo"
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 )
@@ -20,28 +18,20 @@ var Unstake = &cli.Command{
 }
 
 func unstake(context *cli.Context) error {
-
 	config := readConfig(context)
-	ao, err := aogo.New()
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	process := config.Process
 	signer, err := goar.NewSignerFromPath(config.Signer)
 	if err != nil {
-		log.Fatal(err)
-	}
-	itemSigner, err := goar.NewItemSigner(signer)
-	if err != nil {
-		log.Fatal(err)
-	}
-	c := contract.New(ao, process, itemSigner)
-
-	err = c.Unstake()
-	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	fmt.Println("Success")
+	c := contract.New(process, signer)
+
+	res, err := c.Unstake()
+	if err != nil {
+		return err
+	}
+	log.Println(res)
 	return nil
 }

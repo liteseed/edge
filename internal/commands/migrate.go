@@ -21,13 +21,13 @@ func migrate(context *cli.Context) error {
 
 	database, err := database.New(config.Database)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer database.Shutdown()
 
 	err = database.Migrate()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	log.Println("Migration Complete")
