@@ -13,7 +13,7 @@ import (
 
 const (
 	CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
-	MAX_DATA_ITEM_SIZE        = 2 * 1024 * 1024 * 1024
+	MAX_DATA_ITEM_SIZE        = uint(2 * 1024 * 1024 * 1024)
 )
 
 type Server struct {
