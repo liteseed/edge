@@ -42,12 +42,14 @@ func (c *Config) GetOrders(o *schema.Order, scopes ...Scope) (*[]schema.Order, e
 	return orders, err
 }
 
-func (c *Config) UpdateOrder(o *schema.Order) error {
-	return c.DB.Updates(o).Error
+func (c *Config) GetOrder(o *schema.Order, scopes ...Scope) (*schema.Order, error) {
+	order := &schema.Order{}
+	err := c.DB.Scopes(scopes...).Where(o).First(&order).Error
+	return order, err
 }
 
-func (c *Config) UpdateOrders(orders *[]schema.Order, scopes ...Scope) error {
-	return c.DB.Updates(orders).Error
+func (c *Config) UpdateOrder(o *schema.Order) error {
+	return c.DB.Model(schema.Order{ID: o.ID}).Updates(o).Error
 }
 
 func (c *Config) DeleteOrder(id string) error {
@@ -72,4 +74,10 @@ func ConfirmationsGreaterThanEqualTo25(db *gorm.DB) *gorm.DB {
 // Scope for filtering records where confirmations is greater than 25
 func ConfirmationsLessThan25(db *gorm.DB) *gorm.DB {
 	return db.Where("confirmations < ?", 25)
+}
+
+func DeadlinePassed(block int64) Scope {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("deadline > ?", block)
+	}
 }

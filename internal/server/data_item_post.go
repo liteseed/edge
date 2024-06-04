@@ -19,9 +19,8 @@ type DataItemPostResponse struct {
 	ID                  string   `json:"id"`
 	Owner               string   `json:"owner"`
 	DataCaches          []string `json:"dataCaches"`
-	DeadlineHeight      uint     `json:"deadlineHeight"`
+	DeadlineHeight      uint   `json:"deadlineHeight"`
 	FastFinalityIndexes []string `json:"fastFinalityIndexes"`
-	Price               uint64   `json:"price"`
 	Version             string   `json:"version"`
 }
 
@@ -50,33 +49,35 @@ func parseBody(context *gin.Context, contentLength int) ([]byte, error) {
 	return rawData, nil
 }
 
-// POST /data-item
+// POST /tx
 func (s *Server) DataItemPost(context *gin.Context) {
 	header, err := parseHeaders(context)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		context.Error(err)
 		return
 	}
 
 	rawData, err := parseBody(context, *header.ContentLength)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		context.Error(err)
 		return
 	}
 
 	dataItem, err := utils.DecodeBundleItem(rawData)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to decode bundle"})
-		context.Error(err)
 		return
 	}
 
 	err = utils.VerifyBundleItem(*dataItem)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to verify bundle"})
-		context.Error(err)
+		return
+	}
+
+	owner, err := utils.OwnerToAddress(dataItem.Owner)
+	if err != nil {
+		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -85,25 +86,24 @@ func (s *Server) DataItemPost(context *gin.Context) {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
-	
+
 	p, err := s.wallet.Client.GetTransactionPrice(*header.ContentLength, nil)
 	if err != nil {
 		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
-		context.Error(err)
 		return
 	}
 
 	info, err := s.wallet.Client.GetInfo()
 	if err != nil {
 		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
-		context.Error(err)
 		return
 	}
-
+	deadline := uint(info.Height) + 200
 	o := &schema.Order{
-		ID:     dataItem.Id,
-		Status: schema.Queued,
-		Price:  uint64(p),
+		ID:             dataItem.Id,
+		Status:         schema.Created,
+		Price:          uint(p),
+		DeadlineHeight: deadline,
 	}
 
 	err = s.database.CreateOrder(o)
@@ -116,10 +116,9 @@ func (s *Server) DataItemPost(context *gin.Context) {
 		http.StatusCreated,
 		&DataItemPostResponse{
 			ID:                  o.ID,
-			Owner:               s.wallet.Signer.Address,
-			Price:               o.Price,
+			Owner:               owner,
 			Version:             "1.0.0",
-			DeadlineHeight:      uint(info.Height + 200),
+			DeadlineHeight:      deadline,
 			DataCaches:          []string{s.gateway},
 			FastFinalityIndexes: []string{s.gateway},
 		},

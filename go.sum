@@ -277,8 +277,8 @@ github.com/linkedin/goavro/v2 v2.12.0 h1:rIQQSj8jdAUlKQh6DttK8wCRv4t4QO09g1C4aBW
 github.com/linkedin/goavro/v2 v2.12.0/go.mod h1:KXx+erlq+RPlGSPmLF7xGo6SAbh8sCQ53x064+ioxhk=
 github.com/liteseed/aogo v0.0.8 h1:Z46BCDYpqQeHA/mDKiKlLpE1k9Wi1IoPui2X1Cqja5E=
 github.com/liteseed/aogo v0.0.8/go.mod h1:zK0Qi+acj1hdcxbKOTVLhL4orIytqec581Kz21xZkwg=
-github.com/liteseed/sdk-go v0.1.4 h1:Rc/6dDGqAvRYPWQ9iK66I4CjsDyjv95vMIuvJTifR/8=
-github.com/liteseed/sdk-go v0.1.4/go.mod h1:QAVHVKyPXwLu1wKnonwtdG51hBio/DMKVlufUfD/NXE=
+github.com/liteseed/sdk-go v0.1.5 h1:AzDucG4ETATqVwhlszO9LQ9nD2cZ/Ixrde9bJN0Rbx0=
+github.com/liteseed/sdk-go v0.1.5/go.mod h1:QAVHVKyPXwLu1wKnonwtdG51hBio/DMKVlufUfD/NXE=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-colorable v0.1.2/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=

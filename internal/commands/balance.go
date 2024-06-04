@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 
 	"github.com/everFinance/goar"
 
@@ -37,7 +39,25 @@ func balance(context *cli.Context) error {
 		return err
 	}
 
-	_, err = fmt.Printf("Balance: %s LSD\n", b)
+	i, err := c.Info()
+	if err != nil {
+		return err
+	}
+	denomination, err := strconv.Atoi(i.Denomination)
+	if err != nil {
+		return err
+	}
+
+	p := math.Pow10(denomination)
+
+	bal, err := strconv.ParseInt(b, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	res := float64(bal) / p
+
+	_, err = fmt.Printf("Balance: %f %s\n", res, i.Ticker)
 	if err != nil {
 		return err
 	}

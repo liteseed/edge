@@ -67,7 +67,11 @@ func (c *Cron) Shutdown() {
 }
 
 func (c *Cron) Setup(spec string) error {
-	_, err := c.c.AddFunc(spec, c.PostBundle)
+	_, err := c.c.AddFunc(spec, c.CheckBundleConfirmation)
+	if err != nil {
+		return err
+	}
+	_, err = c.c.AddFunc(spec, c.PostBundle)
 	if err != nil {
 		return err
 	}
@@ -75,11 +79,15 @@ func (c *Cron) Setup(spec string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.Sync)
+	_, err = c.c.AddFunc(spec, c.Release)
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.Release)
+	_, err = c.c.AddFunc(spec, c.CheckTransaction)
+	if err != nil {
+		return err
+	}
+	_, err = c.c.AddFunc(spec, c.CheckTransactionConfirmation)
 	if err != nil {
 		return err
 	}

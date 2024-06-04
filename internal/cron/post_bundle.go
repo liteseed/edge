@@ -23,7 +23,7 @@ func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error)
 }
 
 func (c *Cron) PostBundle() {
-	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Queued, Payment: schema.Paid})
+	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Paid})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch queued orders",
@@ -39,7 +39,6 @@ func (c *Cron) PostBundle() {
 
 	dataItems := []types.BundleItem{}
 
-	updatedOrders := []schema.Order{}
 	for _, order := range *orders {
 		dataItem, err := parseDataItemFromOrder(c, &order)
 		if err != nil {
@@ -73,14 +72,13 @@ func (c *Cron) PostBundle() {
 	}
 
 	for _, order := range *orders {
-		updatedOrders = append(updatedOrders, schema.Order{ID: order.ID, Status: schema.Posted, TransactionId: tx.ID})
+		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Posted, BundleID: tx.ID})
+		if err != nil {
+			c.logger.Error(
+				"failed to update database",
+				"error", err,
+			)
+		}
 	}
 
-	err = c.database.UpdateOrders(&updatedOrders)
-	if err != nil {
-		c.logger.Error(
-			"failed to update database",
-			"error", err,
-		)
-	}
 }

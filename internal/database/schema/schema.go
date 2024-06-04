@@ -8,17 +8,17 @@ import (
 
 type Status string
 
-type Payment string
-
 const (
-	Queued = "queued"
-	Error  = "error"
-	Posted = "posted"
+	Created = "created" // Order Created
 
-	Release = "release"
-
-	Permanent = "permanent"
-	Paid      = "paid"
+	Queued    = "queued"    // Order Transaction Added
+	Confirmed = "confirmed" // Order Transaction has > 10 confirmation
+	Paid      = "paid"      // Ready to Send
+	Invalid   = "invalid"   // Not enough AR
+	Posted    = "posted"    // Sent to Arweave
+	Release   = "release"   // Request Liteseed Reward
+	Permanent = "permanent" //
+	Error     = "error"
 )
 
 func (s *Status) Scan(value any) error {
@@ -32,10 +32,11 @@ func (s Status) Value() (driver.Value, error) {
 
 type Order struct {
 	gorm.Model
-	ID            string  `gorm:"primary_key;" json:"id"`
-	Status        Status  `gorm:"index:idx_status;default:queued" sql:"type:status" json:"status"`
-	TransactionId string  `json:"transaction_id"`
-	Price         uint64  `json:"price"`
-	Payment       Payment `gorm:"index:idx_status;default:unpaid" sql:"type:payment" json:"payment"`
-	Confirmations uint    `uint:confirmations`
+	ID             string `gorm:"primary_key;" json:"id"`
+	Status         Status `gorm:"index:idx_status;default:created" sql:"type:status" json:"status"`
+	TransactionID  string `json:"transaction_id"`
+	BundleID       string `json:"bundle_id"`
+	Price          uint   `json:"price"`
+	Confirmations  uint   `json:"confirmations"`
+	DeadlineHeight uint   `json:"deadline_height"`
 }

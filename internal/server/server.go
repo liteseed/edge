@@ -36,6 +36,9 @@ func New(port string, version string, gateway string, options ...func(*Server)) 
 
 	engine.GET("/", s.StatusGet(version))
 	engine.POST("/tx", s.DataItemPost)
+	engine.GET("/tx/:id", s.DataItemGet)
+	engine.PUT("/tx/:id/:transaction_id", s.DataItemPut)
+	engine.GET("/tx/:id/status", s.DataItemStatusGet)
 
 	s.server = &http.Server{
 		Addr:    port,
