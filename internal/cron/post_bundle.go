@@ -23,7 +23,7 @@ func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error)
 }
 
 func (c *Cron) PostBundle() {
-	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Paid})
+	orders, err := c.database.GetOrders(&schema.Order{Payment: schema.Paid})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch queued orders",

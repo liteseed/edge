@@ -35,6 +35,7 @@ func (c *Cron) RemoveBundle() {
 				"failed to delete order from database",
 				"error", err,
 			)
+			continue
 		}
 	}
 }

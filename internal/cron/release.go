@@ -21,6 +21,7 @@ func (c *Cron) Release() {
 				"failed to release reward",
 				"error", err,
 			)
+			continue
 		}
 		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Permanent})
 		if err != nil {
@@ -28,6 +29,7 @@ func (c *Cron) Release() {
 				"failed to update database",
 				"error", err,
 			)
+			continue
 		}
 	}
 

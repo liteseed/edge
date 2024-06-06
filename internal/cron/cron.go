@@ -14,6 +14,7 @@ type Cron struct {
 	c        *cron.Cron
 	contract *contract.Contract
 	database *database.Config
+	gateway  string
 	logger   *slog.Logger
 	store    *store.Store
 	wallet   *goar.Wallet
@@ -21,8 +22,8 @@ type Cron struct {
 
 type Option = func(*Cron)
 
-func New(options ...func(*Cron)) (*Cron, error) {
-	c := &Cron{c: cron.New()}
+func New(gateway string, options ...func(*Cron)) (*Cron, error) {
+	c := &Cron{c: cron.New(), gateway: gateway}
 	for _, o := range options {
 		o(c)
 	}
@@ -83,7 +84,7 @@ func (c *Cron) Setup(spec string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.c.AddFunc(spec, c.CheckTransaction)
+	_, err = c.c.AddFunc(spec, c.CheckTransactionAmount)
 	if err != nil {
 		return err
 	}

@@ -63,7 +63,7 @@ func start(context *cli.Context) error {
 
 	contracts := contract.New(process, wallet.Signer)
 
-	c, err := cron.New(cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
+	c, err := cron.New(config.Node, cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
 	if err != nil {
 		return err
 	}

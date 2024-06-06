@@ -19,7 +19,7 @@ type DataItemPostResponse struct {
 	ID                  string   `json:"id"`
 	Owner               string   `json:"owner"`
 	DataCaches          []string `json:"dataCaches"`
-	DeadlineHeight      uint   `json:"deadlineHeight"`
+	DeadlineHeight      uint     `json:"deadlineHeight"`
 	FastFinalityIndexes []string `json:"fastFinalityIndexes"`
 	Version             string   `json:"version"`
 }
@@ -87,12 +87,6 @@ func (s *Server) DataItemPost(context *gin.Context) {
 		return
 	}
 
-	p, err := s.wallet.Client.GetTransactionPrice(*header.ContentLength, nil)
-	if err != nil {
-		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
-		return
-	}
-
 	info, err := s.wallet.Client.GetInfo()
 	if err != nil {
 		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
@@ -101,8 +95,9 @@ func (s *Server) DataItemPost(context *gin.Context) {
 	deadline := uint(info.Height) + 200
 	o := &schema.Order{
 		ID:             dataItem.Id,
+		Payment:        schema.Unpaid,
 		Status:         schema.Created,
-		Price:          uint(p),
+		Size:           len(dataItem.ItemBinary),
 		DeadlineHeight: deadline,
 	}
 

@@ -24,6 +24,7 @@ func (c *Cron) Posted() {
 				"order_id", order.ID,
 				"order_transaction_id", order.TransactionID,
 			)
+			continue
 		}
 		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Release})
 		if err != nil {
@@ -31,6 +32,7 @@ func (c *Cron) Posted() {
 				"failed to update database",
 				"error", err,
 			)
+			continue
 		}
 	}
 }
