@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/everFinance/goar/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/liteseed/goar/crypto"
+	"github.com/liteseed/goar/transaction/data_item"
 
 	"github.com/liteseed/edge/internal/database/schema"
 )
@@ -50,7 +51,7 @@ func parseBody(context *gin.Context, contentLength int) ([]byte, error) {
 }
 
 // POST /tx
-func (s *Server) DataItemPost(context *gin.Context) {
+func (srv *Server) DataItemPost(context *gin.Context) {
 	header, err := parseHeaders(context)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -63,45 +64,45 @@ func (s *Server) DataItemPost(context *gin.Context) {
 		return
 	}
 
-	dataItem, err := utils.DecodeBundleItem(rawData)
+	dataItem, err := data_item.Decode(rawData)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to decode bundle"})
 		return
 	}
 
-	err = utils.VerifyBundleItem(*dataItem)
+	err = data_item.Verify(dataItem)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to verify bundle"})
 		return
 	}
 
-	owner, err := utils.OwnerToAddress(dataItem.Owner)
+	owner, err := crypto.GetAddressFromOwner(dataItem.Owner)
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	err = s.store.Set(dataItem.Id, dataItem.ItemBinary)
+	err = srv.store.Set(dataItem.ID, dataItem.Raw)
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	info, err := s.wallet.Client.GetInfo()
+	info, err := srv.client.GetNetworkInfo()
 	if err != nil {
 		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
 		return
 	}
 	deadline := uint(info.Height) + 200
 	o := &schema.Order{
-		ID:             dataItem.Id,
+		ID:             dataItem.ID,
 		Payment:        schema.Unpaid,
 		Status:         schema.Created,
-		Size:           len(dataItem.ItemBinary),
+		Size:           len(dataItem.Raw),
 		DeadlineHeight: deadline,
 	}
 
-	err = s.database.CreateOrder(o)
+	err = srv.database.CreateOrder(o)
 	if err != nil {
 		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
@@ -114,8 +115,8 @@ func (s *Server) DataItemPost(context *gin.Context) {
 			Owner:               owner,
 			Version:             "1.0.0",
 			DeadlineHeight:      deadline,
-			DataCaches:          []string{s.gateway},
-			FastFinalityIndexes: []string{s.gateway},
+			DataCaches:          []string{srv.client.Gateway},
+			FastFinalityIndexes: []string{srv.client.Gateway},
 		},
 	)
 }

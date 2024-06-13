@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Cron) RemoveBundle() {
-	info, err := c.wallet.Client.GetInfo()
+	info, err := c.client.GetNetworkInfo()
 	if err != nil {
 		c.logger.Error(
 			"failed to query gateway",
@@ -14,6 +14,7 @@ func (c *Cron) RemoveBundle() {
 		)
 		return
 	}
+
 	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Invalid}, database.DeadlinePassed(info.Height))
 	if err != nil {
 		c.logger.Error(

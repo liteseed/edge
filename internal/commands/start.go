@@ -9,11 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/everFinance/goar"
 	"github.com/liteseed/edge/internal/cron"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
 	"github.com/liteseed/edge/internal/store"
+	"github.com/liteseed/goar/client"
+	"github.com/liteseed/goar/signer"
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -52,35 +53,37 @@ func start(context *cli.Context) error {
 		return err
 	}
 
-	wallet, err := goar.NewWalletFromPath(config.Signer, config.Node)
+	signer, err := signer.FromPath(config.Signer)
 	if err != nil {
 		return err
 	}
+
+	client := client.New(config.Node)
 
 	store := store.New(config.Store)
 
 	process := config.Process
 
-	contracts := contract.New(process, wallet.Signer)
+	contracts := contract.New(process, signer)
 
-	c, err := cron.New(config.Node, cron.WthContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(wallet), cron.WithLogger(logger))
+	cron, err := cron.New(cron.WithClient(client), cron.WithContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithSigner(signer), cron.WithLogger(logger))
 	if err != nil {
 		return err
 	}
-	err = c.Setup("* * * * *")
+	err = cron.Setup("* * * * *")
 	if err != nil {
 		return err
 	}
 
-	go c.Start()
+	go cron.Start()
 
-	s, err := server.New(":8080", context.App.Version, config.Node, server.WithContracts(contracts), server.WithDatabase(db), server.WithWallet(wallet), server.WithStore(store))
+	server, err := server.New(":8080", context.App.Version, server.WithClient(client), server.WithContracts(contracts), server.WithDatabase(db), server.WithSigner(signer), server.WithStore(store))
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		err := s.Start()
+		err := server.Start()
 		if err != http.ErrServerClosed {
 			log.Fatal("failed to start server", err)
 		}
@@ -90,7 +93,7 @@ func start(context *cli.Context) error {
 
 	log.Println("Shutdown")
 
-	c.Shutdown()
+	cron.Shutdown()
 	if err = db.Shutdown(); err != nil {
 		return err
 	}
@@ -99,7 +102,7 @@ func start(context *cli.Context) error {
 	}
 
 	time.Sleep(2 * time.Second)
-	if err = s.Shutdown(); err != nil {
+	if err = server.Shutdown(); err != nil {
 		return err
 	}
 	return nil

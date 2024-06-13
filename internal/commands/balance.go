@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/everFinance/goar"
+	"github.com/liteseed/goar/signer"
 
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
@@ -25,16 +25,16 @@ func balance(context *cli.Context) error {
 
 	process := config.Process
 
-	signer, err := goar.NewSignerFromPath(config.Signer)
+	s, err := signer.FromPath(config.Signer)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Address: ", signer.Address)
+	fmt.Println("Address: ", s.Address)
 
-	c := contract.New(process, signer)
+	c := contract.New(process, s)
 
-	b, err := c.Balance(signer.Address)
+	b, err := c.Balance(s.Address)
 	if err != nil {
 		return err
 	}
@@ -48,26 +48,24 @@ func balance(context *cli.Context) error {
 		return err
 	}
 
-	p := math.Pow10(denomination)
+	pow := math.Pow10(denomination)
 
 	bal, err := strconv.ParseInt(b, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	res := float64(bal) / p
-
-	_, err = fmt.Printf("Balance: %f %s\n", res, i.Ticker)
+	_, err = fmt.Printf("Balance: %f %s\n", float64(bal)/pow, i.Ticker)
 	if err != nil {
 		return err
 	}
 
-	s, err := c.Staked()
+	res, err := c.Staked()
 	if err != nil {
 		return err
 	}
 
-	_, err = fmt.Println("Staked: ", s)
+	_, err = fmt.Println("Staked: ", res)
 	if err != nil {
 		return err
 	}

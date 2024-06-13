@@ -1,11 +1,9 @@
 package commands
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"os"
 
-	"github.com/everFinance/gojwk"
+	"github.com/liteseed/goar/signer"
 	"github.com/urfave/cli/v2"
 )
 
@@ -20,21 +18,8 @@ var Generate = &cli.Command{
 
 func generate(ctx *cli.Context) error {
 	config := readConfig(ctx)
-	bitSize := 4096
-
 	// Generate RSA key.
-	key, err := rsa.GenerateKey(rand.Reader, bitSize)
-	if err != nil {
-		return err
-	}
-	jwk, err := gojwk.PrivateKey(key)
-	if err != nil {
-		return err
-	}
-	data, err := gojwk.Marshal(jwk)
-	if err != nil {
-		return err
-	}
+	data, err := signer.New()
 	err = os.WriteFile(config.Signer, data, os.ModePerm)
 	if err != nil {
 		return err

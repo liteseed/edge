@@ -5,18 +5,18 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func (c *Cron) CheckDeadline() {
-	info, err := c.wallet.Client.GetInfo()
+func (crn *Cron) CheckDeadlinePassed() {
+	info, err := crn.client.GetNetworkInfo()
 	if err != nil {
-		c.logger.Error(
+		crn.logger.Error(
 			"failed to query gateway",
 			"error", err,
 		)
 		return
 	}
-	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Created}, database.DeadlinePassed(info.Height))
+	orders, err := crn.database.GetOrders(&schema.Order{Status: schema.Created}, database.DeadlinePassed(info.Height))
 	if err != nil {
-		c.logger.Error(
+		crn.logger.Error(
 			"failed to fetch queued orders",
 			"error", err,
 		)
@@ -24,14 +24,14 @@ func (c *Cron) CheckDeadline() {
 	}
 
 	if len(*orders) == 0 {
-		c.logger.Info("no data item to delete")
+		crn.logger.Info("no data item to delete")
 		return
 	}
 
 	for _, order := range *orders {
-		err := c.database.DeleteOrder(order.ID)
+		err := crn.database.DeleteOrder(order.ID)
 		if err != nil {
-			c.logger.Info("unable to remove order")
+			crn.logger.Info("unable to remove order")
 			continue
 		}
 	}

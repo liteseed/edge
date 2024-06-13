@@ -3,7 +3,7 @@ package commands
 import (
 	"log"
 
-	"github.com/everFinance/goar"
+	"github.com/liteseed/goar/signer"
 
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
@@ -23,14 +23,14 @@ func stake(context *cli.Context) error {
 	config := readConfig(context)
 	url := context.String("url")
 
-	signer, err := goar.NewSignerFromPath(config.Signer)
+	s, err := signer.FromPath(config.Signer)
 	if err != nil {
 		return err
 	}
 
 	process := config.Process
 
-	c := contract.New(process, signer)
+	c := contract.New(process, s)
 
 	res, err := c.Stake(url)
 	if err != nil {

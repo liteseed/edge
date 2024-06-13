@@ -10,7 +10,7 @@ func (c *Cron) CheckTransactionConfirmation() {
 		return
 	}
 	for _, order := range *orders {
-		status, err := c.wallet.Client.GetTransactionStatus(order.TransactionID)
+		status, err := c.client.GetTransactionStatus(order.TransactionID)
 		if err != nil {
 			c.logger.Error("fail: gateway - get transaction status", "err", err)
 			continue

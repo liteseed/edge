@@ -1,31 +1,35 @@
 package cron
 
 import (
-	"github.com/everFinance/goar/types"
-	"github.com/everFinance/goar/utils"
 	"github.com/liteseed/edge/internal/database/schema"
+	"github.com/liteseed/goar/tag"
+	"github.com/liteseed/goar/transaction"
+	"github.com/liteseed/goar/transaction/bundle"
+	"github.com/liteseed/goar/transaction/data_item"
 )
 
-func parseDataItemFromOrder(c *Cron, o *schema.Order) (*types.BundleItem, error) {
-	rawDataItem, err := c.store.Get(o.ID)
+func (crn *Cron) parseDataItemFromOrder(o *schema.Order) (*data_item.DataItem, error) {
+	raw, err := crn.store.Get(o.ID)
 	if err != nil {
 		return nil, err
 	}
-	dataItem, err := utils.DecodeBundleItem(rawDataItem)
+
+	dataItem, err := data_item.Decode(raw)
 	if err != nil {
 		return nil, err
 	}
-	err = c.database.UpdateOrder(&schema.Order{ID: o.ID, Status: schema.Posted})
+
+	err = crn.database.UpdateOrder(&schema.Order{ID: o.ID, Status: schema.Posted})
 	if err != nil {
 		return nil, err
 	}
 	return dataItem, nil
 }
 
-func (c *Cron) PostBundle() {
-	orders, err := c.database.GetOrders(&schema.Order{Payment: schema.Paid})
+func (crn *Cron) PostBundle() {
+	orders, err := crn.database.GetOrders(&schema.Order{Payment: schema.Paid})
 	if err != nil {
-		c.logger.Error(
+		crn.logger.Error(
 			"failed to fetch queued orders",
 			"error", err,
 		)
@@ -33,16 +37,16 @@ func (c *Cron) PostBundle() {
 	}
 
 	if len(*orders) == 0 {
-		c.logger.Info("no data item to post")
+		crn.logger.Info("no data item to post")
 		return
 	}
 
-	dataItems := []types.BundleItem{}
+	dataItems := []data_item.DataItem{}
 
 	for _, order := range *orders {
-		dataItem, err := parseDataItemFromOrder(c, &order)
+		dataItem, err := crn.parseDataItemFromOrder(&order)
 		if err != nil {
-			c.logger.Error(
+			crn.logger.Error(
 				"failed to decode data item",
 				"error", err,
 				"order", order.ID,
@@ -52,29 +56,42 @@ func (c *Cron) PostBundle() {
 		dataItems = append(dataItems, *dataItem)
 	}
 
-	bundle, err := utils.NewBundle(dataItems...)
+	bundle, err := bundle.New(&dataItems)
 
 	if err != nil {
-		c.logger.Error(
+		crn.logger.Error(
 			"failed to bundle data items",
 			"error", err,
 		)
 		return
 	}
-
-	tx, err := c.wallet.SendData([]byte(bundle.BundleBinary), []types.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
+	tx := &transaction.Transaction{
+		Data: bundle.RawData,
+		Tags: []tag.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}},
+	}
+	err = tx.Sign(crn.signer)
 	if err != nil {
-		c.logger.Error(
-			"failed to upload bundle",
+		crn.logger.Error(
+			"failed to sign transaction",
 			"error", err,
 		)
 		return
 	}
 
+	code, err := crn.client.SubmitTransaction(tx)
+	if err != nil {
+		crn.logger.Error(
+			"failed to sign transaction",
+			"error", err,
+			"code", code,
+		)
+		return
+	}
+
 	for _, order := range *orders {
-		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Posted, BundleID: tx.ID})
+		err = crn.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Posted, BundleID: tx.ID})
 		if err != nil {
-			c.logger.Error(
+			crn.logger.Error(
 				"failed to update database",
 				"error", err,
 			)

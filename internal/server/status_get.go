@@ -8,19 +8,19 @@ import (
 
 // GET /status
 
-func (s *Server) StatusGet(version string) gin.HandlerFunc {
+func (srv *Server) StatusGet(version string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		info, err := s.wallet.Client.GetInfo()
+		info, err := srv.client.GetNetworkInfo()
 		if err != nil {
 			c.JSON(
 				http.StatusFailedDependency,
 				gin.H{
-					"Address": s.wallet.Signer.Address,
+					"Address": srv.signer.Address,
 					"Name":    "Edge",
 					"Version": version,
 					"Gateway": gin.H{
 						"Block-Height": "",
-						"URL":          s.gateway,
+						"URL":          srv.client.Gateway,
 						"Status":       "failed",
 					},
 				},
@@ -29,12 +29,12 @@ func (s *Server) StatusGet(version string) gin.HandlerFunc {
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"Address": s.wallet.Signer.Address,
+				"Address": srv.signer.Address,
 				"Name":    "Edge",
 				"Version": version,
 				"Gateway": gin.H{
 					"Block-Height": info.Height,
-					"URL":          s.gateway,
+					"URL":          srv.client.Gateway,
 					"Status":       "ok",
 				},
 			},
