@@ -4,7 +4,7 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func (c *Cron) Release() {
+func (c *Cron) JobReleaseReward() {
 	o, err := c.database.GetOrders(&schema.Order{Status: schema.Release})
 	if err != nil {
 		c.logger.Error(

@@ -5,7 +5,7 @@ import (
 	"github.com/liteseed/edge/internal/database/schema"
 )
 
-func (c *Cron) RemoveBundle() {
+func (c *Cron) JobRemoveBundle() {
 	info, err := c.wallet.Client.GetNetworkInfo()
 	if err != nil {
 		c.logger.Error(

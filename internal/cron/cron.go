@@ -76,11 +76,15 @@ func (crn *Cron) Setup(spec string) error {
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.Posted)
+	_, err = crn.c.AddFunc(spec, crn.JobPostUpdate)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.Release)
+	_, err = crn.c.AddFunc(spec, crn.JobReleaseReward)
+	if err != nil {
+		return err
+	}
+	_, err = crn.c.AddFunc(spec, crn.JobRemoveBundle)
 	if err != nil {
 		return err
 	}

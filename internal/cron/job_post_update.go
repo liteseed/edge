@@ -5,7 +5,7 @@ import (
 )
 
 // Notify the AO contract of Successful Data Post
-func (c *Cron) Posted() {
+func (c *Cron) JobPostUpdate() {
 	o, err := c.database.GetOrders(&schema.Order{Status: schema.Sent})
 	if err != nil {
 		c.logger.Error("failed to fetch order from database", "error", err)
