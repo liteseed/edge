@@ -20,8 +20,8 @@ var Balance = &cli.Command{
 	Action: balance,
 }
 
-func balance(context *cli.Context) error {
-	config := readConfig(context)
+func balance(ctx *cli.Context) error {
+	config := readConfig(ctx)
 
 	process := config.Process
 

@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Cron) RemoveBundle() {
-	info, err := c.client.GetNetworkInfo()
+	info, err := c.wallet.Client.GetNetworkInfo()
 	if err != nil {
 		c.logger.Error(
 			"failed to query gateway",

@@ -7,8 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
-	"github.com/liteseed/goar/client"
-	"github.com/liteseed/goar/signer"
+	"github.com/liteseed/goar/wallet"
 	"github.com/liteseed/sdk-go/contract"
 )
 
@@ -18,12 +17,11 @@ const (
 )
 
 type Server struct {
-	client   *client.Client
 	contract *contract.Contract
 	database *database.Config
 	server   *http.Server
 	store    *store.Store
-	signer   *signer.Signer
+	wallet   *wallet.Wallet
 }
 
 func New(port string, version string, options ...func(*Server)) (*Server, error) {
@@ -47,13 +45,6 @@ func New(port string, version string, options ...func(*Server)) (*Server, error)
 	return s, nil
 }
 
-
-func WithClient(c *client.Client) func(*Server) {
-	return func(srv *Server) {
-		srv.client = c
-	}
-}
-
 func WithContracts(c *contract.Contract) func(*Server) {
 	return func(srv *Server) {
 		srv.contract = c
@@ -66,15 +57,14 @@ func WithDatabase(db *database.Config) func(*Server) {
 	}
 }
 
-func WithSigner(s *signer.Signer) func(*Server) {
-	return func(srv *Server) {
-		srv.signer = s
-	}
-}
-
 func WithStore(s *store.Store) func(*Server) {
 	return func(srv *Server) {
 		srv.store = s
+	}
+}
+func WithWallet(w *wallet.Wallet) func(*Server) {
+	return func(srv *Server) {
+		srv.wallet = w
 	}
 }
 

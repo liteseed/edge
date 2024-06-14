@@ -16,8 +16,8 @@ var Migrate = &cli.Command{
 	Action: migrate,
 }
 
-func migrate(context *cli.Context) error {
-	config := readConfig(context)
+func migrate(ctx *cli.Context) error {
+	config := readConfig(ctx)
 
 	database, err := database.New(config.Database)
 	if err != nil {

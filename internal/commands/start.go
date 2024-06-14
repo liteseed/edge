@@ -13,8 +13,7 @@ import (
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/server"
 	"github.com/liteseed/edge/internal/store"
-	"github.com/liteseed/goar/client"
-	"github.com/liteseed/goar/signer"
+	"github.com/liteseed/goar/wallet"
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -29,11 +28,11 @@ var Start = &cli.Command{
 	Action: start,
 }
 
-func start(context *cli.Context) error {
+func start(ctx *cli.Context) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	config := readConfig(context)
+	config := readConfig(ctx)
 
 	logger := slog.New(
 		slog.NewJSONHandler(
@@ -53,37 +52,35 @@ func start(context *cli.Context) error {
 		return err
 	}
 
-	signer, err := signer.FromPath(config.Signer)
+	w, err := wallet.FromPath(config.Signer, config.Node)
 	if err != nil {
 		return err
 	}
-
-	client := client.New(config.Node)
 
 	store := store.New(config.Store)
 
 	process := config.Process
 
-	contracts := contract.New(process, signer)
+	contracts := contract.New(process, w.Signer)
 
-	cron, err := cron.New(cron.WithClient(client), cron.WithContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithSigner(signer), cron.WithLogger(logger))
+	crn, err := cron.New(cron.WithContracts(contracts), cron.WithDatabase(db), cron.WithStore(store), cron.WithWallet(w), cron.WithLogger(logger))
 	if err != nil {
 		return err
 	}
-	err = cron.Setup("* * * * *")
+	err = crn.Setup("* * * * *")
 	if err != nil {
 		return err
 	}
 
-	go cron.Start()
+	go crn.Start()
 
-	server, err := server.New(":8080", context.App.Version, server.WithClient(client), server.WithContracts(contracts), server.WithDatabase(db), server.WithSigner(signer), server.WithStore(store))
+	srv, err := server.New(":8080", ctx.App.Version, server.WithContracts(contracts), server.WithDatabase(db), server.WithWallet(w), server.WithStore(store))
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		err := server.Start()
+		err := srv.Start()
 		if err != http.ErrServerClosed {
 			log.Fatal("failed to start server", err)
 		}
@@ -93,7 +90,7 @@ func start(context *cli.Context) error {
 
 	log.Println("Shutdown")
 
-	cron.Shutdown()
+	crn.Shutdown()
 	if err = db.Shutdown(); err != nil {
 		return err
 	}
@@ -102,7 +99,7 @@ func start(context *cli.Context) error {
 	}
 
 	time.Sleep(2 * time.Second)
-	if err = server.Shutdown(); err != nil {
+	if err = srv.Shutdown(); err != nil {
 		return err
 	}
 	return nil

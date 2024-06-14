@@ -8,18 +8,15 @@ import (
 )
 
 // Get /tx
-func (s *Server) DataItemGet(context *gin.Context) {
+func (srv *Server) DataItemGet(context *gin.Context) {
 	id := context.Param("id")
 
-	raw, err := s.store.Get(id)
+	raw, err := srv.store.Get(id)
 	if err != nil {
 		log.Println(err)
 		context.JSON(http.StatusNotFound, gin.H{"error": "transaction id does not exist"})
 		return
 	}
 
-	context.JSON(
-		http.StatusOK,
-		raw,
-	)
+	context.JSON(http.StatusOK, raw)
 }

@@ -10,17 +10,17 @@ import (
 
 func (srv *Server) StatusGet(version string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		info, err := srv.client.GetNetworkInfo()
+		info, err := srv.wallet.Client.GetNetworkInfo()
 		if err != nil {
 			c.JSON(
 				http.StatusFailedDependency,
 				gin.H{
-					"Address": srv.signer.Address,
+					"Address": srv.wallet.Signer.Address,
 					"Name":    "Edge",
 					"Version": version,
 					"Gateway": gin.H{
 						"Block-Height": "",
-						"URL":          srv.client.Gateway,
+						"URL":          srv.wallet.Client.Gateway,
 						"Status":       "failed",
 					},
 				},
@@ -29,12 +29,12 @@ func (srv *Server) StatusGet(version string) gin.HandlerFunc {
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"Address": srv.signer.Address,
+				"Address": srv.wallet.Signer.Address,
 				"Name":    "Edge",
 				"Version": version,
 				"Gateway": gin.H{
 					"Block-Height": info.Height,
-					"URL":          srv.client.Gateway,
+					"URL":          srv.wallet.Client.Gateway,
 					"Status":       "ok",
 				},
 			},

@@ -27,8 +27,8 @@ type Config struct {
 	Store    string
 }
 
-func readConfig(context *cli.Context) Config {
-	configPath := context.Path("config")
+func readConfig(ctx *cli.Context) Config {
+	configPath := ctx.Path("config")
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalln(err)

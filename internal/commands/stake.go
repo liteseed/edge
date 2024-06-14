@@ -19,9 +19,9 @@ var Stake = &cli.Command{
 	Action: stake,
 }
 
-func stake(context *cli.Context) error {
-	config := readConfig(context)
-	url := context.String("url")
+func stake(ctx *cli.Context) error {
+	config := readConfig(ctx)
+	url := ctx.String("url")
 
 	s, err := signer.FromPath(config.Signer)
 	if err != nil {

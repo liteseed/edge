@@ -20,6 +20,10 @@ func generate(ctx *cli.Context) error {
 	config := readConfig(ctx)
 	// Generate RSA key.
 	data, err := signer.New()
+	if err != nil {
+		return err
+	}
+
 	err = os.WriteFile(config.Signer, data, os.ModePerm)
 	if err != nil {
 		return err

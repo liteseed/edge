@@ -88,7 +88,7 @@ func (srv *Server) DataItemPost(context *gin.Context) {
 		return
 	}
 
-	info, err := srv.client.GetNetworkInfo()
+	info, err := srv.wallet.Client.GetNetworkInfo()
 	if err != nil {
 		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
 		return
@@ -96,7 +96,6 @@ func (srv *Server) DataItemPost(context *gin.Context) {
 	deadline := uint(info.Height) + 200
 	o := &schema.Order{
 		ID:             dataItem.ID,
-		Payment:        schema.Unpaid,
 		Status:         schema.Created,
 		Size:           len(dataItem.Raw),
 		DeadlineHeight: deadline,
@@ -115,8 +114,8 @@ func (srv *Server) DataItemPost(context *gin.Context) {
 			Owner:               owner,
 			Version:             "1.0.0",
 			DeadlineHeight:      deadline,
-			DataCaches:          []string{srv.client.Gateway},
-			FastFinalityIndexes: []string{srv.client.Gateway},
+			DataCaches:          []string{srv.wallet.Client.Gateway},
+			FastFinalityIndexes: []string{srv.wallet.Client.Gateway},
 		},
 	)
 }

@@ -17,8 +17,8 @@ var Unstake = &cli.Command{
 	Action: unstake,
 }
 
-func unstake(context *cli.Context) error {
-	config := readConfig(context)
+func unstake(ctx *cli.Context) error {
+	config := readConfig(ctx)
 
 	process := config.Process
 	s, err := signer.FromPath(config.Signer)

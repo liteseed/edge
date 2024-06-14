@@ -18,7 +18,7 @@ type DataItemPutResponse struct {
 func (srv *Server) DataItemPut(context *gin.Context) {
 	ID := context.Param("id")
 	transactionID := context.Param("transaction_id")
-	info, err := srv.client.GetNetworkInfo()
+	info, err := srv.wallet.Client.GetNetworkInfo()
 	if err != nil {
 		context.Status(http.StatusFailedDependency)
 		log.Println(err)

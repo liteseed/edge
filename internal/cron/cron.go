@@ -5,19 +5,17 @@ import (
 
 	"github.com/liteseed/edge/internal/database"
 	"github.com/liteseed/edge/internal/store"
-	"github.com/liteseed/goar/client"
-	"github.com/liteseed/goar/signer"
+	"github.com/liteseed/goar/wallet"
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/robfig/cron/v3"
 )
 
 type Cron struct {
 	c        *cron.Cron
-	client   *client.Client
 	contract *contract.Contract
 	database *database.Config
 	logger   *slog.Logger
-	signer   *signer.Signer
+	wallet   *wallet.Wallet
 	store    *store.Store
 }
 
@@ -29,12 +27,6 @@ func New(options ...func(*Cron)) (*Cron, error) {
 		o(c)
 	}
 	return c, nil
-}
-
-func WithClient(c *client.Client) Option {
-	return func(crn *Cron) {
-		crn.client = c
-	}
 }
 
 func WithContracts(contract *contract.Contract) Option {
@@ -55,9 +47,9 @@ func WithLogger(logger *slog.Logger) Option {
 	}
 }
 
-func WithSigner(s *signer.Signer) Option {
+func WithWallet(w *wallet.Wallet) Option {
 	return func(crn *Cron) {
-		crn.signer = s
+		crn.wallet = w
 	}
 }
 
@@ -76,11 +68,11 @@ func (crn *Cron) Shutdown() {
 }
 
 func (crn *Cron) Setup(spec string) error {
-	_, err := crn.c.AddFunc(spec, crn.CheckBundleConfirmation)
+	_, err := crn.c.AddFunc(spec, crn.JobBundleConfirmations)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.PostBundle)
+	_, err = crn.c.AddFunc(spec, crn.JobPostBundle)
 	if err != nil {
 		return err
 	}
@@ -89,14 +81,6 @@ func (crn *Cron) Setup(spec string) error {
 		return err
 	}
 	_, err = crn.c.AddFunc(spec, crn.Release)
-	if err != nil {
-		return err
-	}
-	_, err = crn.c.AddFunc(spec, crn.CheckTransactionAmount)
-	if err != nil {
-		return err
-	}
-	_, err = crn.c.AddFunc(spec, crn.CheckTransactionConfirmation)
 	if err != nil {
 		return err
 	}
