@@ -2,8 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"math"
-	"strconv"
+	"math/big"
 
 	"github.com/liteseed/goar/signer"
 
@@ -43,19 +42,13 @@ func balance(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	denomination, err := strconv.Atoi(i.Denomination)
-	if err != nil {
-		return err
-	}
 
-	pow := math.Pow10(denomination)
+	bal := big.NewInt(0)
+	bal.SetString(b, 10)
 
-	bal, err := strconv.ParseInt(b, 10, 64)
-	if err != nil {
-		return err
-	}
+	bal.Div(bal, big.NewInt(1e18))
 
-	_, err = fmt.Printf("Balance: %f %s\n", float64(bal)/pow, i.Ticker)
+	_, err = fmt.Printf("Balance: %f %s\n", bal, i.Ticker)
 	if err != nil {
 		return err
 	}
