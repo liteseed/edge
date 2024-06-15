@@ -12,7 +12,7 @@ require (
 require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/liteseed/goar v0.1.6
-	github.com/liteseed/sdk-go v0.1.10
+	github.com/liteseed/sdk-go v0.1.11
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -44,7 +44,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/linkedin/goavro/v2 v2.13.0 // indirect
-	github.com/liteseed/aogo v0.1.3 // indirect
+	github.com/liteseed/aogo v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
