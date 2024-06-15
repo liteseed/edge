@@ -12,7 +12,7 @@ require (
 require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/liteseed/goar v0.1.6
-	github.com/liteseed/sdk-go v0.1.11
+	github.com/liteseed/sdk-go v0.1.12
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

@@ -25,6 +25,13 @@ func (srv *Server) DataItemPut(context *gin.Context) {
 		return
 	}
 
+	err = srv.contract.Pay(ID, transactionID)
+	if err != nil {
+		context.Status(http.StatusFailedDependency)
+		log.Println(err)
+		return
+	}
+	
 	deadline := uint(info.Height) + 200
 	err = srv.database.UpdateOrder(&schema.Order{ID: ID, TransactionID: transactionID, Status: schema.Queued, DeadlineHeight: deadline})
 	if err != nil {
