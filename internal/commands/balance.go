@@ -48,7 +48,7 @@ func balance(ctx *cli.Context) error {
 
 	bal.Div(bal, big.NewInt(1e18))
 
-	_, err = fmt.Printf("Balance: %f %s\n", bal, i.Ticker)
+	_, err = fmt.Printf("Balance: %d %s\n", bal, i.Ticker)
 	if err != nil {
 		return err
 	}
