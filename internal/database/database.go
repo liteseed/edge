@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/liteseed/edge/internal/database/schema"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -12,7 +12,7 @@ type Config struct {
 }
 
 func New(url string) (*Config, error) {
-	db, err := gorm.Open(sqlite.Open(url), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(url), &gorm.Config{
 		CreateBatchSize: 200,
 		Logger:          logger.Default.LogMode(logger.Silent),
 	})

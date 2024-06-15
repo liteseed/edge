@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSQLite(t *testing.T) {
+func TestPostgres(t *testing.T) {
 	url := os.Getenv("DATABASE_URL")
 	db, err := New(url)
 	assert.NoError(t, err)

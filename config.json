@@ -2,7 +2,7 @@
   "Process": "qAbHIghbi7lb0Y8KdZr8q9dvH8xwXpawCXgGSD8OpJk",
   "Port": "8080",
   "Signer": "/data/signer.json",
-  "Database": "/data/sqlite",
+  "Database": "postgres:name@password:url:5432",
   "Node": "https://arweave.net",
   "Store": "/data/badger",
   "Log": "/data/log"
