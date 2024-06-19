@@ -76,7 +76,7 @@ func TestDataItemPost(t *testing.T) {
 	_, err = w.SignDataItem(d)
 	assert.NoError(t, err)
 
-	s := store.New("../../data/test")
+	s := store.New("../../test/store")
 
 	mockDb, mock, _ := sqlmock.New()
 	db, err := database.FromDialector(postgres.New(postgres.Config{
