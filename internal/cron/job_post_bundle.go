@@ -64,7 +64,7 @@ func (crn *Cron) JobPostBundle() {
 	}
 
 	for _, order := range *orders {
-		err = crn.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Sent, BundleID: tx.ID})
+		err = crn.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Sent, BundleID: tx.ID})
 		if err != nil {
 			crn.logger.Error(
 				"failed to update database",

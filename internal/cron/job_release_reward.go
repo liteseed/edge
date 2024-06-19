@@ -5,7 +5,7 @@ import (
 )
 
 func (c *Cron) JobReleaseReward() {
-	o, err := c.database.GetOrders(&schema.Order{Status: schema.Release})
+	o, err := c.database.GetOrders(&schema.Order{Status: schema.Confirmed})
 	if err != nil {
 		c.logger.Error(
 			"failed to fetch reward orders",
@@ -15,7 +15,7 @@ func (c *Cron) JobReleaseReward() {
 	}
 
 	for _, order := range *o {
-		err = c.contract.Release(order.ID, order.TransactionID)
+		err = c.contract.Release(order.ID)
 		if err != nil {
 			c.logger.Error(
 				"failed to release reward",
@@ -23,7 +23,7 @@ func (c *Cron) JobReleaseReward() {
 			)
 			continue
 		}
-		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Permanent})
+		err = c.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Permanent})
 		if err != nil {
 			c.logger.Error(
 				"failed to update database",

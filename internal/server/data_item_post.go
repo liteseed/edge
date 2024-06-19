@@ -1,8 +1,11 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/liteseed/goar/crypto"
@@ -13,7 +16,7 @@ import (
 
 type DataItemPostRequestHeader struct {
 	ContentType   *string `header:"content-type" binding:"required"`
-	ContentLength *int    `header:"content-length" binding:"required"`
+	ContentLength *string `header:"content-length" binding:"required"`
 }
 
 type DataItemPostResponse struct {
@@ -28,13 +31,10 @@ type DataItemPostResponse struct {
 func parseHeaders(context *gin.Context) (*DataItemPostRequestHeader, error) {
 	header := &DataItemPostRequestHeader{}
 	if err := context.ShouldBindHeader(header); err != nil {
-		return nil, err
-	}
-	if *header.ContentLength == 0 || uint(*header.ContentLength) > MAX_DATA_ITEM_SIZE {
-		return nil, fmt.Errorf("content-length: supported range 1B - %dB", MAX_DATA_ITEM_SIZE)
+		return nil, errors.New("required header(s) - content-type, content-length")
 	}
 	if *header.ContentType != CONTENT_TYPE_OCTET_STREAM {
-		return nil, fmt.Errorf("content-type: unsupported")
+		return nil, errors.New("required header(s) - content-type: application/octet-stream")
 	}
 	return header, nil
 }
@@ -47,50 +47,57 @@ func parseBody(context *gin.Context, contentLength int) ([]byte, error) {
 	if len(rawData) != contentLength {
 		return nil, fmt.Errorf("content-length, body: length mismatch (%d, %d)", contentLength, len(rawData))
 	}
+
 	return rawData, nil
 }
 
+
 // POST /tx
-func (srv *Server) DataItemPost(context *gin.Context) {
-	header, err := parseHeaders(context)
+func (srv *Server) DataItemPost(ctx *gin.Context) {
+	header, err := parseHeaders(ctx)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	rawData, err := parseBody(context, *header.ContentLength)
+	contentLength, err := strconv.Atoi(*header.ContentLength)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	rawData, err := parseBody(ctx, contentLength)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	dataItem, err := data_item.Decode(rawData)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to decode bundle"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to decode data item"})
 		return
 	}
 
 	err = data_item.Verify(dataItem)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "failed to verify bundle"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to verify data item"})
 		return
 	}
 
 	owner, err := crypto.GetAddressFromOwner(dataItem.Owner)
 	if err != nil {
-		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	err = srv.store.Set(dataItem.ID, dataItem.Raw)
 	if err != nil {
-		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	info, err := srv.wallet.Client.GetNetworkInfo()
 	if err != nil {
-		context.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
+		ctx.JSON(http.StatusFailedDependency, gin.H{"error": "failed to query gateway"})
 		return
 	}
 	deadline := uint(info.Height) + 200
@@ -103,11 +110,11 @@ func (srv *Server) DataItemPost(context *gin.Context) {
 
 	err = srv.database.CreateOrder(o)
 	if err != nil {
-		context.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	context.JSON(
+	ctx.JSON(
 		http.StatusCreated,
 		&DataItemPostResponse{
 			ID:                  o.ID,

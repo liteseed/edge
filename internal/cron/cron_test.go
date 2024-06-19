@@ -61,7 +61,7 @@ func TestCheckBundleConfirmations(t *testing.T) {
 			mine()
 		}
 
-		u := crn.checkBundleConfirmations("TEST", tx.ID)
+		u := crn.checkBundleConfirmations(tx.ID)
 		assert.Equal(t, schema.Status("queued"), u.Status)
 	})
 
@@ -78,7 +78,7 @@ func TestCheckBundleConfirmations(t *testing.T) {
 			mine()
 		}
 
-		u := crn.checkBundleConfirmations("TEST", tx.ID)
+		u := crn.checkBundleConfirmations(tx.ID)
 		assert.Nil(t, u)
 	})
 }

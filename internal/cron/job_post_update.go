@@ -13,12 +13,12 @@ func (c *Cron) JobPostUpdate() {
 	}
 
 	for _, order := range *o {
-		err := c.contract.Posted(order.ID, order.TransactionID)
+		err := c.contract.Posted(order.ID)
 		if err != nil {
 			c.logger.Error("failed to post transaction to contract", "error", err, "order_id", order.ID, "order_transaction_id", order.TransactionID)
 			continue
 		}
-		err = c.database.UpdateOrder(&schema.Order{ID: order.ID, Status: schema.Release})
+		err = c.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Release})
 		if err != nil {
 			c.logger.Error(
 				"failed to update database",

@@ -18,7 +18,7 @@ const (
 
 type Server struct {
 	contract *contract.Contract
-	database *database.Config
+	database *database.Database
 	server   *http.Server
 	store    *store.Store
 	wallet   *wallet.Wallet
@@ -35,7 +35,7 @@ func New(port string, version string, options ...func(*Server)) (*Server, error)
 	engine.GET("/", s.StatusGet(version))
 	engine.POST("/tx", s.DataItemPost)
 	engine.GET("/tx/:id", s.DataItemGet)
-	engine.PUT("/tx/:id/:transaction_id", s.DataItemPut)
+	engine.PUT("/tx/:id/:payment_id", s.DataItemPut)
 	engine.GET("/tx/:id/status", s.DataItemStatusGet)
 
 	s.server = &http.Server{
@@ -51,7 +51,7 @@ func WithContracts(c *contract.Contract) func(*Server) {
 	}
 }
 
-func WithDatabase(db *database.Config) func(*Server) {
+func WithDatabase(db *database.Database) func(*Server) {
 	return func(srv *Server) {
 		srv.database = db
 	}

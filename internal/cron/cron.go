@@ -13,7 +13,7 @@ import (
 type Cron struct {
 	c        *cron.Cron
 	contract *contract.Contract
-	database *database.Config
+	database *database.Database
 	logger   *slog.Logger
 	wallet   *wallet.Wallet
 	store    *store.Store
@@ -35,7 +35,7 @@ func WithContracts(contract *contract.Contract) Option {
 	}
 }
 
-func WithDatabase(db *database.Config) Option {
+func WithDatabase(db *database.Database) Option {
 	return func(crn *Cron) {
 		crn.database = db
 	}

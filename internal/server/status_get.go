@@ -19,7 +19,7 @@ func (srv *Server) StatusGet(version string) gin.HandlerFunc {
 					"Name":    "Edge",
 					"Version": version,
 					"Gateway": gin.H{
-						"Block-Height": "",
+						"Block-Height": -1,
 						"URL":          srv.wallet.Client.Gateway,
 						"Status":       "failed",
 					},

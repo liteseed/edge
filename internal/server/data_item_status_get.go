@@ -13,7 +13,7 @@ func (s *Server) DataItemStatusGet(context *gin.Context) {
 
 	o, err := s.database.GetOrder(&schema.Order{ID: id})
 	if err != nil {
-		context.JSON(http.StatusNotFound, err.Error())
+		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
 
