@@ -10,7 +10,6 @@ sqlite
 temp
 
 wallet.json
-signer.json
 keyfile.json
 bundler.json
 config.test.json
