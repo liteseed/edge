@@ -11,13 +11,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/liteseed/aogo"
-	"github.com/liteseed/edge/internal/database"
-	"github.com/liteseed/edge/internal/store"
-	"github.com/liteseed/goar/tag"
-	"github.com/liteseed/goar/wallet"
+	"github.com/liteseed/edge/test"
 	"github.com/liteseed/sdk-go/contract"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
 )
 
 func TestNewServer(t *testing.T) {
@@ -28,13 +24,10 @@ func TestNewServer(t *testing.T) {
 
 func TestStatusHandler(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		arweave := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
-			_, err := writer.Write([]byte(`{"network":"arweave.N.1","version": 5,"release": 69,"height": 1447908,"current":"XwcWkjKLbXlDg8QcagmW0AN6c2V3y0lyHEaPLT2tUf8vH9kKM5OlfYmfKQtd6XxI","blocks": 1447909,"peers": 307,"queue_length": 0,"node_stat)e_latency": 1}`))
-			assert.NoError(t, err)
-		}))
-		defer arweave.Close()
-		w, err := wallet.FromPath("../../test/signer.json", arweave.URL)
-		assert.NoError(t, err)
+		g := test.Gateway()
+		defer g.Close()
+
+		w := test.Wallet(g.URL)
 		srv, _ := New(":8080", "test", WithWallet(w))
 
 		rcd := httptest.NewRecorder()
@@ -42,15 +35,15 @@ func TestStatusHandler(t *testing.T) {
 		srv.server.Handler.ServeHTTP(rcd, req)
 
 		assert.Equal(t, http.StatusOK, rcd.Code)
-		assert.Equal(t, fmt.Sprintf(`{"Address":"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck","Gateway":{"Block-Height":1447908,"Status":"ok","URL":"%s"},"Name":"Edge","Version":"test"}`, arweave.URL), rcd.Body.String())
+		assert.Equal(t, fmt.Sprintf(`{"Address":"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck","Gateway":{"Block-Height":1447908,"Status":"ok","URL":"%s"},"Name":"Edge","Version":"test"}`, g.URL), rcd.Body.String())
 
 	})
 
 	t.Run("Gateway Error", func(t *testing.T) {
-		arweave := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) { writer.WriteHeader(http.StatusNotFound) }))
-		defer arweave.Close()
-		w, err := wallet.FromPath("../../test/signer.json", arweave.URL)
-		assert.NoError(t, err)
+		g := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) { writer.WriteHeader(http.StatusNotFound) }))
+		defer g.Close()
+
+		w := test.Wallet(g.URL)
 		srv, _ := New(":8080", "test", WithWallet(w))
 
 		rcd := httptest.NewRecorder()
@@ -58,40 +51,31 @@ func TestStatusHandler(t *testing.T) {
 		srv.server.Handler.ServeHTTP(rcd, req)
 
 		assert.Equal(t, http.StatusFailedDependency, rcd.Code)
-		assert.Equal(t, fmt.Sprintf(`{"Address":"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck","Gateway":{"Block-Height":-1,"Status":"failed","URL":"%s"},"Name":"Edge","Version":"test"}`, arweave.URL), rcd.Body.String())
+		assert.Equal(t, fmt.Sprintf(`{"Address":"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck","Gateway":{"Block-Height":-1,"Status":"failed","URL":"%s"},"Name":"Edge","Version":"test"}`, g.URL), rcd.Body.String())
 
 	})
 }
 
 func TestDataItemPost(t *testing.T) {
-	arweave := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
-		_, err := writer.Write([]byte(`{"network":"arweave.N.1","version": 5,"release": 69,"height": 1447908,"current":"XwcWkjKLbXlDg8QcagmW0AN6c2V3y0lyHEaPLT2tUf8vH9kKM5OlfYmfKQtd6XxI","blocks": 1447909,"peers": 307,"queue_length": 0,"node_stat)e_latency": 1}`))
-		assert.NoError(t, err)
-	}))
+	s := test.Store()
+	defer s.Shutdown()
 
-	w, err := wallet.FromPath("../../test/signer.json", arweave.URL)
-	assert.NoError(t, err)
+	g := test.Gateway()
+	defer g.Close()
 
-	d := w.CreateDataItem([]byte{1, 2, 3}, "", "", &[]tag.Tag{})
-	_, err = w.SignDataItem(d)
-	assert.NoError(t, err)
+	w := test.Wallet(g.URL)
 
-	s := store.New("../../test/store")
+	d := test.DataItem()
+	_, _ = w.SignDataItem(d)
 
-	mockDb, mock, _ := sqlmock.New()
-	db, err := database.FromDialector(postgres.New(postgres.Config{
-		Conn:       mockDb,
-		DriverName: "postgres",
-	}))
-
-	assert.NoError(t, err)
+	mock, db := test.Database()
 
 	srv, err := New(":8000", "test", WithDatabase(db), WithStore(s), WithWallet(w))
 	assert.NoError(t, err)
 
 	t.Run("Success", func(t *testing.T) {
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "orders" ("id","status","transaction_id","bundle_id","size","deadline_height") VALUES ($1,$2,$3,$4,$5,$6)`)).WithArgs(d.ID, "created", "", "", 1047, 1448108).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "orders" ("id","status","transaction_id","bundle_id","size","deadline_height") VALUES ($1,$2,$3,$4,$5,$6)`)).WithArgs(d.ID, "created", "", "", 1115, 1448108).WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
 		rcd := httptest.NewRecorder()
@@ -102,7 +86,7 @@ func TestDataItemPost(t *testing.T) {
 		srv.server.Handler.ServeHTTP(rcd, req)
 
 		assert.Equal(t, http.StatusCreated, rcd.Code)
-		assert.Equal(t, fmt.Sprintf("{\"id\":\"%s\",\"owner\":\"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck\",\"dataCaches\":[\"%s\"],\"deadlineHeight\":1448108,\"fastFinalityIndexes\":[\"%s\"],\"version\":\"1.0.0\"}", d.ID, arweave.URL, arweave.URL), rcd.Body.String())
+		assert.Equal(t, fmt.Sprintf("{\"id\":\"%s\",\"owner\":\"3XTR7MsJUD9LoaiFRdWswzX1X5BR7AQdl1x2v2zIVck\",\"dataCaches\":[\"%s\"],\"deadlineHeight\":1448108,\"fastFinalityIndexes\":[\"%s\"],\"version\":\"1.0.0\"}", d.ID, g.URL, g.URL), rcd.Body.String())
 	})
 
 	t.Run("Missing", func(t *testing.T) {
@@ -143,7 +127,7 @@ func TestDataItemPost(t *testing.T) {
 		srv.server.Handler.ServeHTTP(rcd, req)
 
 		assert.Equal(t, http.StatusBadRequest, rcd.Code)
-		assert.Equal(t, `{"error":"content-length, body: length mismatch (-100, 1047)"}`, rcd.Body.String())
+		assert.Equal(t, `{"error":"content-length, body: length mismatch (-100, 1115)"}`, rcd.Body.String())
 	})
 
 	t.Run("Nil Body", func(t *testing.T) {
@@ -164,7 +148,7 @@ func TestDataItemPost(t *testing.T) {
 		req.Header.Set("content-length", strconv.Itoa(len(d.Raw)))
 		srv.server.Handler.ServeHTTP(rcd, req)
 		assert.Equal(t, http.StatusBadRequest, rcd.Code)
-		assert.Equal(t, `{"error":"content-length, body: length mismatch (1047, 3)"}`, rcd.Body.String())
+		assert.Equal(t, `{"error":"content-length, body: length mismatch (1115, 3)"}`, rcd.Body.String())
 	})
 
 	t.Run("Invalid Data Item", func(t *testing.T) {
@@ -180,26 +164,15 @@ func TestDataItemPost(t *testing.T) {
 }
 
 func TestDataItemPut(t *testing.T) {
-	w, err := wallet.FromPath("../../test/signer.json", "")
-	assert.NoError(t, err)
+	w := test.Wallet("")
 
-	mu := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(`{"id":"id", "message": ""}`))
-		assert.NoError(t, err)
-	}))
+	mu := test.MU()
 	defer mu.Close()
-
 	ao, err := aogo.New(aogo.WthMU(mu.URL))
 	assert.NoError(t, err)
 
 	c := contract.Custom(ao, "process", w.Signer)
-	mockDb, mock, _ := sqlmock.New()
-	db, err := database.FromDialector(postgres.New(postgres.Config{
-		Conn:       mockDb,
-		DriverName: "postgres",
-	}))
-
-	assert.NoError(t, err)
+	mock, db := test.Database()
 
 	srv, err := New(":8000", "test", WithDatabase(db), WithContracts(c))
 	assert.NoError(t, err)

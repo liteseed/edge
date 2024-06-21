@@ -21,10 +21,12 @@ func DataItem() *data_item.DataItem {
 }
 
 func Gateway() *httptest.Server {
-	arweave := httptest.NewServer(
+	return httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p := strings.Split(r.URL.Path, "/")
-			if p[1] == "price" {
+			if r.URL.Path == "/" || r.URL.Path == "/info" {
+				_, _ = w.Write([]byte(`{"network":"arweave.N.1","version": 5,"release": 69,"height": 1447908,"current":"XwcWkjKLbXlDg8QcagmW0AN6c2V3y0lyHEaPLT2tUf8vH9kKM5OlfYmfKQtd6XxI","blocks": 1447909,"peers": 307,"queue_length": 0,"node_stat)e_latency": 1}`))
+			} else if p[1] == "price" {
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte("10000"))
 			} else if p[1] == "tx_anchor" {
@@ -43,7 +45,6 @@ func Gateway() *httptest.Server {
 				w.WriteHeader(http.StatusNotFound)
 			}
 		}))
-	return arweave
 }
 
 func Database() (sqlmock.Sqlmock, *database.Database) {
