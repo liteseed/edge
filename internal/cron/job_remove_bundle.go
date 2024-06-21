@@ -1,26 +1,11 @@
 package cron
 
-import (
-	"github.com/liteseed/edge/internal/database"
-	"github.com/liteseed/edge/internal/database/schema"
-)
+import "github.com/liteseed/edge/internal/database/schema"
 
-func (c *Cron) JobRemoveBundle() {
-	info, err := c.wallet.Client.GetNetworkInfo()
+func (c *Cron) JobDeleteBundle() {
+	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Permanent})
 	if err != nil {
-		c.logger.Error(
-			"failed to query gateway",
-			"error", err,
-		)
-		return
-	}
-
-	orders, err := c.database.GetOrders(&schema.Order{Status: schema.Invalid}, database.DeadlinePassed(info.Height))
-	if err != nil {
-		c.logger.Error(
-			"failed to fetch queued orders",
-			"error", err,
-		)
+		c.logger.Error("failed to fetch queued orders", err)
 		return
 	}
 

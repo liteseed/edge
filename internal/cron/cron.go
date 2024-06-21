@@ -11,7 +11,7 @@ import (
 )
 
 type Cron struct {
-	c        *cron.Cron
+	cron     *cron.Cron
 	contract *contract.Contract
 	database *database.Database
 	logger   *slog.Logger
@@ -22,7 +22,7 @@ type Cron struct {
 type Option = func(*Cron)
 
 func New(options ...func(*Cron)) (*Cron, error) {
-	c := &Cron{c: cron.New()}
+	c := &Cron{cron: cron.New()}
 	for _, o := range options {
 		o(c)
 	}
@@ -60,31 +60,31 @@ func WithStore(s *store.Store) Option {
 }
 
 func (crn *Cron) Start() {
-	crn.c.Start()
+	crn.cron.Start()
 }
 
 func (crn *Cron) Shutdown() {
-	crn.c.Stop()
+	crn.cron.Stop()
 }
 
 func (crn *Cron) Setup(spec string) error {
-	_, err := crn.c.AddFunc(spec, crn.JobBundleConfirmations)
+	_, err := crn.cron.AddFunc(spec, crn.JobBundleConfirmations)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.JobPostBundle)
+	_, err = crn.cron.AddFunc(spec, crn.JobPostBundle)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.JobPostUpdate)
+	_, err = crn.cron.AddFunc(spec, crn.JobPostUpdate)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.JobReleaseReward)
+	_, err = crn.cron.AddFunc(spec, crn.JobReleaseReward)
 	if err != nil {
 		return err
 	}
-	_, err = crn.c.AddFunc(spec, crn.JobRemoveBundle)
+	_, err = crn.cron.AddFunc(spec, crn.JobDeleteBundle)
 	if err != nil {
 		return err
 	}

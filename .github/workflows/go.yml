@@ -23,3 +23,5 @@ jobs:
         
     - name: Test Endpoints
       run: go test ./internal/server
+    - name: Test Cron
+      run: go test ./internal/cron

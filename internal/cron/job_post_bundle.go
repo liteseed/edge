@@ -45,15 +45,15 @@ func (crn *Cron) JobPostBundle() {
 
 	bundle, err := bundle.New(&dataItems)
 	if err != nil {
-		crn.logger.Error("failed to bundle data items", "error", err)
+		crn.logger.Error("fail - internal - bundle data items", "error", err)
 		return
 	}
 
-	tx := crn.wallet.CreateTransaction(bundle.RawData, "", "", []tag.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
+	tx := crn.wallet.CreateTransaction(bundle.RawData, "", "", &[]tag.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
 
 	_, err = crn.wallet.SignTransaction(tx)
 	if err != nil {
-		crn.logger.Error("failed to sign transaction", "error", err)
+		crn.logger.Error("fail - internal - sign transaction", err)
 		return
 	}
 
@@ -63,14 +63,10 @@ func (crn *Cron) JobPostBundle() {
 		return
 	}
 
-	for _, order := range *orders {
-		err = crn.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Sent, BundleID: tx.ID})
+	for _, d := range dataItems {
+		err = crn.database.UpdateOrder(d.ID, &schema.Order{Status: schema.Sent, BundleID: tx.ID})
 		if err != nil {
-			crn.logger.Error(
-				"failed to update database",
-				"error", err,
-			)
+			crn.logger.Error("failed to update database", "error", err)
 		}
 	}
-
 }
