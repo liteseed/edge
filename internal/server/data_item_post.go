@@ -51,7 +51,6 @@ func parseBody(context *gin.Context, contentLength int) ([]byte, error) {
 	return rawData, nil
 }
 
-
 // POST /tx
 func (srv *Server) DataItemPost(ctx *gin.Context) {
 	header, err := parseHeaders(ctx)
@@ -77,7 +76,7 @@ func (srv *Server) DataItemPost(ctx *gin.Context) {
 		return
 	}
 
-	err = data_item.Verify(dataItem)
+	err = dataItem.Verify()
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to verify data item"})
 		return

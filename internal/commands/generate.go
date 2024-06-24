@@ -19,12 +19,12 @@ var Generate = &cli.Command{
 func generate(ctx *cli.Context) error {
 	config := readConfig(ctx)
 	// Generate RSA key.
-	data, err := signer.New()
+	s, err := signer.New()
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(config.Signer, data, os.ModePerm)
+	err = os.WriteFile(config.Signer, s.PrivateKey.N.Bytes(), os.ModePerm)
 	if err != nil {
 		return err
 	}
