@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,10 +12,9 @@ func (srv *Server) DataItemGet(ctx *gin.Context) {
 
 	raw, err := srv.store.Get(id)
 	if err != nil {
-		log.Println(err)
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "data item id does not exist"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, raw)
+	ctx.Data(http.StatusOK, "application/octet-stream", raw)
 }
