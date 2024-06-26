@@ -43,7 +43,7 @@ func (c *Database) CreateOrder(o *schema.Order) error {
 
 func (c *Database) GetOrders(o *schema.Order, scopes ...Scope) (*[]schema.Order, error) {
 	orders := &[]schema.Order{}
-	err := c.DB.Scopes(scopes...).Where(o).Limit(25).Find(&orders).Error
+	err := c.DB.Scopes(scopes...).Where(o).Limit(10).Find(&orders).Error
 	return orders, err
 }
 

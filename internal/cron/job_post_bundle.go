@@ -43,13 +43,13 @@ func (crn *Cron) JobPostBundle() {
 		dataItems = append(dataItems, *dataItem)
 	}
 
-	bundle, err := bundle.New(&dataItems)
+	b, err := bundle.New(&dataItems)
 	if err != nil {
 		crn.logger.Error("fail - internal - bundle data items", "error", err)
 		return
 	}
 
-	tx := crn.wallet.CreateTransaction(bundle.RawData, "", "", &[]tag.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
+	tx := crn.wallet.CreateTransaction(b.Raw, "", "", &[]tag.Tag{{Name: "Bundle-Format", Value: "binary"}, {Name: "Bundle-Version", Value: "2.0.0"}, {Name: "App-Name", Value: "Edge"}})
 
 	_, err = crn.wallet.SignTransaction(tx)
 	if err != nil {
