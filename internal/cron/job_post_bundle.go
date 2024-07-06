@@ -59,14 +59,14 @@ func (crn *Cron) JobPostBundle() {
 
 	err = crn.wallet.SendTransaction(tx)
 	if err != nil {
-		crn.logger.Error("failed to send transaction", "error", err)
+		crn.logger.Error("failed to send transaction", err)
 		return
 	}
 
 	for _, d := range dataItems {
 		err = crn.database.UpdateOrder(d.ID, &schema.Order{Status: schema.Sent, BundleID: tx.ID})
 		if err != nil {
-			crn.logger.Error("failed to update database", "error", err)
+			crn.logger.Error("failed to update database", err)
 		}
 	}
 }
