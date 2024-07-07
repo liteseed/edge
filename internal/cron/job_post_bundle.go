@@ -53,13 +53,13 @@ func (crn *Cron) JobPostBundle() {
 
 	_, err = crn.wallet.SignTransaction(tx)
 	if err != nil {
-		crn.logger.Error("fail - internal - sign transaction", err)
+		crn.logger.Error("fail - internal - sign transaction", "err", err)
 		return
 	}
 
 	err = crn.wallet.SendTransaction(tx)
 	if err != nil {
-		crn.logger.Error("failed to send transaction", err)
+		crn.logger.Error("failed to send transaction", "err", err)
 		return
 	}
 

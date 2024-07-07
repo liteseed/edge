@@ -12,3 +12,8 @@ The node was tested on a system with the following specification:
 - OS - Linux
 
 The requirements are expected to grow in the future.
+
+
+# Operating a node
+
+
