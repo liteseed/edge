@@ -1,10 +1,9 @@
 package commands
 
 import (
-	"log"
-
 	"github.com/liteseed/edge/internal/database"
 	"github.com/urfave/cli/v2"
+	"log"
 )
 
 var Migrate = &cli.Command{
@@ -19,17 +18,21 @@ var Migrate = &cli.Command{
 func migrate(ctx *cli.Context) error {
 	config := readConfig(ctx)
 
-	database, err := database.New(config.Database)
+	db, err := database.New(config.Driver, config.Database)
 	if err != nil {
 		return err
 	}
-	defer database.Shutdown()
 
-	err = database.Migrate()
+	err = db.Migrate()
 	if err != nil {
 		return err
 	}
 
 	log.Println("Migration Complete")
+	err = db.Shutdown()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

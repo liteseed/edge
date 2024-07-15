@@ -10,8 +10,8 @@ const (
 	// Order
 	Created = "created" // Order Created
 
-	Queued    = "queued"    // Order Transaction Added
-	Sent      = "sent"      // Sent to Arweave
+	Queued = "queued" // Order Transaction Added
+	Sent   = "sent"   // Sent to Arweave
 
 	Confirmed = "confirmed" // > Confirmations > 25
 	Release   = "release"   // Request Liteseed Reward

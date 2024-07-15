@@ -47,7 +47,7 @@ func start(ctx *cli.Context) error {
 		),
 	)
 
-	db, err := database.New(config.Database)
+	db, err := database.New(config.Driver, config.Database)
 	if err != nil {
 		return err
 	}

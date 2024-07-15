@@ -19,6 +19,7 @@ var Commands = []*cli.Command{
 
 type Config struct {
 	Database string
+	Driver   string
 	Log      string
 	Port     string
 	Process  string
