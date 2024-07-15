@@ -2,7 +2,6 @@ package cron
 
 import "github.com/liteseed/edge/internal/database/schema"
 
-
 // Check status of the upload on Arweave
 func (crn *Cron) JobBundleConfirmations() {
 	orders, err := crn.database.GetOrders(&schema.Order{Status: schema.Sent})

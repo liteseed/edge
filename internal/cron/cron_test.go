@@ -213,7 +213,6 @@ func TestJobPostUpdate(t *testing.T) {
 	})
 }
 
-
 func TestJobRelease(t *testing.T) {
 	g := test.Gateway()
 	defer g.Close()
@@ -275,4 +274,3 @@ func TestJobDeleteBundle(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
-

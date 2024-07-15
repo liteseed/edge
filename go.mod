@@ -5,19 +5,20 @@ go 1.22.1
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/urfave/cli/v2 v2.27.2
-	gorm.io/gorm v1.25.10
+	gorm.io/gorm v1.25.11
 )
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/dgraph-io/badger v1.6.2
-	github.com/liteseed/aogo v0.2.3
-	github.com/liteseed/goar v0.2.6
-	github.com/liteseed/sdk-go v0.2.6
+	github.com/liteseed/aogo v0.2.6
+	github.com/liteseed/goar v0.2.9
+	github.com/liteseed/sdk-go v0.2.9
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.9
+	gorm.io/driver/sqlite v1.5.6
 )
 
 require (
@@ -52,6 +53,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/linkedin/goavro/v2 v2.13.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect

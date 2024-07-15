@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Get /tx
+// DataItemGet Get /tx
 func (srv *Server) DataItemGet(ctx *gin.Context) {
 	id := ctx.Param("id")
 

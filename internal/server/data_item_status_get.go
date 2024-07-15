@@ -8,10 +8,10 @@ import (
 )
 
 // Get /tx/:id/status
-func (s *Server) DataItemStatusGet(context *gin.Context) {
+func (srv *Server) DataItemStatusGet(context *gin.Context) {
 	id := context.Param("id")
 
-	o, err := s.database.GetOrder(&schema.Order{ID: id})
+	o, err := srv.database.GetOrder(&schema.Order{ID: id})
 	if err != nil {
 		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return

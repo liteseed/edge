@@ -2,9 +2,11 @@ package cron
 
 import (
 	"github.com/liteseed/edge/internal/database/schema"
+	"github.com/liteseed/goar/crypto"
 	"github.com/liteseed/goar/tag"
 	"github.com/liteseed/goar/transaction/bundle"
 	"github.com/liteseed/goar/transaction/data_item"
+	"log"
 )
 
 func (crn *Cron) parseDataItemFromOrder(o *schema.Order) (*data_item.DataItem, error) {
@@ -57,10 +59,31 @@ func (crn *Cron) JobPostBundle() {
 		return
 	}
 
-	err = crn.wallet.SendTransaction(tx)
+	data, err := crypto.Base64URLDecode(tx.Data)
+	if err != nil {
+		crn.logger.Error("failed to decode transaction data", "err", err)
+		return
+	}
+
+	tx.Data = ""
+	res, err := crn.wallet.Client.SubmitTransaction(tx)
+	log.Println(res)
 	if err != nil {
 		crn.logger.Error("failed to send transaction", "err", err)
 		return
+	}
+
+	for i := 0; i < len(tx.ChunkData.Chunks); i++ {
+		c, err := tx.GetChunk(i, data)
+		if err != nil {
+			crn.logger.Error("failed to upload chunk", "err", err)
+			return
+		}
+		res, err = crn.wallet.Client.UploadChunk(c)
+		if err != nil {
+			crn.logger.Error("failed to upload chunk", "err", err)
+			return
+		}
 	}
 
 	for _, d := range dataItems {

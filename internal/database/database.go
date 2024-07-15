@@ -1,8 +1,10 @@
 package database
 
 import (
+	"errors"
 	"github.com/liteseed/edge/internal/database/schema"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -11,17 +13,42 @@ type Database struct {
 	DB *gorm.DB
 }
 
-func New(url string) (*Database, error) {
-	db, err := gorm.Open(postgres.Open(url), &gorm.Config{CreateBatchSize: 200, Logger: logger.Default.LogMode(logger.Silent)})
+func New(database string, url string) (*Database, error) {
+	config := &gorm.Config{CreateBatchSize: 200, Logger: logger.Default.LogMode(logger.Silent)}
+	switch database {
+	case "postgres":
+		return Postgres(url, config)
+	case "sqlite":
+		return Sqlite(url, config)
+	default:
+		return nil, errors.New("database not supported")
+	}
+}
+
+func Postgres(url string, config *gorm.Config) (*Database, error) {
+	psql, err := gorm.Open(postgres.Open(url), config)
 	if err != nil {
 		return nil, err
 	}
-	c := &Database{DB: db}
-	err = c.Migrate()
+	db := &Database{DB: psql}
+	err = db.Migrate()
 	if err != nil {
 		return nil, err
 	}
-	return c, nil
+	return db, nil
+}
+
+func Sqlite(url string, config *gorm.Config) (*Database, error) {
+	database, err := gorm.Open(sqlite.Open(url), config)
+	if err != nil {
+		return nil, err
+	}
+	db := &Database{DB: database}
+	err = db.Migrate()
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func FromDialector(d gorm.Dialector) (*Database, error) {
@@ -37,36 +64,37 @@ func (db *Database) Migrate() error {
 	return err
 }
 
-func (c *Database) CreateOrder(o *schema.Order) error {
-	return c.DB.Create(&o).Error
+func (db *Database) CreateOrder(o *schema.Order) error {
+	return db.DB.Create(&o).Error
 }
 
-func (c *Database) GetOrders(o *schema.Order, scopes ...Scope) (*[]schema.Order, error) {
+func (db *Database) GetOrders(o *schema.Order, scopes ...Scope) (*[]schema.Order, error) {
 	orders := &[]schema.Order{}
-	err := c.DB.Scopes(scopes...).Where(o).Limit(10).Find(&orders).Error
+	err := db.DB.Scopes(scopes...).Where(o).Limit(10).Find(&orders).Error
 	return orders, err
 }
 
-func (c *Database) GetOrder(o *schema.Order, scopes ...Scope) (*schema.Order, error) {
+func (db *Database) GetOrder(o *schema.Order, scopes ...Scope) (*schema.Order, error) {
 	order := &schema.Order{}
-	err := c.DB.Scopes(scopes...).Where(o).First(&order).Error
+	err := db.DB.Scopes(scopes...).Where(o).First(&order).Error
 	return order, err
 }
 
-func (c *Database) UpdateOrder(id string, o *schema.Order) error {
-	return c.DB.Model(&schema.Order{}).Where("id = ?", id).Updates(o).Error
+func (db *Database) UpdateOrder(id string, o *schema.Order) error {
+	return db.DB.Model(&schema.Order{}).Where("id = ?", id).Updates(o).Error
 }
 
-func (c *Database) DeleteOrder(id string) error {
-	return c.DB.Delete(&schema.Order{ID: id}).Error
+func (db *Database) DeleteOrder(id string) error {
+	return db.DB.Delete(&schema.Order{ID: id}).Error
 }
 
-func (c *Database) Shutdown() error {
-	db, err := c.DB.DB()
+func (db *Database) Shutdown() error {
+	conn, err := db.DB.DB()
 	if err != nil {
 		return err
 	}
-	return db.Close()
+	return conn.Close()
+	return conn.Close()
 }
 
 type Scope = func(*gorm.DB) *gorm.DB
