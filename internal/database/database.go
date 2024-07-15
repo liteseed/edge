@@ -94,7 +94,6 @@ func (db *Database) Shutdown() error {
 		return err
 	}
 	return conn.Close()
-	return conn.Close()
 }
 
 type Scope = func(*gorm.DB) *gorm.DB
