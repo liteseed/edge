@@ -1,13 +1,8 @@
 package schema
 
-import (
-	"database/sql/driver"
-)
-
 type Status string
 
 const (
-	// Order
 	Created = "created" // Order Created
 
 	Queued = "queued" // Order Transaction Added
@@ -20,15 +15,6 @@ const (
 
 	Invalid = "Invalid"
 )
-
-func (s *Status) Scan(value any) error {
-	*s = Status(value.(string))
-	return nil
-}
-
-func (s Status) Value() (driver.Value, error) {
-	return string(s), nil
-}
 
 type Order struct {
 	ID             string `gorm:"primary_key;" json:"id"`

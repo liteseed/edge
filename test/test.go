@@ -1,6 +1,7 @@
 package test
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -41,6 +42,8 @@ func Gateway() *httptest.Server {
 				}
 			} else if p[1] == "tx" {
 				w.WriteHeader(http.StatusOK)
+			} else if p[1] == "chunk" && r.Method == "POST" {
+				w.WriteHeader(http.StatusOK)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -48,11 +51,17 @@ func Gateway() *httptest.Server {
 }
 
 func Database() (sqlmock.Sqlmock, *database.Database) {
-	mockDb, mock, _ := sqlmock.New()
-	db, _ := database.FromDialector(postgres.New(postgres.Config{
+	mockDb, mock, err := sqlmock.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := database.FromDialector(postgres.New(postgres.Config{
 		Conn:       mockDb,
 		DriverName: "postgres",
 	}))
+	if err != nil {
+		log.Fatal(err)
+	}
 	return mock, db
 }
 

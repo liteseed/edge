@@ -7,19 +7,19 @@ import (
 func (crn *Cron) JobReleaseReward() {
 	o, err := crn.database.GetOrders(&schema.Order{Status: schema.Confirmed})
 	if err != nil {
-		crn.logger.Error("failed to fetch reward orders", err)
+		crn.logger.Error("failed to fetch reward orders", "err", err)
 		return
 	}
 
 	for _, order := range *o {
 		err = crn.contract.Release(order.ID)
 		if err != nil {
-			crn.logger.Error("failed to release reward", err)
+			crn.logger.Error("failed to release reward", "err", err)
 			continue
 		}
 		err = crn.database.UpdateOrder(order.ID, &schema.Order{Status: schema.Permanent})
 		if err != nil {
-			crn.logger.Error("failed to update database", err)
+			crn.logger.Error("failed to update database", "err", err)
 			continue
 		}
 	}

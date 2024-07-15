@@ -5,7 +5,7 @@ import "github.com/liteseed/edge/internal/database/schema"
 func (crn *Cron) JobDeleteBundle() {
 	orders, err := crn.database.GetOrders(&schema.Order{Status: schema.Created})
 	if err != nil {
-		crn.logger.Error("failed to fetch queued orders", err)
+		crn.logger.Error("failed to fetch queued orders", "err", err)
 		return
 	}
 
@@ -17,7 +17,7 @@ func (crn *Cron) JobDeleteBundle() {
 	for _, order := range *orders {
 		n, err := crn.wallet.Client.GetNetworkInfo()
 		if err != nil {
-			crn.logger.Error("failed to fetch network info", err)
+			crn.logger.Error("failed to fetch network info", "err", err)
 			continue
 		}
 		if n.Height >= int64(order.DeadlineHeight)+100 {
